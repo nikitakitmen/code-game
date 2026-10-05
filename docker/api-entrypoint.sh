@@ -13,6 +13,8 @@ if [ "$1" = "php-fpm" ]; then
   php artisan db:seed --force || true
   php artisan config:cache || true
   php artisan route:cache || true
+  # artisan ran as root; php-fpm runs as www-data and must be able to write logs/cache
+  chown -R www-data:www-data storage bootstrap/cache
 fi
 
 exec "$@"

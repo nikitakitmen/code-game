@@ -7,13 +7,13 @@
 :80 {
 	encode gzip zstd
 
-	# Laravel API (FastCGI to the php-fpm container; document root is the mounted public dir)
+	# Laravel API (FastCGI to the php-fpm container; the same path as inside the api container)
 	handle /api/* {
-		root * /srv/api/public
+		root * /var/www/html/public
 		php_fastcgi api:9000
 	}
 	handle /up {
-		root * /srv/api/public
+		root * /var/www/html/public
 		php_fastcgi api:9000
 	}
 

@@ -85,7 +85,7 @@ services:
       - '${HTTPS_PORT:-443}:443'
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./apps/api:/srv/api:ro
+      - ./apps/api/public:/var/www/html/public:ro
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
