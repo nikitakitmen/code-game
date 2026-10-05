@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+/apps/api/vendor/
+/apps/api/storage/*.key
+/apps/api/.phpunit.result.cache
+/apps/api/.phpunit.cache
+/e2e/test-results/
+/e2e/playwright-report/
+*.tsbuildinfo

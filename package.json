@@ -1,0 +1,24 @@
+{
+  "name": "prod-game",
+  "private": true,
+  "version": "1.0.0",
+  "description": "PROD \u2014 Build it. Break it. Scale it. A browser engineering simulator.",
+  "workspaces": [
+    "packages/engine",
+    "packages/content"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @prod/web",
+    "build": "npm run build -w @prod/web",
+    "test": "npm run test -w @prod/engine && npm run test -w @prod/content && npm run test -w @prod/web",
+    "test:engine": "npm run test -w @prod/engine",
+    "test:content": "npm run test -w @prod/content",
+    "test:web": "npm run test -w @prod/web",
+    "test:e2e": "npm run test -w @prod/e2e",
+    "typecheck": "npm run typecheck -w @prod/engine && npm run typecheck -w @prod/content && npm run typecheck -w @prod/web",
+    "lint": "npm run lint -w @prod/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
