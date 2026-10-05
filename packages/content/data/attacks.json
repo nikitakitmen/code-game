@@ -1,0 +1,104 @@
+[
+  {
+    "id": "sqli",
+    "name": { "en": "SQL Injection on search", "ru": "SQL-инъекция в поиске" },
+    "category": "injection",
+    "knowledge": "sec.sqli",
+    "description": { "en": "Make the search box return data it should never return by turning input into SQL.", "ru": "Заставить поиск вернуть данные, которые он не должен, превратив ввод в SQL." },
+    "impact": { "en": "Full read (and write) access to the database through a public form.", "ru": "Полный доступ к базе на чтение (и запись) через публичную форму." },
+    "steps": [
+      { "id": "s1", "label": { "en": "Open the public search form", "ru": "Открыть публичную форму поиска" }, "at": "search", "blockedWhen": false, "blockedBy": { "en": "", "ru": "" }, "succeeded": { "en": "The form accepts any text.", "ru": "Форма принимает любой текст." } },
+      { "id": "s2", "label": { "en": "Send a crafted input that closes the query and adds a condition", "ru": "Отправить ввод, закрывающий запрос и добавляющий условие" }, "at": "search", "payload": "payload #1", "blockedWhen": { "fact": "app.queryMode", "eq": "parameterized" }, "blockedBy": { "en": "Prepared statements treat the input as a value, not as SQL.", "ru": "Подготовленные запросы считают ввод значением, а не SQL." }, "succeeded": { "en": "The query returns every row, ignoring the filter.", "ru": "Запрос вернул все строки, проигнорировав фильтр." } },
+      { "id": "s3", "label": { "en": "Read the users table through a UNION", "ru": "Прочитать таблицу пользователей через UNION" }, "at": "mysql", "payload": "payload #2", "blockedWhen": { "any": [ { "fact": "app.queryMode", "eq": "parameterized" }, { "all": [ { "fact": "node.waf.mode", "eq": "block" }, { "fact": "node.waf.ruleSqli", "truthy": true } ] } ] }, "blockedBy": { "en": "A WAF rule can catch obvious payloads — but fixing the query is the real defense.", "ru": "Правило WAF может поймать явную нагрузку — но настоящая защита это починка запроса." }, "succeeded": { "en": "Emails and password hashes leak.", "ru": "Утекли email и хеши паролей." } }
+    ]
+  },
+  {
+    "id": "xss",
+    "name": { "en": "Stored XSS in reviews", "ru": "Хранимый XSS в отзывах" },
+    "category": "injection",
+    "knowledge": "sec.xss",
+    "description": { "en": "Leave a review containing a script so it runs in every visitor's browser.", "ru": "Оставить отзыв со скриптом, чтобы он выполнялся в браузере каждого посетителя." },
+    "impact": { "en": "Steal session cookies or act as any visitor who opens the page.", "ru": "Украсть cookie сессии или действовать от имени любого посетителя страницы." },
+    "steps": [
+      { "id": "s1", "label": { "en": "Post a review with an embedded script", "ru": "Оставить отзыв со встроенным скриптом" }, "at": "reviews", "blockedWhen": { "fact": "app.outputEscaping", "truthy": true }, "blockedBy": { "en": "Escaping renders the script as visible text, not code.", "ru": "Экранирование выводит скрипт как видимый текст, а не код." }, "succeeded": { "en": "The review is stored verbatim.", "ru": "Отзыв сохранён как есть." } },
+      { "id": "s2", "label": { "en": "Wait for a victim to open the product page", "ru": "Дождаться, пока жертва откроет страницу товара" }, "at": "reviews", "blockedWhen": { "any": [ { "fact": "app.outputEscaping", "truthy": true }, { "fact": "app.csp", "truthy": true } ] }, "blockedBy": { "en": "A Content-Security-Policy refuses to run inline scripts.", "ru": "Content-Security-Policy не даёт выполнить встроенные скрипты." }, "succeeded": { "en": "The script runs in the victim's browser.", "ru": "Скрипт выполнился в браузере жертвы." } },
+      { "id": "s3", "label": { "en": "Exfiltrate the session cookie", "ru": "Выгрузить cookie сессии" }, "at": "reviews", "blockedWhen": { "any": [ { "fact": "app.outputEscaping", "truthy": true }, { "fact": "app.csp", "truthy": true }, { "fact": "app.cookieHttpOnly", "truthy": true } ] }, "blockedBy": { "en": "An HttpOnly cookie is invisible to JavaScript.", "ru": "HttpOnly cookie не видна для JavaScript." }, "succeeded": { "en": "The attacker now has a valid session.", "ru": "У атакующего теперь есть рабочая сессия." } }
+    ]
+  },
+  {
+    "id": "idor",
+    "name": { "en": "IDOR on orders", "ru": "IDOR в заказах" },
+    "category": "access-control",
+    "knowledge": "sec.idor",
+    "description": { "en": "Change the order id in the URL to read other people's orders.", "ru": "Поменять id заказа в URL, чтобы читать чужие заказы." },
+    "impact": { "en": "Any logged-in user reads every order, with names, addresses and phones.", "ru": "Любой вошедший читает все заказы — с именами, адресами и телефонами." },
+    "steps": [
+      { "id": "s1", "label": { "en": "Log in as an ordinary customer", "ru": "Войти как обычный покупатель" }, "at": "login", "blockedWhen": false, "blockedBy": { "en": "", "ru": "" }, "succeeded": { "en": "Authenticated.", "ru": "Вошли." } },
+      { "id": "s2", "label": { "en": "Open /orders/1002 instead of your own", "ru": "Открыть /orders/1002 вместо своего" }, "at": "order_view", "blockedWhen": { "fact": "app.ownershipChecks", "truthy": true }, "blockedBy": { "en": "The server checks that the order belongs to you and returns 404.", "ru": "Сервер проверяет, что заказ ваш, и отвечает 404." }, "succeeded": { "en": "Someone else's order is shown.", "ru": "Показан чужой заказ." } },
+      { "id": "s3", "label": { "en": "Enumerate every order id", "ru": "Перебрать все id заказов" }, "at": "order_view", "blockedWhen": { "fact": "app.ownershipChecks", "truthy": true }, "blockedBy": { "en": "Ownership checks make enumeration pointless.", "ru": "Проверка владельца делает перебор бессмысленным." }, "succeeded": { "en": "The whole order history is dumped.", "ru": "Выгружена вся история заказов." } }
+    ]
+  },
+  {
+    "id": "bruteforce",
+    "name": { "en": "Password brute force", "ru": "Перебор паролей" },
+    "category": "auth",
+    "knowledge": "sec.rateLimit",
+    "description": { "en": "Try millions of passwords against the login form.", "ru": "Перебрать миллионы паролей на форме входа." },
+    "impact": { "en": "Weak accounts get taken over.", "ru": "Слабые аккаунты угоняются." },
+    "steps": [
+      { "id": "s1", "label": { "en": "Script the login form", "ru": "Заскриптовать форму входа" }, "at": "login", "blockedWhen": false, "blockedBy": { "en": "", "ru": "" }, "succeeded": { "en": "The form accepts automated attempts.", "ru": "Форма принимает автоматические попытки." } },
+      { "id": "s2", "label": { "en": "Send thousands of guesses per minute", "ru": "Слать тысячи попыток в минуту" }, "at": "login", "blockedWhen": { "any": [ { "fact": "app.loginRateLimit", "truthy": true }, { "all": [ { "fact": "role.proxy", "gte": 1 }, { "fact": "node.nginx.rateLimit", "gt": 0 } ] } ] }, "blockedBy": { "en": "Rate limiting returns 429 after a few attempts.", "ru": "Rate limiting отвечает 429 после нескольких попыток." }, "succeeded": { "en": "No limit — attempts fly through.", "ru": "Лимита нет — попытки проходят." } },
+      { "id": "s3", "label": { "en": "Crack a weak password", "ru": "Подобрать слабый пароль" }, "at": "login", "blockedWhen": { "any": [ { "fact": "app.loginRateLimit", "truthy": true }, { "fact": "app.lockout", "ne": "none" } ] }, "blockedBy": { "en": "Throttling and backoff make online guessing hopeless.", "ru": "Троттлинг и задержки делают онлайн-перебор безнадёжным." }, "succeeded": { "en": "An account is compromised.", "ru": "Аккаунт скомпрометирован." } }
+    ]
+  },
+  {
+    "id": "exposed-db",
+    "name": { "en": "Exposed database port", "ru": "Открытый порт базы данных" },
+    "category": "exposure",
+    "knowledge": "sec.exposedPorts",
+    "description": { "en": "Connect straight to MySQL from the internet.", "ru": "Подключиться к MySQL напрямую из интернета." },
+    "impact": { "en": "The whole database, bypassing the app entirely.", "ru": "Вся база данных в обход приложения." },
+    "steps": [
+      { "id": "s1", "label": { "en": "Scan the server for open ports", "ru": "Просканировать сервер на открытые порты" }, "at": "mysql", "blockedWhen": false, "blockedBy": { "en": "", "ru": "" }, "succeeded": { "en": "Port 3306 answers from the internet.", "ru": "Порт 3306 отвечает из интернета." } },
+      { "id": "s2", "label": { "en": "Connect to port 3306", "ru": "Подключиться к порту 3306" }, "at": "mysql", "blockedWhen": { "not": { "fact": "publicRole.database.3306", "truthy": true } }, "blockedBy": { "en": "The firewall only allows the database port from the app's private network.", "ru": "Firewall разрешает порт БД только из приватной сети приложения." }, "succeeded": { "en": "A MySQL prompt appears.", "ru": "Появилось приглашение MySQL." } },
+      { "id": "s3", "label": { "en": "Dump every table", "ru": "Выгрузить все таблицы" }, "at": "mysql", "blockedWhen": { "not": { "fact": "publicRole.database.3306", "truthy": true } }, "blockedBy": { "en": "No network path, no dump.", "ru": "Нет сетевого пути — нет дампа." }, "succeeded": { "en": "The database is copied.", "ru": "База скопирована." } }
+    ]
+  },
+  {
+    "id": "secret-in-git",
+    "name": { "en": "Secret in Git history", "ru": "Секрет в истории Git" },
+    "category": "secrets",
+    "knowledge": "sec.secrets",
+    "description": { "en": "Find the production .env committed to the repository.", "ru": "Найти продовый .env, закоммиченный в репозиторий." },
+    "impact": { "en": "API keys and the database password, straight from the code.", "ru": "Ключи API и пароль БД прямо из кода." },
+    "steps": [
+      { "id": "s1", "label": { "en": "Clone the repository", "ru": "Склонировать репозиторий" }, "at": "backend", "blockedWhen": false, "blockedBy": { "en": "", "ru": "" }, "succeeded": { "en": "Source obtained.", "ru": "Исходники получены." } },
+      { "id": "s2", "label": { "en": "Search the history for the .env file", "ru": "Поискать в истории файл .env" }, "at": "backend", "payload": "git log -p", "blockedWhen": { "any": [ { "fact": "git.historyRewritten", "truthy": true }, { "not": { "fact": "sec.secret.app-env.history", "truthy": true } } ] }, "blockedBy": { "en": "The secret was never in history (or history was rewritten).", "ru": "Секрета никогда не было в истории (или историю переписали)." }, "succeeded": { "en": "An old commit still contains the .env.", "ru": "Старый коммит всё ещё содержит .env." } },
+      { "id": "s3", "label": { "en": "Use the leaked keys", "ru": "Воспользоваться утёкшими ключами" }, "at": "payment", "blockedWhen": { "any": [ { "fact": "git.historyRewritten", "truthy": true }, { "fact": "sec.secret.app-env.rotated", "truthy": true } ] }, "blockedBy": { "en": "Rotated keys make the leaked ones useless.", "ru": "После ротации утёкшие ключи бесполезны." }, "succeeded": { "en": "The attacker charges cards with your payment key.", "ru": "Атакующий списывает деньги вашим платёжным ключом." } }
+    ]
+  },
+  {
+    "id": "upload-rce",
+    "name": { "en": "Malicious file upload", "ru": "Загрузка вредоносного файла" },
+    "category": "injection",
+    "knowledge": "sec.upload",
+    "description": { "en": "Upload a script disguised as an avatar and run it.", "ru": "Загрузить скрипт под видом аватарки и выполнить его." },
+    "impact": { "en": "Arbitrary code execution on the server.", "ru": "Выполнение произвольного кода на сервере." },
+    "steps": [
+      { "id": "s1", "label": { "en": "Upload avatar.php.jpg", "ru": "Загрузить avatar.php.jpg" }, "at": "avatar", "blockedWhen": { "fact": "app.uploadValidation", "truthy": true }, "blockedBy": { "en": "Validation checks the real type and rejects non-images.", "ru": "Валидация проверяет реальный тип и отклоняет не-картинки." }, "succeeded": { "en": "The file is saved under the web root.", "ru": "Файл сохранён под web root." } },
+      { "id": "s2", "label": { "en": "Request the uploaded file as a page", "ru": "Запросить загруженный файл как страницу" }, "at": "avatar", "blockedWhen": { "any": [ { "fact": "app.uploadValidation", "truthy": true }, { "fact": "app.uploadsTarget", "eq": "object-storage" } ] }, "blockedBy": { "en": "Files in object storage are served as data, never executed.", "ru": "Файлы в object storage отдаются как данные и не выполняются." }, "succeeded": { "en": "The server executes the uploaded code.", "ru": "Сервер выполнил загруженный код." } }
+    ]
+  },
+  {
+    "id": "csrf",
+    "name": { "en": "CSRF email change", "ru": "CSRF-смена email" },
+    "category": "access-control",
+    "knowledge": "sec.csrf",
+    "description": { "en": "Trick a logged-in user's browser into changing their account email.", "ru": "Заставить браузер вошедшего пользователя сменить email аккаунта." },
+    "impact": { "en": "Account takeover via a link on another site.", "ru": "Угон аккаунта через ссылку на другом сайте." },
+    "steps": [
+      { "id": "s1", "label": { "en": "Host a page that auto-submits a form to your site", "ru": "Разместить страницу с автоотправкой формы на ваш сайт" }, "at": "account_email", "blockedWhen": false, "blockedBy": { "en": "", "ru": "" }, "succeeded": { "en": "The victim opens it while logged in.", "ru": "Жертва открывает её, будучи залогиненной." } },
+      { "id": "s2", "label": { "en": "The browser sends the request with the session cookie", "ru": "Браузер отправляет запрос с cookie сессии" }, "at": "account_email", "blockedWhen": { "any": [ { "fact": "app.csrfProtection", "eq": "token" }, { "fact": "app.csrfProtection", "eq": "samesite" } ] }, "blockedBy": { "en": "A CSRF token (or SameSite cookie) the attacker can't supply stops it.", "ru": "CSRF-токен (или SameSite cookie), который атакующий не может подставить, останавливает это." }, "succeeded": { "en": "The email is changed to the attacker's.", "ru": "Email сменился на адрес атакующего." } }
+    ]
+  }
+]

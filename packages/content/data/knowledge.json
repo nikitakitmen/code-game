@@ -1,0 +1,2738 @@
+[
+ {
+  "id": "web.clientServer",
+  "category": "web",
+  "parent": null,
+  "title": {
+   "en": "Client & Server",
+   "ru": "Клиент и сервер"
+  },
+  "summary": {
+   "en": "Your browser (client) asks; a server answers.",
+   "ru": "Браузер (клиент) спрашивает; сервер отвечает."
+  },
+  "article": {
+   "what": {
+    "en": "The client is the program in front of the user — a browser or app. The server is a program running somewhere else that holds the data and logic and responds to requests.",
+    "ru": "Клиент — программа перед пользователем: браузер или приложение. Сервер — программа где-то ещё, которая хранит данные и логику и отвечает на запросы."
+   },
+   "why": {
+    "en": "A single computer can't be near everyone and can't be trusted with everyone's data. Splitting work into client and server lets many people share one source of truth.",
+    "ru": "Один компьютер не может быть рядом со всеми и не может хранить данные всех. Разделение на клиент и сервер позволяет многим людям пользоваться одним источником правды."
+   },
+   "limits": {
+    "en": "The network between them is slow and unreliable compared to a function call — that single fact shapes everything else in this game.",
+    "ru": "Сеть между ними медленная и ненадёжная по сравнению с вызовом функции — именно это определяет всё остальное в этой игре."
+   },
+   "production": {
+    "en": "Almost every website works this way: your browser is the client, a data-center machine is the server.",
+    "ru": "Почти любой сайт устроен так: браузер — клиент, машина в дата-центре — сервер."
+   }
+  }
+ },
+ {
+  "id": "web.request",
+  "category": "web",
+  "parent": "web.clientServer",
+  "title": {
+   "en": "Request & Response",
+   "ru": "Запрос и ответ"
+  },
+  "summary": {
+   "en": "One ask, one answer, over HTTP.",
+   "ru": "Один вопрос, один ответ, по HTTP."
+  },
+  "article": {
+   "what": {
+    "en": "An HTTP request has a method (GET, POST…), a path (/products), headers and sometimes a body. The response has a status code, headers and a body.",
+    "ru": "HTTP-запрос содержит метод (GET, POST…), путь (/products), заголовки и иногда тело. Ответ — код статуса, заголовки и тело."
+   },
+   "why": {
+    "en": "It's the common language every browser and server speaks, so any client can talk to any server.",
+    "ru": "Это общий язык всех браузеров и серверов, поэтому любой клиент может общаться с любым сервером."
+   },
+   "limits": {
+    "en": "HTTP is stateless: the server doesn't remember the previous request unless you add cookies or tokens.",
+    "ru": "HTTP не хранит состояние: сервер не помнит прошлый запрос, пока вы не добавите cookie или токены."
+   },
+   "production": {
+    "en": "Open DevTools → Network on any site and you'll see these requests and responses.",
+    "ru": "Откройте DevTools → Network на любом сайте — вы увидите эти запросы и ответы."
+   },
+   "underTheHood": {
+    "en": "When you type a URL, the browser resolves DNS, opens TCP (and TLS for https), sends the request line and headers, and reads the response.",
+    "ru": "Когда вы вводите URL, браузер резолвит DNS, открывает TCP (и TLS для https), шлёт строку запроса с заголовками и читает ответ."
+   }
+  },
+  "related": [
+   "net.dns",
+   "net.tls"
+  ]
+ },
+ {
+  "id": "web.static",
+  "category": "web",
+  "parent": "web.request",
+  "title": {
+   "en": "Static vs Dynamic",
+   "ru": "Статика vs динамика"
+  },
+  "summary": {
+   "en": "Files served as-is, or pages built per request.",
+   "ru": "Файлы как есть или страницы, собираемые на каждый запрос."
+  },
+  "article": {
+   "what": {
+    "en": "A static page is a file sent unchanged. A dynamic page is built by code for each request, often from a database.",
+    "ru": "Статическая страница — файл, отправляемый без изменений. Динамическая — собирается кодом под каждый запрос, часто из базы."
+   },
+   "why": {
+    "en": "Static is cheap and fast but the same for everyone. Dynamic can show your name, your cart, your orders.",
+    "ru": "Статика дешёвая и быстрая, но одинаковая для всех. Динамика может показать ваше имя, корзину, заказы."
+   },
+   "limits": {
+    "en": "Dynamic pages cost CPU and a database on every view; static pages don't.",
+    "ru": "Динамические страницы тратят CPU и базу на каждый показ; статические — нет."
+   },
+   "production": {
+    "en": "A landing page can be static; a user dashboard must be dynamic.",
+    "ru": "Лендинг может быть статическим; личный кабинет обязан быть динамическим."
+   }
+  }
+ },
+ {
+  "id": "backend.role",
+  "category": "backend",
+  "parent": null,
+  "title": {
+   "en": "What a backend is for",
+   "ru": "Зачем нужен бэкенд"
+  },
+  "summary": {
+   "en": "Code on a server that holds logic and data.",
+   "ru": "Код на сервере, где живут логика и данные."
+  },
+  "article": {
+   "what": {
+    "en": "The backend runs your business rules, talks to databases and external services, and decides what each user may see or do.",
+    "ru": "Бэкенд выполняет бизнес-правила, работает с базами и внешними сервисами и решает, что каждому пользователю можно видеть и делать."
+   },
+   "why": {
+    "en": "Anything that must be the same for all users, kept secret, or trusted (prices, stock, permissions) has to live on the server, because the client can be modified by the user.",
+    "ru": "Всё, что должно быть одинаковым для всех, секретным или доверенным (цены, остатки, права), обязано жить на сервере, ведь клиент пользователь может изменить."
+   },
+   "limits": {
+    "en": "You still pay for every backend request in CPU, memory and database time.",
+    "ru": "За каждый запрос к бэкенду вы всё равно платите CPU, памятью и временем базы."
+   },
+   "production": {
+    "en": "Laravel, Django, Rails, Express and Spring are backend frameworks.",
+    "ru": "Laravel, Django, Rails, Express и Spring — бэкенд-фреймворки."
+   }
+  }
+ },
+ {
+  "id": "db.basics",
+  "category": "db",
+  "parent": null,
+  "title": {
+   "en": "Tables & rows",
+   "ru": "Таблицы и строки"
+  },
+  "summary": {
+   "en": "Data in tables of typed columns and rows.",
+   "ru": "Данные в таблицах из типизированных столбцов и строк."
+  },
+  "article": {
+   "what": {
+    "en": "A relational database stores data in tables. Each row is one record; each column has a name and type. A primary key uniquely identifies a row; a foreign key points at a row in another table.",
+    "ru": "Реляционная БД хранит данные в таблицах. Строка — одна запись; у столбца есть имя и тип. Первичный ключ уникально определяет строку; внешний ключ ссылается на строку другой таблицы."
+   },
+   "why": {
+    "en": "A database enforces structure, handles many writers at once and answers questions a plain file can't.",
+    "ru": "База навязывает структуру, выдерживает много одновременных записей и отвечает на вопросы, недоступные обычному файлу."
+   },
+   "limits": {
+    "en": "You must design the schema; changing it later (migrations) takes care.",
+    "ru": "Схему нужно проектировать; менять её потом (миграции) — аккуратно."
+   },
+   "production": {
+    "en": "MySQL, PostgreSQL and SQLite are relational databases.",
+    "ru": "MySQL, PostgreSQL и SQLite — реляционные базы."
+   }
+  },
+  "related": [
+   "db.index",
+   "db.migration"
+  ]
+ },
+ {
+  "id": "db.index",
+  "category": "db",
+  "parent": "db.basics",
+  "title": {
+   "en": "Index",
+   "ru": "Индекс"
+  },
+  "summary": {
+   "en": "A sorted lookup so the DB skips scanning every row.",
+   "ru": "Отсортированный указатель, чтобы БД не читала все строки."
+  },
+  "article": {
+   "what": {
+    "en": "An index is an extra sorted structure (usually a B-tree) on one or more columns. With it the database jumps to matching rows instead of reading the whole table.",
+    "ru": "Индекс — дополнительная отсортированная структура (обычно B-дерево) по одному или нескольким столбцам. С ним база прыгает к нужным строкам, а не читает всю таблицу."
+   },
+   "why": {
+    "en": "A query filtering a million-row table with no index scans all million rows every time. An index turns that into a handful of reads.",
+    "ru": "Запрос по таблице в миллион строк без индекса читает все миллион строк каждый раз. Индекс превращает это в несколько чтений."
+   },
+   "limits": {
+    "en": "Indexes cost disk and slow down writes (they must be kept up to date). LIKE '%x%' and functions on a column can't use a normal index.",
+    "ru": "Индексы стоят места и замедляют запись (их нужно поддерживать). LIKE '%x%' и функции над столбцом не используют обычный индекс."
+   },
+   "production": {
+    "en": "EXPLAIN shows whether a query uses an index (type=ref/const) or scans the table (type=ALL).",
+    "ru": "EXPLAIN показывает, использует ли запрос индекс (type=ref/const) или сканирует таблицу (type=ALL)."
+   },
+   "underTheHood": {
+    "en": "A composite index (a,b) also serves queries on a alone (leftmost prefix) but not on b alone.",
+    "ru": "Составной индекс (a,b) обслуживает и запросы только по a (левый префикс), но не только по b."
+   }
+  },
+  "related": [
+   "db.explain",
+   "perf.slowQuery"
+  ]
+ },
+ {
+  "id": "db.explain",
+  "category": "db",
+  "parent": "db.index",
+  "title": {
+   "en": "EXPLAIN & rows scanned",
+   "ru": "EXPLAIN и просмотренные строки"
+  },
+  "summary": {
+   "en": "How the database plans to run a query.",
+   "ru": "Как база планирует выполнить запрос."
+  },
+  "article": {
+   "what": {
+    "en": "EXPLAIN shows the access type (const, ref, range, ALL), which index is used and how many rows are examined.",
+    "ru": "EXPLAIN показывает тип доступа (const, ref, range, ALL), какой индекс используется и сколько строк просматривается."
+   },
+   "why": {
+    "en": "Rows examined — not rows returned — is what costs time. A query returning 10 rows after scanning a million is slow.",
+    "ru": "Время тратится на просмотренные строки, а не возвращённые. Запрос, вернувший 10 строк после просмотра миллиона, медленный."
+   },
+   "limits": {
+    "en": "EXPLAIN estimates; real numbers can differ with data distribution.",
+    "ru": "EXPLAIN оценивает; реальные числа зависят от распределения данных."
+   },
+   "production": {
+    "en": "'Using filesort' and 'Using temporary' in Extra warn of extra work.",
+    "ru": "'Using filesort' и 'Using temporary' в Extra предупреждают о лишней работе."
+   }
+  }
+ },
+ {
+  "id": "db.join",
+  "category": "db",
+  "parent": "db.basics",
+  "title": {
+   "en": "JOIN & foreign keys",
+   "ru": "JOIN и внешние ключи"
+  },
+  "summary": {
+   "en": "Combine related rows from two tables.",
+   "ru": "Объединить связанные строки двух таблиц."
+  },
+  "article": {
+   "what": {
+    "en": "A JOIN matches rows from two tables on a condition, usually a foreign key equals a primary key.",
+    "ru": "JOIN сопоставляет строки двух таблиц по условию, обычно внешний ключ равен первичному."
+   },
+   "why": {
+    "en": "Normalizing data into separate tables avoids duplication; JOINs put it back together when you query.",
+    "ru": "Нормализация данных по отдельным таблицам убирает дублирование; JOIN собирает их обратно при запросе."
+   },
+   "limits": {
+    "en": "An unindexed foreign key makes JOINs scan; too many JOINs get slow.",
+    "ru": "Неиндексированный внешний ключ заставляет JOIN сканировать; слишком много JOIN тормозят."
+   },
+   "production": {
+    "en": "An index on the foreign-key column is almost always worth it.",
+    "ru": "Индекс по столбцу внешнего ключа почти всегда оправдан."
+   }
+  }
+ },
+ {
+  "id": "db.migration",
+  "category": "db",
+  "parent": "db.basics",
+  "title": {
+   "en": "Migrations",
+   "ru": "Миграции"
+  },
+  "summary": {
+   "en": "Versioned, repeatable changes to the schema.",
+   "ru": "Версионируемые повторяемые изменения схемы."
+  },
+  "article": {
+   "what": {
+    "en": "A migration is a script that changes the schema (add a column, create a table) and can be applied in order on every environment.",
+    "ru": "Миграция — скрипт, меняющий схему (добавить столбец, создать таблицу), применяемый по порядку на каждом окружении."
+   },
+   "why": {
+    "en": "Everyone's database ends up identical, and changes ship with the code that needs them.",
+    "ru": "База у всех оказывается одинаковой, а изменения едут вместе с кодом, которому они нужны."
+   },
+   "limits": {
+    "en": "A destructive migration (drop column) can break the old code still running during a deploy.",
+    "ru": "Разрушительная миграция (удалить столбец) может сломать старый код, ещё работающий во время деплоя."
+   },
+   "production": {
+    "en": "Backward-compatible migrations (add first, remove later) enable zero-downtime deploys.",
+    "ru": "Обратно-совместимые миграции (сначала добавить, потом удалить) дают деплой без простоя."
+   }
+  }
+ },
+ {
+  "id": "db.transaction",
+  "category": "db",
+  "parent": "db.basics",
+  "title": {
+   "en": "Transactions",
+   "ru": "Транзакции"
+  },
+  "summary": {
+   "en": "All-or-nothing groups of changes.",
+   "ru": "Группы изменений по принципу «всё или ничего»."
+  },
+  "article": {
+   "what": {
+    "en": "A transaction groups several statements so they all commit together or all roll back. It gives atomicity and consistency.",
+    "ru": "Транзакция группирует несколько операций так, что они фиксируются вместе или откатываются вместе. Даёт атомарность и согласованность."
+   },
+   "why": {
+    "en": "Money must not leave one account without arriving in another. Transactions guarantee that.",
+    "ru": "Деньги не должны уйти с одного счёта, не придя на другой. Транзакции это гарантируют."
+   },
+   "limits": {
+    "en": "Long transactions hold locks and hurt concurrency.",
+    "ru": "Долгие транзакции держат блокировки и мешают параллельности."
+   },
+   "production": {
+    "en": "Isolation levels decide what one transaction sees of another's uncommitted work.",
+    "ru": "Уровни изоляции решают, что одна транзакция видит из незафиксированной работы другой."
+   }
+  }
+ },
+ {
+  "id": "db.race",
+  "category": "db",
+  "parent": "db.transaction",
+  "title": {
+   "en": "Race condition",
+   "ru": "Состояние гонки"
+  },
+  "summary": {
+   "en": "Two requests step on the same data at once.",
+   "ru": "Два запроса одновременно трогают одни данные."
+  },
+  "article": {
+   "what": {
+    "en": "When two requests read, decide, then write the same row, both can read the old value and one update is lost — e.g. selling the last item twice.",
+    "ru": "Когда два запроса читают, решают и пишут одну строку, оба могут прочитать старое значение, и одно обновление теряется — например, последний товар продаётся дважды."
+   },
+   "why": {
+    "en": "Concurrency is the default in production; code that assumes it runs alone is wrong under load.",
+    "ru": "Параллельность — норма в проде; код, считающий, что он один, ошибается под нагрузкой."
+   },
+   "limits": {
+    "en": "Locks fix it but reduce throughput; atomic updates are cheaper when they fit.",
+    "ru": "Блокировки чинят это, но снижают пропускную способность; атомарные обновления дешевле, когда подходят."
+   },
+   "production": {
+    "en": "UPDATE … WHERE stock>0 is atomic; SELECT-then-UPDATE is not.",
+    "ru": "UPDATE … WHERE stock>0 атомарен; SELECT, а потом UPDATE — нет."
+   }
+  },
+  "related": [
+   "db.lock",
+   "db.deadlock"
+  ]
+ },
+ {
+  "id": "db.lock",
+  "category": "db",
+  "parent": "db.race",
+  "title": {
+   "en": "Locks",
+   "ru": "Блокировки"
+  },
+  "summary": {
+   "en": "Temporary exclusive access to a row.",
+   "ru": "Временный эксклюзивный доступ к строке."
+  },
+  "article": {
+   "what": {
+    "en": "A lock reserves a row so only one transaction changes it at a time; others wait.",
+    "ru": "Блокировка резервирует строку, чтобы её менял только один транзакт за раз; остальные ждут."
+   },
+   "why": {
+    "en": "Locks prevent lost updates and keep data consistent under concurrency.",
+    "ru": "Блокировки предотвращают потерянные обновления и держат данные согласованными при параллельности."
+   },
+   "limits": {
+    "en": "Waiting for locks adds latency; held too long they serialize everything.",
+    "ru": "Ожидание блокировок добавляет задержку; удерживаемые долго — сериализуют всё."
+   },
+   "production": {
+    "en": "SELECT … FOR UPDATE takes a row lock inside a transaction.",
+    "ru": "SELECT … FOR UPDATE берёт блокировку строки внутри транзакции."
+   }
+  }
+ },
+ {
+  "id": "db.deadlock",
+  "category": "db",
+  "parent": "db.lock",
+  "title": {
+   "en": "Deadlock",
+   "ru": "Дедлок"
+  },
+  "summary": {
+   "en": "Two transactions each wait for the other's lock.",
+   "ru": "Две транзакции ждут блокировку друг друга."
+  },
+  "article": {
+   "what": {
+    "en": "A deadlock is a cycle: A holds row 1 and wants row 2, B holds row 2 and wants row 1. Neither can proceed.",
+    "ru": "Дедлок — цикл: A держит строку 1 и хочет строку 2, B держит строку 2 и хочет строку 1. Никто не может продолжить."
+   },
+   "why": {
+    "en": "The database detects it and kills one transaction so the other survives — your code must retry the victim.",
+    "ru": "База обнаруживает это и убивает одну транзакцию, чтобы выжила другая — ваш код должен повторить проигравшую."
+   },
+   "limits": {
+    "en": "You can't always avoid deadlocks, but consistent lock ordering makes them rare.",
+    "ru": "Избежать дедлоков всегда нельзя, но единый порядок блокировок делает их редкими."
+   },
+   "production": {
+    "en": "Error 1213 'Deadlock found; try restarting transaction' is the signal.",
+    "ru": "Ошибка 1213 'Deadlock found; try restarting transaction' — сигнал."
+   }
+  }
+ },
+ {
+  "id": "db.pool",
+  "category": "db",
+  "parent": "db.basics",
+  "title": {
+   "en": "Connection pool",
+   "ru": "Пул соединений"
+  },
+  "summary": {
+   "en": "A reused set of DB connections.",
+   "ru": "Переиспользуемый набор соединений с БД."
+  },
+  "article": {
+   "what": {
+    "en": "Opening a DB connection is expensive, so apps keep a pool of open connections and hand them out. The database also has a max_connections limit.",
+    "ru": "Открыть соединение с БД дорого, поэтому приложение держит пул открытых соединений и раздаёт их. У базы также есть лимит max_connections."
+   },
+   "why": {
+    "en": "Pools cut latency and protect the database from being overwhelmed by thousands of connections.",
+    "ru": "Пулы снижают задержку и защищают базу от тысяч соединений."
+   },
+   "limits": {
+    "en": "Pool too small → requests wait for a free connection. Too large across many app servers → the DB hits max_connections.",
+    "ru": "Пул мал → запросы ждут свободное соединение. Слишком велик на многих серверах → БД упирается в max_connections."
+   },
+   "production": {
+    "en": "instances × pool_size must stay below the database's max_connections.",
+    "ru": "instances × pool_size должно быть меньше max_connections базы."
+   }
+  },
+  "related": [
+   "scale.statelessness"
+  ]
+ },
+ {
+  "id": "db.replica",
+  "category": "db",
+  "parent": "db.basics",
+  "title": {
+   "en": "Read replica",
+   "ru": "Read-реплика"
+  },
+  "summary": {
+   "en": "A follower copy that serves reads.",
+   "ru": "Копия-последователь, обслуживающая чтение."
+  },
+  "article": {
+   "what": {
+    "en": "A replica continuously copies changes from the primary and can answer read queries, offloading the primary.",
+    "ru": "Реплика постоянно копирует изменения с primary и может отвечать на чтение, разгружая primary."
+   },
+   "why": {
+    "en": "Most workloads read far more than they write; replicas scale reads horizontally.",
+    "ru": "Большинство нагрузок читает намного больше, чем пишет; реплики масштабируют чтение горизонтально."
+   },
+   "limits": {
+    "en": "Replicas lag slightly behind, so a user might not see their own just-made change ('read your writes').",
+    "ru": "Реплики немного отстают, поэтому пользователь может не увидеть своё только что сделанное изменение («read your writes»)."
+   },
+   "production": {
+    "en": "Route writes and read-after-write to the primary, everything else to replicas.",
+    "ru": "Записи и чтение-после-записи — в primary, остальное — в реплики."
+   }
+  }
+ },
+ {
+  "id": "db.backups",
+  "category": "db",
+  "parent": "db.basics",
+  "title": {
+   "en": "Backups",
+   "ru": "Бэкапы"
+  },
+  "summary": {
+   "en": "Point-in-time copies you can restore.",
+   "ru": "Копии на момент времени, которые можно восстановить."
+  },
+  "article": {
+   "what": {
+    "en": "A backup is a stored dump of the database taken on a schedule, kept off the main server.",
+    "ru": "Бэкап — сохранённый дамп базы по расписанию, хранящийся вне основного сервера."
+   },
+   "why": {
+    "en": "Replicas copy mistakes (and DROP TABLE) instantly; a backup lets you return to before the mistake.",
+    "ru": "Реплики мгновенно копируют и ошибки (и DROP TABLE); бэкап позволяет вернуться к моменту до ошибки."
+   },
+   "limits": {
+    "en": "A backup you've never restored is a guess. Taking one from a busy primary can hurt performance.",
+    "ru": "Бэкап, который ни разу не восстанавливали, — это догадка. Снятие с загруженного primary бьёт по производительности."
+   },
+   "production": {
+    "en": "Dump from a replica or during off-peak, and test restores.",
+    "ru": "Снимайте дамп с реплики или в непиковое время и проверяйте восстановление."
+   }
+  }
+ },
+ {
+  "id": "auth.session",
+  "category": "auth",
+  "parent": null,
+  "title": {
+   "en": "Sessions & cookies",
+   "ru": "Сессии и cookie"
+  },
+  "summary": {
+   "en": "A random id in a cookie maps to server-side state.",
+   "ru": "Случайный id в cookie указывает на состояние на сервере."
+  },
+  "article": {
+   "what": {
+    "en": "On login the server creates a session, stores it, and sends a cookie with a random id. The browser returns that cookie on every request, so the server knows who you are.",
+    "ru": "При входе сервер создаёт сессию, сохраняет её и шлёт cookie со случайным id. Браузер возвращает cookie на каждом запросе, и сервер понимает, кто вы."
+   },
+   "why": {
+    "en": "HTTP forgets you between requests; a session is how a site keeps you logged in.",
+    "ru": "HTTP забывает вас между запросами; сессия — способ сайта держать вас залогиненным."
+   },
+   "limits": {
+    "en": "Session state lives on the server, so several servers must share it (e.g. in Redis).",
+    "ru": "Состояние сессии живёт на сервере, поэтому несколько серверов должны его делить (например, в Redis)."
+   },
+   "production": {
+    "en": "The id must be long and random; a guessable or editable id means account takeover.",
+    "ru": "id должен быть длинным и случайным; угадываемый или редактируемый id — это угон аккаунта."
+   }
+  },
+  "related": [
+   "auth.cookie",
+   "auth.jwt",
+   "scale.statelessness"
+  ]
+ },
+ {
+  "id": "auth.cookie",
+  "category": "auth",
+  "parent": "auth.session",
+  "title": {
+   "en": "Cookie flags",
+   "ru": "Флаги cookie"
+  },
+  "summary": {
+   "en": "HttpOnly, Secure, SameSite.",
+   "ru": "HttpOnly, Secure, SameSite."
+  },
+  "article": {
+   "what": {
+    "en": "Cookie flags control safety: HttpOnly hides it from JavaScript, Secure sends it only over HTTPS, SameSite limits cross-site sending.",
+    "ru": "Флаги cookie управляют безопасностью: HttpOnly прячет её от JavaScript, Secure шлёт только по HTTPS, SameSite ограничивает межсайтовую отправку."
+   },
+   "why": {
+    "en": "These flags block common session-stealing attacks (XSS reading cookies, CSRF).",
+    "ru": "Эти флаги блокируют частые атаки угона сессии (XSS читает cookie, CSRF)."
+   },
+   "limits": {
+    "en": "They harden cookies but don't replace fixing XSS or adding CSRF tokens.",
+    "ru": "Они укрепляют cookie, но не заменяют исправление XSS и CSRF-токены."
+   },
+   "production": {
+    "en": "Browsers enforce these flags, so they work even against bugs in your own code.",
+    "ru": "Браузеры соблюдают эти флаги, поэтому они работают даже против багов в вашем коде."
+   }
+  }
+ },
+ {
+  "id": "auth.jwt",
+  "category": "auth",
+  "parent": "auth.session",
+  "title": {
+   "en": "JWT",
+   "ru": "JWT"
+  },
+  "summary": {
+   "en": "A signed token the client carries.",
+   "ru": "Подписанный токен, который носит клиент."
+  },
+  "article": {
+   "what": {
+    "en": "A JSON Web Token holds claims (who you are) signed by the server. The client sends it; the server verifies the signature without storing anything.",
+    "ru": "JSON Web Token содержит утверждения (кто вы), подписанные сервером. Клиент его шлёт; сервер проверяет подпись, ничего не храня."
+   },
+   "why": {
+    "en": "Stateless auth scales easily across many servers and services — no shared session store needed.",
+    "ru": "Авторизация без состояния легко масштабируется на многие серверы и сервисы — общее хранилище сессий не нужно."
+   },
+   "limits": {
+    "en": "You can't easily revoke a JWT before it expires; keep lifetimes short and use refresh tokens.",
+    "ru": "Отозвать JWT до истечения непросто; держите срок жизни коротким и используйте refresh-токены."
+   },
+   "production": {
+    "en": "The signature (not encryption) is what matters — anyone can read a JWT's payload.",
+    "ru": "Главное — подпись (не шифрование): payload JWT может прочитать любой."
+   }
+  }
+ },
+ {
+  "id": "auth.authentication",
+  "category": "auth",
+  "parent": null,
+  "title": {
+   "en": "Authentication",
+   "ru": "Аутентификация"
+  },
+  "summary": {
+   "en": "Proving who you are.",
+   "ru": "Доказательство, кто вы."
+  },
+  "article": {
+   "what": {
+    "en": "Authentication verifies identity — a password, a token, a one-time code.",
+    "ru": "Аутентификация подтверждает личность — пароль, токен, одноразовый код."
+   },
+   "why": {
+    "en": "Everything else (permissions, ownership) depends on first knowing who is asking.",
+    "ru": "Всё остальное (права, владение) зависит от того, что сначала известно, кто спрашивает."
+   },
+   "limits": {
+    "en": "Login error messages and timing can leak which accounts exist.",
+    "ru": "Сообщения об ошибке входа и тайминги могут выдать, какие аккаунты существуют."
+   },
+   "production": {
+    "en": "Use generic 'wrong email or password' messages.",
+    "ru": "Используйте обобщённое «неверный email или пароль»."
+   }
+  }
+ },
+ {
+  "id": "auth.authorization",
+  "category": "auth",
+  "parent": "auth.authentication",
+  "title": {
+   "en": "Authorization & RBAC",
+   "ru": "Авторизация и RBAC"
+  },
+  "summary": {
+   "en": "Deciding what you may do.",
+   "ru": "Решение, что вам можно."
+  },
+  "article": {
+   "what": {
+    "en": "Authorization checks permissions after authentication. Role-based access control (RBAC) groups permissions into roles like admin or support.",
+    "ru": "Авторизация проверяет права после аутентификации. Ролевой доступ (RBAC) группирует права в роли вроде admin или support."
+   },
+   "why": {
+    "en": "Being logged in is not the same as being allowed. Every sensitive action needs its own check.",
+    "ru": "Быть залогиненным — не то же, что иметь право. Каждое важное действие нуждается в своей проверке."
+   },
+   "limits": {
+    "en": "Checks must be on the server; hiding a button on the client stops nothing.",
+    "ru": "Проверки должны быть на сервере; спрятать кнопку на клиенте ничего не даёт."
+   },
+   "production": {
+    "en": null,
+    "ru": null
+   },
+   "underTheHood": {
+    "en": [
+     "sec.idor",
+     "sec.leastPrivilege"
+    ],
+    "ru": null
+   }
+  }
+ },
+ {
+  "id": "net.dns",
+  "category": "net",
+  "parent": null,
+  "title": {
+   "en": "DNS",
+   "ru": "DNS"
+  },
+  "summary": {
+   "en": "The internet's phone book: name → IP.",
+   "ru": "Телефонная книга интернета: имя → IP."
+  },
+  "article": {
+   "what": {
+    "en": "DNS translates a domain like example.shop into an IP address. Records include A (to an IPv4), CNAME (alias), MX (mail), TXT (verification).",
+    "ru": "DNS переводит домен вроде example.shop в IP-адрес. Записи: A (на IPv4), CNAME (псевдоним), MX (почта), TXT (проверка)."
+   },
+   "why": {
+    "en": "People and browsers use names; routers need numbers. DNS bridges the two.",
+    "ru": "Люди и браузеры используют имена; маршрутизаторам нужны числа. DNS соединяет их."
+   },
+   "limits": {
+    "en": "Answers are cached for the record's TTL, so changes take time to spread.",
+    "ru": "Ответы кэшируются на время TTL записи, поэтому изменения расходятся не сразу."
+   },
+   "production": {
+    "en": "'It's always DNS' — a surprising share of outages are stale or wrong DNS.",
+    "ru": "«Это всегда DNS» — удивительная доля аварий это устаревший или неверный DNS."
+   }
+  },
+  "related": [
+   "net.ttl",
+   "net.tls"
+  ]
+ },
+ {
+  "id": "net.ttl",
+  "category": "net",
+  "parent": "net.dns",
+  "title": {
+   "en": "TTL",
+   "ru": "TTL"
+  },
+  "summary": {
+   "en": "How long an answer may be cached.",
+   "ru": "Как долго ответ можно кэшировать."
+  },
+  "article": {
+   "what": {
+    "en": "TTL (time to live) is seconds a DNS answer may be cached before asking again.",
+    "ru": "TTL (time to live) — секунды, в течение которых ответ DNS можно кэшировать, прежде чем спросить снова."
+   },
+   "why": {
+    "en": "Low TTL means fast changes but more DNS traffic; high TTL means fewer lookups but slow changes.",
+    "ru": "Низкий TTL — быстрые изменения, но больше DNS-трафика; высокий TTL — меньше запросов, но медленные изменения."
+   },
+   "limits": {
+    "en": "After changing an IP, old resolvers keep sending users to the old server until the TTL expires.",
+    "ru": "После смены IP старые резолверы шлют пользователей на старый сервер, пока не истечёт TTL."
+   },
+   "production": {
+    "en": "Lower the TTL before a planned IP change, raise it again afterward.",
+    "ru": "Снизьте TTL перед плановой сменой IP, потом снова повысьте."
+   }
+  }
+ },
+ {
+  "id": "net.tls",
+  "category": "net",
+  "parent": "net.dns",
+  "title": {
+   "en": "HTTPS & TLS",
+   "ru": "HTTPS и TLS"
+  },
+  "summary": {
+   "en": "Encrypted, authenticated HTTP.",
+   "ru": "Шифрованный и аутентифицированный HTTP."
+  },
+  "article": {
+   "what": {
+    "en": "TLS encrypts the connection and proves the server's identity with a certificate. HTTPS is HTTP over TLS.",
+    "ru": "TLS шифрует соединение и подтверждает личность сервера сертификатом. HTTPS — это HTTP поверх TLS."
+   },
+   "why": {
+    "en": "Without it, anyone on the path reads passwords and can modify pages. Browsers now mark plain HTTP as 'Not secure'.",
+    "ru": "Без него любой на пути читает пароли и может менять страницы. Браузеры помечают обычный HTTP как «Не защищено»."
+   },
+   "limits": {
+    "en": "Certificates expire (Let's Encrypt every 90 days); an expired cert breaks every request.",
+    "ru": "Сертификаты истекают (Let's Encrypt каждые 90 дней); просроченный сертификат ломает все запросы."
+   },
+   "production": {
+    "en": "A handshake adds round trips (TLS 1.3 needs one); session resumption reuses it.",
+    "ru": "Рукопожатие добавляет круги (TLS 1.3 — один); возобновление сессии его переиспользует."
+   },
+   "underTheHood": {
+    "en": "Automate renewal (certbot) so a certificate never expires by surprise.",
+    "ru": "Автоматизируйте обновление (certbot), чтобы сертификат не истёк внезапно."
+   }
+  }
+ },
+ {
+  "id": "net.reverseProxy",
+  "category": "net",
+  "parent": null,
+  "title": {
+   "en": "Reverse proxy",
+   "ru": "Reverse proxy"
+  },
+  "summary": {
+   "en": "A front door in front of your app.",
+   "ru": "Входная дверь перед приложением."
+  },
+  "article": {
+   "what": {
+    "en": "A reverse proxy (Nginx) sits in front of backends: it terminates TLS, serves static files, compresses, and forwards dynamic requests.",
+    "ru": "Reverse proxy (Nginx) стоит перед бэкендами: терминирует TLS, отдаёт статику, сжимает и пересылает динамические запросы."
+   },
+   "why": {
+    "en": "It handles the boring, repetitive parts of HTTP efficiently and hides how many backends exist.",
+    "ru": "Он эффективно делает скучную повторяющуюся часть HTTP и скрывает, сколько бэкендов есть."
+   },
+   "limits": {
+    "en": "It's another hop and another thing to configure; misconfig can expose or block traffic.",
+    "ru": "Это ещё один узел и ещё одна настройка; ошибка конфигурации может открыть или заблокировать трафик."
+   },
+   "production": {
+    "en": "Exposing the backend's port directly to the internet skips the proxy's protections.",
+    "ru": "Открытый наружу порт бэкенда минует защиту прокси."
+   }
+  },
+  "related": [
+   "scale.loadBalancer",
+   "cache.cdn"
+  ]
+ },
+ {
+  "id": "net.latency",
+  "category": "net",
+  "parent": null,
+  "title": {
+   "en": "Latency & geography",
+   "ru": "Задержка и география"
+  },
+  "summary": {
+   "en": "Distance costs milliseconds.",
+   "ru": "Расстояние стоит миллисекунд."
+  },
+  "article": {
+   "what": {
+    "en": "Latency is the time for a request to travel there and back. It grows with physical distance — light in fiber is the hard limit.",
+    "ru": "Задержка — время запроса туда и обратно. Она растёт с физическим расстоянием — скорость света в оптоволокне это жёсткий предел."
+   },
+   "why": {
+    "en": "A server 8000 km away costs ~100+ ms per round trip no matter how fast it is.",
+    "ru": "Сервер в 8000 км стоит ~100+ мс на круг, как бы быстр он ни был."
+   },
+   "limits": {
+    "en": "You can't beat physics; you can only move data or servers closer (CDN, regions).",
+    "ru": "Физику не победить; можно лишь приблизить данные или серверы (CDN, регионы)."
+   },
+   "production": {
+    "en": "Fewer round trips (HTTP/2, keep-alive) matter as much as raw bandwidth.",
+    "ru": "Меньше кругов (HTTP/2, keep-alive) важно не меньше, чем ширина канала."
+   }
+  }
+ },
+ {
+  "id": "cache.redis",
+  "category": "cache",
+  "parent": null,
+  "title": {
+   "en": "Caching & Redis",
+   "ru": "Кэширование и Redis"
+  },
+  "summary": {
+   "en": "Remember expensive answers in fast memory.",
+   "ru": "Запоминать дорогие ответы в быстрой памяти."
+  },
+  "article": {
+   "what": {
+    "en": "A cache stores the result of expensive work (a query, a render) under a key so the next request reads it from memory instead of recomputing.",
+    "ru": "Кэш хранит результат дорогой работы (запрос, рендер) по ключу, чтобы следующий запрос читал из памяти, а не считал заново."
+   },
+   "why": {
+    "en": "Reading from RAM is ~100× faster than hitting the database; caching is the cheapest big speedup.",
+    "ru": "Чтение из памяти в ~100 раз быстрее обращения к базе; кэш — самое дешёвое крупное ускорение."
+   },
+   "limits": {
+    "en": "A cache can serve stale data and has limited memory; it adds a new failure mode.",
+    "ru": "Кэш может отдавать устаревшие данные, у него ограничена память, и он добавляет новый вид отказа."
+   },
+   "production": {
+    "en": "Hit rate = share of requests served from cache. λ·T/(1+λ·T) for a TTL cache.",
+    "ru": "Hit rate = доля запросов из кэша. λ·T/(1+λ·T) для TTL-кэша."
+   }
+  },
+  "related": [
+   "cache.ttl",
+   "cache.invalidation",
+   "cache.eviction"
+  ]
+ },
+ {
+  "id": "cache.ttl",
+  "category": "cache",
+  "parent": "cache.redis",
+  "title": {
+   "en": "TTL & hit/miss",
+   "ru": "TTL и hit/miss"
+  },
+  "summary": {
+   "en": "How long a cached value stays valid.",
+   "ru": "Сколько кэшированное значение остаётся валидным."
+  },
+  "article": {
+   "what": {
+    "en": "A hit serves from cache; a miss recomputes and stores. TTL is how long a value lives before expiring.",
+    "ru": "Hit отдаёт из кэша; miss пересчитывает и сохраняет. TTL — сколько значение живёт до истечения."
+   },
+   "why": {
+    "en": "Longer TTL means higher hit rate but more stale data; shorter TTL is fresher but hits the DB more.",
+    "ru": "Длиннее TTL — выше hit rate, но данные устаревают; короче TTL — свежее, но чаще в БД."
+   },
+   "limits": {
+    "en": "The first request after expiry is a miss; many missing at once can stampede the DB.",
+    "ru": "Первый запрос после истечения — miss; много промахов разом могут затоптать БД."
+   },
+   "production": {
+    "en": "Hotter keys benefit most: a key hit 10×/s with a 60 s TTL is ~99.8% hits.",
+    "ru": "Горячие ключи выигрывают больше: ключ с 10 обращениями/с и TTL 60 с даёт ~99,8% попаданий."
+   }
+  }
+ },
+ {
+  "id": "cache.invalidation",
+  "category": "cache",
+  "parent": "cache.redis",
+  "title": {
+   "en": "Invalidation & stale data",
+   "ru": "Инвалидация и устаревшие данные"
+  },
+  "summary": {
+   "en": "Keeping the cache honest when data changes.",
+   "ru": "Держать кэш честным при изменении данных."
+  },
+  "article": {
+   "what": {
+    "en": "When the underlying data changes, the cached copy is wrong until it expires — unless you delete (invalidate) the key on write.",
+    "ru": "Когда исходные данные меняются, копия в кэше неверна до истечения — если не удалять (инвалидировать) ключ при записи."
+   },
+   "why": {
+    "en": "Users see wrong prices or stock if the cache isn't updated; invalidation on write fixes that.",
+    "ru": "Пользователи видят неверные цены или остатки, если кэш не обновлён; инвалидация при записи это чинит."
+   },
+   "limits": {
+    "en": "'There are only two hard things…' — invalidation is genuinely tricky with many keys and dependencies.",
+    "ru": "«Есть две сложные вещи…» — инвалидация действительно непроста при множестве ключей и зависимостей."
+   },
+   "production": {
+    "en": "TTL-only caching trades a window of staleness for simplicity.",
+    "ru": "Кэш только по TTL меняет окно устаревания на простоту."
+   }
+  }
+ },
+ {
+  "id": "cache.eviction",
+  "category": "cache",
+  "parent": "cache.redis",
+  "title": {
+   "en": "Eviction & memory",
+   "ru": "Вытеснение и память"
+  },
+  "summary": {
+   "en": "What happens when the cache is full.",
+   "ru": "Что происходит, когда кэш заполнен."
+  },
+  "article": {
+   "what": {
+    "en": "When Redis hits maxmemory it either refuses writes (noeviction) or drops keys by a policy (allkeys-lru removes least recently used).",
+    "ru": "Когда Redis упирается в maxmemory, он либо отказывает в записи (noeviction), либо удаляет ключи по политике (allkeys-lru убирает давно не использованные)."
+   },
+   "why": {
+    "en": "Memory is finite; a policy decides whether you lose new writes or old keys.",
+    "ru": "Память конечна; политика решает, теряете ли вы новые записи или старые ключи."
+   },
+   "limits": {
+    "en": "noeviction causes 'OOM command not allowed' errors; LRU can silently evict sessions if they share the instance.",
+    "ru": "noeviction вызывает ошибки 'OOM command not allowed'; LRU может молча вытеснить сессии, если они на том же инстансе."
+   },
+   "production": {
+    "en": "Keep disposable cache and must-keep sessions on separate Redis instances.",
+    "ru": "Держите выбрасываемый кэш и важные сессии на разных инстансах Redis."
+   }
+  }
+ },
+ {
+  "id": "cache.cdn",
+  "category": "cache",
+  "parent": "cache.redis",
+  "title": {
+   "en": "CDN & browser cache",
+   "ru": "CDN и кэш браузера"
+  },
+  "summary": {
+   "en": "Cache files close to the user.",
+   "ru": "Кэшировать файлы рядом с пользователем."
+  },
+  "article": {
+   "what": {
+    "en": "A CDN caches static files on edge servers worldwide; the browser cache (Cache-Control) reuses files the visitor already downloaded.",
+    "ru": "CDN кэширует статику на edge-серверах по миру; кэш браузера (Cache-Control) переиспользует файлы, уже скачанные посетителем."
+   },
+   "why": {
+    "en": "They cut both latency (closer) and load (origin serves less).",
+    "ru": "Они снижают и задержку (ближе), и нагрузку (origin отдаёт меньше)."
+   },
+   "limits": {
+    "en": "Cached old files can stick around; you version file names (app.9f3a.js) to bust the cache.",
+    "ru": "Старые кэшированные файлы могут залипнуть; имена версионируют (app.9f3a.js), чтобы сбросить кэш."
+   },
+   "production": {
+    "en": "Cache-Control: max-age and immutable tell browsers how long to keep a file.",
+    "ru": "Cache-Control: max-age и immutable говорят браузеру, сколько хранить файл."
+   }
+  }
+ },
+ {
+  "id": "async.queue",
+  "category": "async",
+  "parent": null,
+  "title": {
+   "en": "Queues",
+   "ru": "Очереди"
+  },
+  "summary": {
+   "en": "A buffer of work to do later.",
+   "ru": "Буфер работы на потом."
+  },
+  "article": {
+   "what": {
+    "en": "A queue holds jobs the backend pushes; workers pull and process them later. The user's request returns immediately.",
+    "ru": "Очередь хранит задачи, которые кладёт бэкенд; воркеры забирают и обрабатывают их позже. Запрос пользователя возвращается сразу."
+   },
+   "why": {
+    "en": "The user shouldn't wait for an email to send or a PDF to render; move slow work off the request path.",
+    "ru": "Пользователь не должен ждать отправку письма или рендер PDF; уберите медленную работу с пути запроса."
+   },
+   "limits": {
+    "en": "Async means the result isn't ready when the response returns; you need a way to report status.",
+    "ru": "Асинхронность значит, что результат не готов к моменту ответа; нужен способ сообщить статус."
+   },
+   "production": {
+    "en": "A queue also absorbs bursts: 10k signups enqueue fast, workers drain steadily.",
+    "ru": "Очередь ещё сглаживает всплески: 10 тысяч регистраций кладутся быстро, воркеры разгребают ровно."
+   }
+  },
+  "related": [
+   "async.worker",
+   "async.backlog",
+   "async.idempotency"
+  ]
+ },
+ {
+  "id": "async.worker",
+  "category": "async",
+  "parent": "async.queue",
+  "title": {
+   "en": "Workers",
+   "ru": "Воркеры"
+  },
+  "summary": {
+   "en": "Processes that drain the queue.",
+   "ru": "Процессы, разгребающие очередь."
+  },
+  "article": {
+   "what": {
+    "en": "A worker is a long-running process that takes jobs from the queue and runs them, with some concurrency.",
+    "ru": "Воркер — долгоживущий процесс, берущий задачи из очереди и выполняющий их с некоторой параллельностью."
+   },
+   "why": {
+    "en": "Throughput = workers × concurrency × jobs/second each. Add workers to drain faster.",
+    "ru": "Пропускная способность = воркеры × параллельность × задач/с каждый. Добавьте воркеров, чтобы разгребать быстрее."
+   },
+   "limits": {
+    "en": "Workers compete for the same databases and providers; more isn't always faster.",
+    "ru": "Воркеры конкурируют за те же базы и провайдеров; больше — не всегда быстрее."
+   },
+   "production": {
+    "en": "Dedicate workers to critical queues so bulk jobs don't starve them.",
+    "ru": "Выделяйте воркеров на критичные очереди, чтобы массовые задачи их не морили."
+   }
+  }
+ },
+ {
+  "id": "async.backlog",
+  "category": "async",
+  "parent": "async.worker",
+  "title": {
+   "en": "Backlog",
+   "ru": "Бэклог"
+  },
+  "summary": {
+   "en": "Jobs piling up faster than they drain.",
+   "ru": "Задачи копятся быстрее, чем разгребаются."
+  },
+  "article": {
+   "what": {
+    "en": "If jobs arrive faster than workers process them, the backlog grows and jobs wait longer and longer.",
+    "ru": "Если задачи приходят быстрее, чем воркеры успевают, бэклог растёт, и задачи ждут всё дольше."
+   },
+   "why": {
+    "en": "A growing backlog is an early warning that capacity is short before users notice.",
+    "ru": "Растущий бэклог — ранний сигнал нехватки мощности, пока пользователи не заметили."
+   },
+   "limits": {
+    "en": "Wait time = backlog / throughput; a flat-but-high backlog still means long waits.",
+    "ru": "Время ожидания = бэклог / пропускная способность; стабильно высокий бэклог всё равно значит долгое ожидание."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "async.retry",
+  "category": "async",
+  "parent": "async.queue",
+  "title": {
+   "en": "Retry & dead-letter",
+   "ru": "Повторы и dead-letter"
+  },
+  "summary": {
+   "en": "Try again on failure, then give up safely.",
+   "ru": "Повторить при ошибке, потом безопасно сдаться."
+  },
+  "article": {
+   "what": {
+    "en": "A failed job can be retried, ideally with growing delays (backoff). After max attempts it goes to a dead-letter queue instead of looping forever.",
+    "ru": "Упавшую задачу можно повторить, лучше с растущими задержками (backoff). После лимита попыток она идёт в dead-letter вместо бесконечного цикла."
+   },
+   "why": {
+    "en": "Transient failures (a brief provider blip) succeed on retry; permanent ones shouldn't retry forever.",
+    "ru": "Временные сбои (краткий провал провайдера) проходят при повторе; постоянные не должны повторяться вечно."
+   },
+   "limits": {
+    "en": "Immediate retries against a struggling dependency make the outage worse (retry storm).",
+    "ru": "Мгновенные повторы к страдающей зависимости усугубляют аварию (шторм повторов)."
+   },
+   "production": {
+    "en": "Exponential backoff with jitter spreads retries out.",
+    "ru": "Экспоненциальный backoff с jitter разносит повторы по времени."
+   }
+  }
+ },
+ {
+  "id": "async.idempotency",
+  "category": "async",
+  "parent": "async.queue",
+  "title": {
+   "en": "Idempotency",
+   "ru": "Идемпотентность"
+  },
+  "summary": {
+   "en": "Doing it twice equals doing it once.",
+   "ru": "Сделать дважды — то же, что один раз."
+  },
+  "article": {
+   "what": {
+    "en": "An idempotent operation has the same effect whether it runs once or many times, usually by de-duplicating on a key.",
+    "ru": "Идемпотентная операция даёт тот же эффект при одном и многих запусках, обычно за счёт дедупликации по ключу."
+   },
+   "why": {
+    "en": "Queues deliver 'at least once' and users double-click; without idempotency you charge twice or email twice.",
+    "ru": "Очереди доставляют «хотя бы раз», а пользователи кликают дважды; без идемпотентности вы спишете или напишете дважды."
+   },
+   "limits": {
+    "en": "You need a stable key (order id, event id) and a place to record what's done.",
+    "ru": "Нужен стабильный ключ (id заказа, id события) и место, где отмечать сделанное."
+   },
+   "production": {
+    "en": "A UNIQUE constraint on the key turns the duplicate into a harmless error.",
+    "ru": "UNIQUE по ключу превращает дубль в безобидную ошибку."
+   }
+  }
+ },
+ {
+  "id": "files.objectStorage",
+  "category": "files",
+  "parent": null,
+  "title": {
+   "en": "Object storage",
+   "ru": "Object storage"
+  },
+  "summary": {
+   "en": "Files as objects behind an API.",
+   "ru": "Файлы как объекты за API."
+  },
+  "article": {
+   "what": {
+    "en": "Object storage (S3-like) keeps files as objects with keys, reachable over HTTP, independent of any server's disk.",
+    "ru": "Object storage (как S3) хранит файлы объектами с ключами, доступными по HTTP, независимо от диска любого сервера."
+   },
+   "why": {
+    "en": "Server disks fill up and aren't shared between servers; object storage is shared, durable and huge.",
+    "ru": "Диски серверов заполняются и не общие; object storage общий, надёжный и огромный."
+   },
+   "limits": {
+    "en": "It's network storage, so each access is an HTTP call with its own latency.",
+    "ru": "Это сетевое хранилище, поэтому каждый доступ — HTTP-вызов со своей задержкой."
+   },
+   "production": {
+    "en": "Serve public files through a CDN, keep private ones behind signed URLs.",
+    "ru": "Публичные файлы отдавайте через CDN, приватные — по подписанным ссылкам."
+   }
+  }
+ },
+ {
+  "id": "files.upload",
+  "category": "files",
+  "parent": "files.objectStorage",
+  "title": {
+   "en": "Upload validation",
+   "ru": "Проверка загрузок"
+  },
+  "summary": {
+   "en": "Never trust an uploaded file.",
+   "ru": "Никогда не доверяйте загруженному файлу."
+  },
+  "article": {
+   "what": {
+    "en": "Validate the real content type, cap the size, rename to a random name, and store outside the web root (ideally object storage).",
+    "ru": "Проверяйте реальный тип содержимого, ограничьте размер, переименуйте в случайное имя и храните вне web root (лучше в object storage)."
+   },
+   "why": {
+    "en": "An attacker who uploads a script to a path the server executes gets code execution.",
+    "ru": "Атакующий, загрузивший скрипт по пути, который сервер исполняет, получает выполнение кода."
+   },
+   "limits": {
+    "en": "Extension and declared MIME lie; check magic bytes.",
+    "ru": "Расширение и заявленный MIME врут; проверяйте magic bytes."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "perf.assets",
+  "category": "perf",
+  "parent": null,
+  "title": {
+   "en": "Asset weight",
+   "ru": "Вес ассетов"
+  },
+  "summary": {
+   "en": "Big pages are slow pages.",
+   "ru": "Тяжёлые страницы — медленные страницы."
+  },
+  "article": {
+   "what": {
+    "en": "A page's weight is all the bytes it loads: HTML, CSS, JS and images. Each must travel the network before the page is usable.",
+    "ru": "Вес страницы — все байты, которые она грузит: HTML, CSS, JS и картинки. Каждый должен пройти сеть, прежде чем страница станет пригодной."
+   },
+   "why": {
+    "en": "On slow or mobile networks, megabytes of images dominate load time far more than server speed.",
+    "ru": "На медленных и мобильных сетях мегабайты картинок определяют время загрузки куда сильнее скорости сервера."
+   },
+   "limits": {
+    "en": "You trade quality for size; too aggressive and images look bad.",
+    "ru": "Вы меняете качество на размер; переборщите — картинки выглядят плохо."
+   },
+   "production": {
+    "en": "Compress text (gzip/brotli), optimize and lazy-load images, and use modern formats (WebP/AVIF).",
+    "ru": "Сжимайте текст (gzip/brotli), оптимизируйте и лениво грузите картинки, используйте современные форматы (WebP/AVIF)."
+   }
+  }
+ },
+ {
+  "id": "perf.slowQuery",
+  "category": "perf",
+  "parent": "perf.assets",
+  "title": {
+   "en": "Slow queries",
+   "ru": "Медленные запросы"
+  },
+  "summary": {
+   "en": "One bad query can sink the whole app.",
+   "ru": "Один плохой запрос топит всё приложение."
+  },
+  "article": {
+   "what": {
+    "en": "A query that scans a large table (no index, or a LIKE '%x%') takes longer as data grows and holds resources while it runs.",
+    "ru": "Запрос, сканирующий большую таблицу (нет индекса или LIKE '%x%'), с ростом данных замедляется и держит ресурсы, пока выполняется."
+   },
+   "why": {
+    "en": "The database is shared; one slow query queued behind others makes everything slow.",
+    "ru": "База общая; один медленный запрос в очереди за другими замедляет всё."
+   },
+   "limits": {
+    "en": "Caching hides a slow query but doesn't fix it; the first miss is still slow.",
+    "ru": "Кэш прячет медленный запрос, но не чинит его; первый промах всё равно медленный."
+   },
+   "production": {
+    "en": "Find them in the slow query log, then EXPLAIN and add the right index.",
+    "ru": "Найдите их в slow query log, затем EXPLAIN и добавьте нужный индекс."
+   }
+  }
+ },
+ {
+  "id": "perf.scaling",
+  "category": "perf",
+  "parent": null,
+  "title": {
+   "en": "Vertical vs horizontal",
+   "ru": "Вертикальное vs горизонтальное"
+  },
+  "summary": {
+   "en": "Bigger server, or more servers.",
+   "ru": "Больший сервер или больше серверов."
+  },
+  "article": {
+   "what": {
+    "en": "Vertical scaling gives one server more CPU/RAM. Horizontal scaling adds more servers behind a load balancer.",
+    "ru": "Вертикальное масштабирование даёт одному серверу больше CPU/RAM. Горизонтальное добавляет серверы за балансировщиком."
+   },
+   "why": {
+    "en": "Vertical is quick but has a ceiling and a single point of failure; horizontal scales further and survives one server dying.",
+    "ru": "Вертикальное быстрое, но имеет потолок и единую точку отказа; горизонтальное масштабируется дальше и переживает смерть одного сервера."
+   },
+   "limits": {
+    "en": "Horizontal only works if the app is stateless; otherwise sessions and uploads break.",
+    "ru": "Горизонтальное работает, только если приложение без состояния; иначе ломаются сессии и загрузки."
+   },
+   "production": {
+    "en": "Scale the bottleneck, not everything; a bigger web server won't fix a slow query.",
+    "ru": "Масштабируйте узкое место, а не всё; больший веб-сервер не починит медленный запрос."
+   }
+  },
+  "related": [
+   "scale.loadBalancer",
+   "scale.statelessness"
+  ]
+ },
+ {
+  "id": "scale.loadBalancer",
+  "category": "scale",
+  "parent": null,
+  "title": {
+   "en": "Load balancer",
+   "ru": "Балансировщик"
+  },
+  "summary": {
+   "en": "One front door, many servers.",
+   "ru": "Одна дверь, много серверов."
+  },
+  "article": {
+   "what": {
+    "en": "A load balancer spreads requests across identical servers and stops routing to ones that fail health checks.",
+    "ru": "Балансировщик распределяет запросы между одинаковыми серверами и перестаёт слать на те, что не прошли health check."
+   },
+   "why": {
+    "en": "A single server has a ceiling; a load balancer lets several share the load and removes single points of failure.",
+    "ru": "У одного сервера есть потолок; балансировщик даёт нескольким делить нагрузку и убирает единые точки отказа."
+   },
+   "limits": {
+    "en": "It only helps if the servers behind it are interchangeable (stateless).",
+    "ru": "Он помогает, только если серверы за ним взаимозаменяемы (без состояния)."
+   },
+   "production": {
+    "en": "Health checks need a few seconds to notice a dead server; some requests fail meanwhile.",
+    "ru": "Health check замечает мёртвый сервер за секунды; часть запросов пока падает."
+   }
+  }
+ },
+ {
+  "id": "scale.statelessness",
+  "category": "scale",
+  "parent": "scale.loadBalancer",
+  "title": {
+   "en": "Statelessness",
+   "ru": "Отсутствие состояния"
+  },
+  "summary": {
+   "en": "Any server can handle any request.",
+   "ru": "Любой сервер обслуживает любой запрос."
+  },
+  "article": {
+   "what": {
+    "en": "A stateless server keeps no per-user data locally; sessions, uploads and cache live in shared stores, so requests can hit any server.",
+    "ru": "Сервер без состояния не хранит данные пользователя локально; сессии, загрузки и кэш — в общих хранилищах, поэтому запрос может попасть на любой сервер."
+   },
+   "why": {
+    "en": "Horizontal scaling and load balancing only work when servers are interchangeable.",
+    "ru": "Горизонтальное масштабирование и балансировка работают, только когда серверы взаимозаменяемы."
+   },
+   "limits": {
+    "en": "Moving state out (to Redis, object storage) is extra work and extra network hops.",
+    "ru": "Вынос состояния (в Redis, object storage) — дополнительная работа и сетевые переходы."
+   },
+   "production": {
+    "en": "In-memory sessions + a load balancer = random logouts. Sticky sessions hide it; shared sessions fix it.",
+    "ru": "Сессии в памяти + балансировщик = случайные разлогины. Sticky прячет это; общие сессии чинят."
+   }
+  }
+ },
+ {
+  "id": "dist.providers",
+  "category": "dist",
+  "parent": null,
+  "title": {
+   "en": "External providers",
+   "ru": "Внешние провайдеры"
+  },
+  "summary": {
+   "en": "Code you depend on but don't control.",
+   "ru": "Код, от которого вы зависите, но не управляете им."
+  },
+  "article": {
+   "what": {
+    "en": "Payment, mail and other third-party APIs do work you shouldn't build yourself — but their latency and outages become yours.",
+    "ru": "Платёжные, почтовые и другие сторонние API делают работу, которую не стоит строить самому, — но их задержки и аварии становятся вашими."
+   },
+   "why": {
+    "en": "You trade building (and maintaining) complex systems for a dependency on someone else's uptime.",
+    "ru": "Вы меняете создание (и поддержку) сложных систем на зависимость от чужой доступности."
+   },
+   "limits": {
+    "en": "A slow provider in the request path makes your app slow; always set timeouts.",
+    "ru": "Медленный провайдер на пути запроса делает ваше приложение медленным; всегда ставьте таймауты."
+   },
+   "production": {
+    "en": null,
+    "ru": null
+   },
+   "underTheHood": {
+    "en": [
+     "dist.timeouts",
+     "dist.circuitBreaker",
+     "dist.webhooks"
+    ],
+    "ru": null
+   }
+  }
+ },
+ {
+  "id": "dist.timeouts",
+  "category": "dist",
+  "parent": "dist.providers",
+  "title": {
+   "en": "Timeouts",
+   "ru": "Таймауты"
+  },
+  "summary": {
+   "en": "Decide how long is too long.",
+   "ru": "Решите, сколько — это слишком долго."
+  },
+  "article": {
+   "what": {
+    "en": "A timeout caps how long you wait for a dependency before giving up and failing fast.",
+    "ru": "Таймаут ограничивает, сколько вы ждёте зависимость, прежде чем сдаться и быстро отказать."
+   },
+   "why": {
+    "en": "Without a timeout, one slow dependency ties up every worker waiting on it and the whole app stalls.",
+    "ru": "Без таймаута одна медленная зависимость занимает всех воркеров в ожидании, и всё приложение встаёт."
+   },
+   "limits": {
+    "en": "Too short and you fail healthy-but-slow calls; too long and you hang.",
+    "ru": "Слишком коротко — роняете здоровые, но медленные вызовы; слишком долго — зависаете."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "dist.circuitBreaker",
+  "category": "dist",
+  "parent": "dist.timeouts",
+  "title": {
+   "en": "Retry & circuit breaker",
+   "ru": "Повторы и circuit breaker"
+  },
+  "summary": {
+   "en": "Stop hammering something that's down.",
+   "ru": "Перестать долбить то, что лежит."
+  },
+  "article": {
+   "what": {
+    "en": "A circuit breaker trips after repeated failures and fails fast for a while instead of calling a dead dependency; retries (with backoff) handle brief blips.",
+    "ru": "Circuit breaker размыкается после серии ошибок и некоторое время быстро отказывает вместо вызова мёртвой зависимости; повторы (с backoff) закрывают краткие сбои."
+   },
+   "why": {
+    "en": "Retries help transient errors but, stacked across layers, multiply load and turn a blip into an outage.",
+    "ru": "Повторы помогают при временных ошибках, но, сложенные по слоям, умножают нагрузку и превращают сбой в аварию."
+   },
+   "limits": {
+    "en": "A breaker sheds load to let the dependency recover; it also fails requests that might have worked.",
+    "ru": "Breaker сбрасывает нагрузку, чтобы зависимость восстановилась; но и роняет запросы, которые могли бы пройти."
+   },
+   "production": {
+    "en": "Retry amplification: 3 layers × 3 retries = up to 27× the original load.",
+    "ru": "Усиление повторов: 3 слоя × 3 повтора = до 27× исходной нагрузки."
+   }
+  }
+ },
+ {
+  "id": "dist.webhooks",
+  "category": "dist",
+  "parent": "dist.providers",
+  "title": {
+   "en": "Webhooks & duplicates",
+   "ru": "Вебхуки и дубликаты"
+  },
+  "summary": {
+   "en": "They call you back — maybe twice.",
+   "ru": "Они перезванивают вам — возможно, дважды."
+  },
+  "article": {
+   "what": {
+    "en": "A webhook is an HTTP call a provider makes to tell you something happened (a payment succeeded). Providers retry, so you may get it more than once.",
+    "ru": "Вебхук — HTTP-вызов, которым провайдер сообщает о событии (платёж прошёл). Провайдеры повторяют, поэтому вы можете получить его не раз."
+   },
+   "why": {
+    "en": "It's push instead of poll — you learn immediately. But you must handle duplicates and out-of-order delivery.",
+    "ru": "Это push вместо опроса — вы узнаёте сразу. Но нужно обрабатывать дубликаты и доставку не по порядку."
+   },
+   "limits": {
+    "en": "A slow webhook handler makes the provider time out and retry, creating more duplicates.",
+    "ru": "Медленный обработчик вебхука заставляет провайдера таймаутить и повторять, создавая ещё дубли."
+   },
+   "production": {
+    "en": "Ack fast (200), process async, dedupe by event id.",
+    "ru": "Быстро подтверждайте (200), обрабатывайте асинхронно, дедуплицируйте по id события."
+   }
+  }
+ },
+ {
+  "id": "dist.consistency",
+  "category": "dist",
+  "parent": null,
+  "title": {
+   "en": "Eventual consistency",
+   "ru": "Итоговая согласованность"
+  },
+  "summary": {
+   "en": "Copies agree — eventually.",
+   "ru": "Копии согласуются — со временем."
+  },
+  "article": {
+   "what": {
+    "en": "In a distributed system, data copied to replicas, caches and services isn't updated everywhere at the same instant; they converge after a short delay.",
+    "ru": "В распределённой системе данные, скопированные в реплики, кэши и сервисы, не обновляются везде мгновенно; они сходятся через короткую задержку."
+   },
+   "why": {
+    "en": "Insisting every copy is always identical (strong consistency) is slow and fragile across a network; eventual consistency is often good enough.",
+    "ru": "Требовать, чтобы каждая копия всегда совпадала (строгая согласованность), медленно и хрупко через сеть; итоговой часто достаточно."
+   },
+   "limits": {
+    "en": "During the window, different users can see different values; design features to tolerate it.",
+    "ru": "В это окно разные пользователи видят разные значения; проектируйте фичи с учётом этого."
+   },
+   "production": {
+    "en": null,
+    "ru": null
+   },
+   "underTheHood": {
+    "en": [
+     "dist.services",
+     "db.replica"
+    ],
+    "ru": null
+   }
+  }
+ },
+ {
+  "id": "dist.services",
+  "category": "dist",
+  "parent": "dist.consistency",
+  "title": {
+   "en": "Services & boundaries",
+   "ru": "Сервисы и границы"
+  },
+  "summary": {
+   "en": "Split by what owns the data.",
+   "ru": "Разделяйте по владельцу данных."
+  },
+  "article": {
+   "what": {
+    "en": "Breaking a monolith into services draws boundaries around data and responsibilities; services talk over the network via contracts.",
+    "ru": "Разбиение монолита на сервисы проводит границы вокруг данных и ответственности; сервисы общаются по сети через контракты."
+   },
+   "why": {
+    "en": "Independent deploys and scaling per service — if the boundaries follow real data ownership.",
+    "ru": "Независимые деплой и масштабирование на сервис — если границы следуют реальному владению данными."
+   },
+   "limits": {
+    "en": "Bad boundaries create a 'distributed monolith': services that must deploy together and share a database — all the cost, none of the benefit.",
+    "ru": "Плохие границы создают «распределённый монолит»: сервисы деплоятся вместе и делят базу — все издержки, никакой выгоды."
+   },
+   "production": {
+    "en": "A service should own its data; others ask via its API, never its tables.",
+    "ru": "Сервис владеет своими данными; другие спрашивают через его API, не через таблицы."
+   }
+  }
+ },
+ {
+  "id": "dist.partialFailure",
+  "category": "dist",
+  "parent": "dist.services",
+  "title": {
+   "en": "Partial failure",
+   "ru": "Частичный отказ"
+  },
+  "summary": {
+   "en": "Part of the system is down, not all.",
+   "ru": "Часть системы лежит, не вся."
+  },
+  "article": {
+   "what": {
+    "en": "In a distributed system one service can fail while others are fine; a request touching several may half-succeed.",
+    "ru": "В распределённой системе один сервис может упасть, пока другие в порядке; запрос, задевающий несколько, может пройти наполовину."
+   },
+   "why": {
+    "en": "You can keep serving a degraded experience (hide recommendations) instead of failing the whole page.",
+    "ru": "Можно продолжать отдавать урезанный опыт (спрятать рекомендации) вместо падения всей страницы."
+   },
+   "limits": {
+    "en": "Deciding what's essential vs optional is a product decision, not just technical.",
+    "ru": "Решение, что обязательно, а что опционально, — продуктовое, не только техническое."
+   },
+   "production": {
+    "en": "Graceful degradation and fallbacks turn a hard failure into a soft one.",
+    "ru": "Graceful degradation и fallback превращают жёсткий отказ в мягкий."
+   }
+  }
+ },
+ {
+  "id": "dist.outbox",
+  "category": "dist",
+  "parent": "dist.services",
+  "title": {
+   "en": "Transactional outbox",
+   "ru": "Transactional outbox"
+  },
+  "summary": {
+   "en": "Save the event with the data, publish later.",
+   "ru": "Сохранить событие вместе с данными, опубликовать позже."
+  },
+  "article": {
+   "what": {
+    "en": "Write the event into the same database transaction as the change, then a separate relay publishes it. The DB commit and the event can't disagree.",
+    "ru": "Записывайте событие в ту же транзакцию БД, что и изменение, затем отдельный процесс публикует его. Коммит БД и событие не могут разойтись."
+   },
+   "why": {
+    "en": "Otherwise the DB commits but the broker call fails (or vice-versa) and the event is lost or duplicated.",
+    "ru": "Иначе БД коммитит, а вызов брокера падает (или наоборот), и событие теряется или дублируется."
+   },
+   "limits": {
+    "en": "It adds a relay and a little latency before the event is visible.",
+    "ru": "Это добавляет процесс-ретранслятор и небольшую задержку до появления события."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "obs.metrics",
+  "category": "obs",
+  "parent": null,
+  "title": {
+   "en": "Metrics",
+   "ru": "Метрики"
+  },
+  "summary": {
+   "en": "Numbers over time about your system.",
+   "ru": "Числа о системе во времени."
+  },
+  "article": {
+   "what": {
+    "en": "Metrics are numeric time series: requests/sec, error rate, p95 latency, CPU, queue depth. You chart them and alert on them.",
+    "ru": "Метрики — числовые ряды во времени: запросов/с, доля ошибок, задержка p95, CPU, глубина очереди. Их строят на графиках и по ним шлют алерты."
+   },
+   "why": {
+    "en": "You can't fix what you can't see; metrics turn 'the site feels slow' into a number.",
+    "ru": "Нельзя починить то, чего не видишь; метрики превращают «сайт тормозит» в число."
+   },
+   "limits": {
+    "en": "Averages hide pain; use percentiles (p95, p99) so you see the slow tail real users feel.",
+    "ru": "Средние прячут боль; используйте перцентили (p95, p99), чтобы видеть медленный хвост, который чувствуют реальные пользователи."
+   },
+   "production": {
+    "en": null,
+    "ru": null
+   },
+   "underTheHood": {
+    "en": [
+     "obs.alerts",
+     "obs.slo"
+    ],
+    "ru": null
+   }
+  }
+ },
+ {
+  "id": "obs.logs",
+  "category": "obs",
+  "parent": "obs.metrics",
+  "title": {
+   "en": "Logs",
+   "ru": "Логи"
+  },
+  "summary": {
+   "en": "Timestamped records of events.",
+   "ru": "Записи событий с метками времени."
+  },
+  "article": {
+   "what": {
+    "en": "Logs are lines describing what happened: a request, an error, a warning. Structured logs carry fields (level, request id) you can filter.",
+    "ru": "Логи — строки о том, что произошло: запрос, ошибка, предупреждение. Структурированные логи несут поля (уровень, request id) для фильтрации."
+   },
+   "why": {
+    "en": "When something breaks, logs are the story of what the system actually did.",
+    "ru": "Когда что-то ломается, логи — это рассказ о том, что система реально сделала."
+   },
+   "limits": {
+    "en": "Too many logs hide the signal; timezones and clocks across servers can mislead.",
+    "ru": "Слишком много логов прячут сигнал; часовые пояса и часы на разных серверах могут запутать."
+   },
+   "production": {
+    "en": "Log in UTC, ship to one place, and include a request id on every line.",
+    "ru": "Логируйте в UTC, шлите в одно место и добавляйте request id в каждую строку."
+   }
+  }
+ },
+ {
+  "id": "obs.requestId",
+  "category": "obs",
+  "parent": "obs.logs",
+  "title": {
+   "en": "Request ID",
+   "ru": "Request ID"
+  },
+  "summary": {
+   "en": "One id to follow a request everywhere.",
+   "ru": "Один id, чтобы проследить запрос везде."
+  },
+  "article": {
+   "what": {
+    "en": "A request id is generated at the edge and attached to every log line and downstream call for that request.",
+    "ru": "Request id генерируется на входе и прикрепляется к каждой строке лога и вызову вниз по цепочке для этого запроса."
+   },
+   "why": {
+    "en": "Across many servers, it lets you gather all logs of one user's one failing request.",
+    "ru": "На многих серверах он позволяет собрать все логи одного падающего запроса одного пользователя."
+   },
+   "limits": {
+    "en": "Only useful if every service forwards and logs it.",
+    "ru": "Полезен, только если каждый сервис передаёт и логирует его."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "obs.tracing",
+  "category": "obs",
+  "parent": "obs.requestId",
+  "title": {
+   "en": "Traces",
+   "ru": "Трассы"
+  },
+  "summary": {
+   "en": "A timed map of one request's journey.",
+   "ru": "Карта пути одного запроса со временем."
+  },
+  "article": {
+   "what": {
+    "en": "A trace breaks one request into spans — proxy, backend, each query, each external call — with the time each took.",
+    "ru": "Трасса разбивает один запрос на спаны — прокси, бэкенд, каждый запрос к БД, каждый внешний вызов — со временем каждого."
+   },
+   "why": {
+    "en": "Metrics say something is slow; a trace says which step is slow.",
+    "ru": "Метрики говорят, что что-то медленно; трасса говорит, какой именно шаг медленный."
+   },
+   "limits": {
+    "en": "Tracing everything is expensive; systems sample a fraction.",
+    "ru": "Трассировать всё дорого; системы берут выборку."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "obs.alerts",
+  "category": "obs",
+  "parent": "obs.metrics",
+  "title": {
+   "en": "Alerts",
+   "ru": "Алерты"
+  },
+  "summary": {
+   "en": "Wake someone when a metric is bad.",
+   "ru": "Разбудить кого-то, когда метрика плоха."
+  },
+  "article": {
+   "what": {
+    "en": "An alert fires when a metric crosses a threshold for some time; it pages a human or opens a ticket.",
+    "ru": "Алерт срабатывает, когда метрика превышает порог какое-то время; он будит человека или заводит тикет."
+   },
+   "why": {
+    "en": "You can't watch dashboards 24/7; alerts bring you to the problem.",
+    "ru": "Нельзя смотреть дашборды круглосуточно; алерты приводят вас к проблеме."
+   },
+   "limits": {
+    "en": "Too sensitive → false alarms and alert fatigue; too lax → you miss real outages.",
+    "ru": "Слишком чувствительно → ложные тревоги и усталость; слишком мягко → пропускаете реальные аварии."
+   },
+   "production": {
+    "en": "Alert on symptoms users feel (errors, latency), require a duration to avoid flapping.",
+    "ru": "Алертите на симптомы, которые чувствуют пользователи (ошибки, задержка), с выдержкой по времени против дребезга."
+   }
+  }
+ },
+ {
+  "id": "obs.incident",
+  "category": "obs",
+  "parent": "obs.alerts",
+  "title": {
+   "en": "Incidents & timeline",
+   "ru": "Инциденты и таймлайн"
+  },
+  "summary": {
+   "en": "A tracked, time-ordered response.",
+   "ru": "Отслеживаемый ответ по времени."
+  },
+  "article": {
+   "what": {
+    "en": "An incident is a declared disruption with a severity; you build a timeline of what happened and when to coordinate and learn.",
+    "ru": "Инцидент — объявленное нарушение с серьёзностью; вы строите таймлайн событий, чтобы координироваться и учиться."
+   },
+   "why": {
+    "en": "Clear roles and an ordered timeline turn chaos into a methodical response.",
+    "ru": "Ясные роли и упорядоченный таймлайн превращают хаос в методичный ответ."
+   },
+   "limits": {
+    "en": "Timeline entries from different servers need a common timezone to order correctly.",
+    "ru": "Записи таймлайна с разных серверов нужно свести к общему часовому поясу, чтобы правильно упорядочить."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "obs.postmortem",
+  "category": "obs",
+  "parent": "obs.incident",
+  "title": {
+   "en": "Postmortem & runbook",
+   "ru": "Постмортем и runbook"
+  },
+  "summary": {
+   "en": "Learn from it; write down the fix steps.",
+   "ru": "Учиться на этом; записать шаги починки."
+  },
+  "article": {
+   "what": {
+    "en": "A blameless postmortem records what happened, the root cause and action items. A runbook is a checklist for handling a known kind of incident.",
+    "ru": "Безобвинительный постмортем фиксирует, что случилось, первопричину и действия. Runbook — чеклист для известного типа инцидента."
+   },
+   "why": {
+    "en": "The goal is to stop the same outage recurring, not to blame a person.",
+    "ru": "Цель — не повторить ту же аварию, а не обвинить человека."
+   },
+   "limits": {
+    "en": "A postmortem nobody acts on is just paperwork.",
+    "ru": "Постмортем, по которому ничего не делают, — просто бумага."
+   },
+   "production": {
+    "en": "Ask 'why' five times to get past the symptom to the cause.",
+    "ru": "Спросите «почему» пять раз, чтобы пройти от симптома к причине."
+   }
+  }
+ },
+ {
+  "id": "obs.slo",
+  "category": "obs",
+  "parent": "obs.metrics",
+  "title": {
+   "en": "SLA / SLO / error budget",
+   "ru": "SLA / SLO / бюджет ошибок"
+  },
+  "summary": {
+   "en": "A target for reliability, and room to fail.",
+   "ru": "Цель по надёжности и допустимый запас на отказ."
+  },
+  "article": {
+   "what": {
+    "en": "An SLO is an internal reliability target (99.9% success). The error budget is the allowed failure (0.1%). An SLA is a promise to customers with consequences.",
+    "ru": "SLO — внутренняя цель надёжности (99,9% успеха). Бюджет ошибок — допустимый отказ (0,1%). SLA — обещание клиентам с последствиями."
+   },
+   "why": {
+    "en": "100% is impossible and too expensive; a budget lets you spend some reliability on shipping features.",
+    "ru": "100% невозможны и слишком дороги; бюджет позволяет тратить часть надёжности на выпуск фич."
+   },
+   "limits": {
+    "en": "Burning the budget fast means slow down and stabilize; lots left means you can take risks.",
+    "ru": "Быстро жжёте бюджет — тормозите и стабилизируйте; много осталось — можно рисковать."
+   },
+   "production": {
+    "en": "Error budget = 1 − SLO. 99.9% monthly ≈ 43 minutes of downtime.",
+    "ru": "Бюджет ошибок = 1 − SLO. 99,9% в месяц ≈ 43 минуты простоя."
+   }
+  }
+ },
+ {
+  "id": "obs.timezones",
+  "category": "obs",
+  "parent": "obs.logs",
+  "title": {
+   "en": "Time & timezones",
+   "ru": "Время и часовые пояса"
+  },
+  "summary": {
+   "en": "Store UTC, display local.",
+   "ru": "Храните UTC, показывайте местное."
+  },
+  "article": {
+   "what": {
+    "en": "Servers in different places may log in different local times; comparing them without converting to UTC scrambles the order of events.",
+    "ru": "Серверы в разных местах логируют в разном местном времени; сравнение без перевода в UTC путает порядок событий."
+   },
+   "why": {
+    "en": "During an incident, a one-hour offset can make cause look like effect.",
+    "ru": "Во время инцидента смещение в час может сделать причину похожей на следствие."
+   },
+   "limits": {
+    "en": "Local time is for humans reading a screen, never for storage or comparison.",
+    "ru": "Местное время — для людей, смотрящих на экран, не для хранения и сравнения."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "deploy.git",
+  "category": "deploy",
+  "parent": null,
+  "title": {
+   "en": "Git",
+   "ru": "Git"
+  },
+  "summary": {
+   "en": "Versioned history of your code.",
+   "ru": "Версионированная история кода."
+  },
+  "article": {
+   "what": {
+    "en": "Git records snapshots (commits) of your code. Branches let you work in parallel; merging combines them.",
+    "ru": "Git записывает снимки (коммиты) кода. Ветки позволяют работать параллельно; слияние объединяет их."
+   },
+   "why": {
+    "en": "You can see what changed, when and by whom, and go back to any past state.",
+    "ru": "Видно, что изменилось, когда и кем, и можно вернуться к любому прошлому состоянию."
+   },
+   "limits": {
+    "en": "Committing secrets (an .env) leaves them in history even after you delete the file.",
+    "ru": "Коммит секретов (.env) оставляет их в истории даже после удаления файла."
+   },
+   "production": {
+    "en": null,
+    "ru": null
+   },
+   "underTheHood": {
+    "en": [
+     "deploy.ci",
+     "deploy.rollback"
+    ],
+    "ru": null
+   }
+  }
+ },
+ {
+  "id": "deploy.merge",
+  "category": "deploy",
+  "parent": "deploy.git",
+  "title": {
+   "en": "Merge & conflicts",
+   "ru": "Слияние и конфликты"
+  },
+  "summary": {
+   "en": "Combine branches; resolve clashes.",
+   "ru": "Объединить ветки; разрешить столкновения."
+  },
+  "article": {
+   "what": {
+    "en": "Merging brings one branch's changes into another. A conflict happens when both changed the same lines — a human must choose.",
+    "ru": "Слияние переносит изменения одной ветки в другую. Конфликт возникает, когда обе поменяли одни строки — выбирает человек."
+   },
+   "why": {
+    "en": "Parallel work needs a way to reunite; a pull request reviews it before it lands.",
+    "ru": "Параллельной работе нужен способ воссоединиться; pull request рецензирует её до попадания в основную ветку."
+   },
+   "limits": {
+    "en": "Resolving a conflict wrongly silently reintroduces a bug.",
+    "ru": "Неверно разрешённый конфликт тихо возвращает баг."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "deploy.ci",
+  "category": "deploy",
+  "parent": "deploy.git",
+  "title": {
+   "en": "CI & tests",
+   "ru": "CI и тесты"
+  },
+  "summary": {
+   "en": "Automatically build and test every change.",
+   "ru": "Автоматически собирать и тестировать каждое изменение."
+  },
+  "article": {
+   "what": {
+    "en": "Continuous Integration runs linters, tests and a build on every commit or pull request, before it can merge.",
+    "ru": "Continuous Integration запускает линтеры, тесты и сборку на каждый коммит или pull request до слияния."
+   },
+   "why": {
+    "en": "Machines catch regressions consistently; 'works on my machine' stops being an argument.",
+    "ru": "Машины стабильно ловят регрессии; «у меня работает» перестаёт быть аргументом."
+   },
+   "limits": {
+    "en": "Tests only catch what they cover; green CI isn't proof of correctness.",
+    "ru": "Тесты ловят лишь то, что покрывают; зелёный CI — не доказательство правильности."
+   },
+   "production": {
+    "en": "A regression test reproduces a past bug so it can never come back unnoticed.",
+    "ru": "Регрессионный тест воспроизводит прошлый баг, чтобы он не вернулся незаметно."
+   }
+  }
+ },
+ {
+  "id": "deploy.rollback",
+  "category": "deploy",
+  "parent": "deploy.ci",
+  "title": {
+   "en": "Deploy & rollback",
+   "ru": "Деплой и откат"
+  },
+  "summary": {
+   "en": "Ship it; undo it fast if it's bad.",
+   "ru": "Выкатить; быстро откатить, если плохо."
+  },
+  "article": {
+   "what": {
+    "en": "A deploy puts new code into production. A rollback returns to the previous known-good release when the new one misbehaves.",
+    "ru": "Деплой выводит новый код в прод. Откат возвращает к предыдущему рабочему релизу, когда новый ведёт себя плохо."
+   },
+   "why": {
+    "en": "The fastest way to end an incident caused by a release is to undo the release.",
+    "ru": "Самый быстрый способ закончить инцидент из-за релиза — отменить релиз."
+   },
+   "limits": {
+    "en": "Rollback is hard if a destructive migration already changed the database.",
+    "ru": "Откат труден, если разрушительная миграция уже изменила базу."
+   },
+   "production": {
+    "en": "Keep migrations backward-compatible so old and new code both work during a deploy.",
+    "ru": "Держите миграции обратно-совместимыми, чтобы старый и новый код работали во время деплоя."
+   }
+  }
+ },
+ {
+  "id": "deploy.canary",
+  "category": "deploy",
+  "parent": "deploy.rollback",
+  "title": {
+   "en": "Canary & feature flags",
+   "ru": "Canary и feature flags"
+  },
+  "summary": {
+   "en": "Release to a few first; toggle features.",
+   "ru": "Выкатить сначала немногим; переключать фичи."
+  },
+  "article": {
+   "what": {
+    "en": "A canary sends a new release to a small percentage of traffic first. A feature flag turns a feature on or off without deploying.",
+    "ru": "Canary направляет новый релиз сначала на малую долю трафика. Feature flag включает или выключает фичу без деплоя."
+   },
+   "why": {
+    "en": "You find a bad release while it hurts 5% of users, not 100%; flags let you decouple deploy from release.",
+    "ru": "Вы находите плохой релиз, пока он бьёт по 5% пользователей, а не по 100%; флаги отделяют деплой от включения."
+   },
+   "limits": {
+    "en": "A canary needs good metrics to judge it, and flags left on forever become technical debt.",
+    "ru": "Canary нужны хорошие метрики для оценки, а флаги, оставленные навсегда, становятся техдолгом."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "sec.hashing",
+  "category": "sec",
+  "parent": null,
+  "title": {
+   "en": "Password hashing",
+   "ru": "Хеширование паролей"
+  },
+  "summary": {
+   "en": "Store a slow salted hash, never the password.",
+   "ru": "Храните медленный хеш с солью, не сам пароль."
+  },
+  "article": {
+   "what": {
+    "en": "A password hash is a one-way function; a salt makes each hash unique; a slow algorithm (bcrypt, Argon2) makes guessing expensive.",
+    "ru": "Хеш пароля — односторонняя функция; соль делает каждый хеш уникальным; медленный алгоритм (bcrypt, Argon2) делает перебор дорогим."
+   },
+   "why": {
+    "en": "Databases leak. If you stored plaintext, every account is compromised instantly; a good hash buys time and usually safety.",
+    "ru": "Базы утекают. Если хранили открытый текст — все аккаунты скомпрометированы сразу; хороший хеш даёт время и обычно безопасность."
+   },
+   "limits": {
+    "en": "Fast hashes (MD5, SHA-256) are crackable at billions/sec; unsalted hashes fall to rainbow tables.",
+    "ru": "Быстрые хеши (MD5, SHA-256) ломаются миллиардами/с; хеши без соли падают от радужных таблиц."
+   },
+   "production": {
+    "en": "bcrypt deliberately costs ~60 ms of CPU per check — fine for login, painful for an attacker.",
+    "ru": "bcrypt намеренно стоит ~60 мс CPU на проверку — норм для входа, больно для атакующего."
+   }
+  }
+ },
+ {
+  "id": "sec.sqli",
+  "category": "sec",
+  "parent": null,
+  "title": {
+   "en": "SQL injection",
+   "ru": "SQL-инъекция"
+  },
+  "summary": {
+   "en": "Input that becomes SQL code.",
+   "ru": "Ввод, ставший SQL-кодом."
+  },
+  "article": {
+   "what": {
+    "en": "If user input is concatenated into a SQL string, the input can close the query and add its own, reading or changing anything.",
+    "ru": "Если пользовательский ввод склеивается в SQL-строку, ввод может закрыть запрос и добавить свой, читая или меняя что угодно."
+   },
+   "why": {
+    "en": "It's one of the oldest and most damaging web bugs — a public form can dump your whole database.",
+    "ru": "Это один из старейших и самых разрушительных веб-багов — публичная форма может выгрузить всю базу."
+   },
+   "limits": {
+    "en": "A WAF can catch obvious payloads but is bypassable; only parameterized queries truly fix it.",
+    "ru": "WAF ловит очевидные нагрузки, но обходится; по-настоящему чинят только параметризованные запросы."
+   },
+   "production": {
+    "en": "Prepared statements send SQL and data separately, so data can never become code.",
+    "ru": "Подготовленные запросы шлют SQL и данные отдельно, поэтому данные не станут кодом."
+   }
+  }
+ },
+ {
+  "id": "sec.xss",
+  "category": "sec",
+  "parent": null,
+  "title": {
+   "en": "XSS",
+   "ru": "XSS"
+  },
+  "summary": {
+   "en": "Input that becomes JavaScript.",
+   "ru": "Ввод, ставший JavaScript."
+  },
+  "article": {
+   "what": {
+    "en": "Cross-site scripting stores or reflects user input as HTML; a crafted payload runs as script in other users' browsers.",
+    "ru": "Межсайтовый скриптинг сохраняет или отражает ввод как HTML; подготовленная нагрузка выполняется скриптом в браузерах других пользователей."
+   },
+   "why": {
+    "en": "Attacker JavaScript can steal sessions, act as the victim, or deface the page.",
+    "ru": "JavaScript атакующего может украсть сессии, действовать от имени жертвы или испортить страницу."
+   },
+   "limits": {
+    "en": "Escaping output is the core fix; CSP and HttpOnly cookies are defense in depth.",
+    "ru": "Экранирование вывода — основная починка; CSP и HttpOnly cookie — эшелонированная защита."
+   },
+   "production": {
+    "en": "Escaping turns <script> into &lt;script&gt; — the browser shows text, doesn't run it.",
+    "ru": "Экранирование превращает <script> в &lt;script&gt; — браузер показывает текст, не выполняет."
+   }
+  }
+ },
+ {
+  "id": "sec.csrf",
+  "category": "sec",
+  "parent": null,
+  "title": {
+   "en": "CSRF",
+   "ru": "CSRF"
+  },
+  "summary": {
+   "en": "Your browser tricked into acting for another site.",
+   "ru": "Браузер обманут и действует по команде другого сайта."
+  },
+  "article": {
+   "what": {
+    "en": "Cross-site request forgery abuses that browsers attach your cookies to requests even from other sites, so a hidden form can act as you.",
+    "ru": "CSRF использует то, что браузеры прикладывают ваши cookie к запросам даже с других сайтов, поэтому скрытая форма может действовать от вашего имени."
+   },
+   "why": {
+    "en": "Without protection, a link on another site can change your email or make a purchase.",
+    "ru": "Без защиты ссылка на чужом сайте может сменить ваш email или сделать покупку."
+   },
+   "limits": {
+    "en": "Only matters for cookie-based auth; token-based (Authorization header) isn't auto-sent.",
+    "ru": "Важно только для cookie-авторизации; токен (заголовок Authorization) не отправляется автоматически."
+   },
+   "production": {
+    "en": "A CSRF token the other site can't read, or SameSite cookies, stops it.",
+    "ru": "CSRF-токен, недоступный чужому сайту, или SameSite cookie останавливают это."
+   }
+  }
+ },
+ {
+  "id": "sec.idor",
+  "category": "sec",
+  "parent": "auth.authorization",
+  "title": {
+   "en": "IDOR / broken access control",
+   "ru": "IDOR / сломанный доступ"
+  },
+  "summary": {
+   "en": "Changing an id to see others' data.",
+   "ru": "Смена id, чтобы видеть чужие данные."
+  },
+  "article": {
+   "what": {
+    "en": "Insecure Direct Object Reference: the server returns object #1002 just because you asked, without checking it's yours.",
+    "ru": "Небезопасная прямая ссылка на объект: сервер отдаёт объект #1002 просто потому что вы попросили, не проверив, что он ваш."
+   },
+   "why": {
+    "en": "Authentication isn't authorization; every object access needs an ownership check.",
+    "ru": "Аутентификация — не авторизация; каждый доступ к объекту нуждается в проверке владельца."
+   },
+   "limits": {
+    "en": "Hard to spot because the happy path works perfectly; only a changed id reveals it.",
+    "ru": "Трудно заметить, потому что обычный путь работает; выдаёт только изменённый id."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "sec.rateLimit",
+  "category": "sec",
+  "parent": null,
+  "title": {
+   "en": "Rate limiting & brute force",
+   "ru": "Rate limiting и перебор"
+  },
+  "summary": {
+   "en": "Cap how often someone can try.",
+   "ru": "Ограничить, как часто можно пытаться."
+  },
+  "article": {
+   "what": {
+    "en": "Rate limiting rejects requests above a threshold (per IP, per account). It blunts brute-force guessing and abusive traffic.",
+    "ru": "Rate limiting отклоняет запросы выше порога (на IP, на аккаунт). Он притупляет перебор и абьюз."
+   },
+   "why": {
+    "en": "Login forms, OTP checks and expensive endpoints are guessed or abused without a limit.",
+    "ru": "Формы входа, проверки OTP и дорогие endpoint'ы перебирают или абьюзят без лимита."
+   },
+   "limits": {
+    "en": "Permanent account lockout lets an attacker lock out real users; prefer delays and CAPTCHAs.",
+    "ru": "Постоянная блокировка аккаунта позволяет атакующему заблокировать реальных пользователей; лучше задержки и CAPTCHA."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "sec.exposedPorts",
+  "category": "sec",
+  "parent": null,
+  "title": {
+   "en": "Exposed services",
+   "ru": "Открытые сервисы"
+  },
+  "summary": {
+   "en": "Don't put internal ports on the internet.",
+   "ru": "Не выставляйте внутренние порты в интернет."
+  },
+  "article": {
+   "what": {
+    "en": "Databases, caches and admin panels should only be reachable from the private network, never from the public internet.",
+    "ru": "Базы, кэши и админки должны быть доступны только из приватной сети, не из публичного интернета."
+   },
+   "why": {
+    "en": "Scanners find open ports in minutes; an exposed DB bypasses all your app's security.",
+    "ru": "Сканеры находят открытые порты за минуты; открытая БД обходит всю защиту приложения."
+   },
+   "limits": {
+    "en": "A firewall rule is simple but easy to forget when spinning up a new server.",
+    "ru": "Правило firewall простое, но его легко забыть, поднимая новый сервер."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "sec.secrets",
+  "category": "sec",
+  "parent": "deploy.git",
+  "title": {
+   "en": "Secrets & Git history",
+   "ru": "Секреты и история Git"
+  },
+  "summary": {
+   "en": "Keys don't belong in the repository.",
+   "ru": "Ключам не место в репозитории."
+  },
+  "article": {
+   "what": {
+    "en": "Secrets (DB passwords, API keys) live in environment variables, not in code. Committed once, they stay in Git history forever.",
+    "ru": "Секреты (пароли БД, ключи API) живут в переменных окружения, не в коде. Закоммиченные раз, они остаются в истории Git навсегда."
+   },
+   "why": {
+    "en": "Anyone with the repo (or a leak of it) gets your keys; deleting the file doesn't remove it from history.",
+    "ru": "Любой с доступом к репозиторию (или его утечкой) получает ваши ключи; удаление файла не убирает его из истории."
+   },
+   "limits": {
+    "en": "Rotating the leaked secret is the real fix; rewriting history helps but is messy.",
+    "ru": "Настоящая починка — ротация утёкшего секрета; переписывание истории помогает, но грязно."
+   },
+   "production": {
+    "en": "Add .env to .gitignore before the first commit, and use a secrets manager.",
+    "ru": "Добавьте .env в .gitignore до первого коммита и используйте менеджер секретов."
+   }
+  }
+ },
+ {
+  "id": "sec.upload",
+  "category": "sec",
+  "parent": "files.upload",
+  "title": {
+   "en": "Insecure file upload",
+   "ru": "Небезопасная загрузка"
+  },
+  "summary": {
+   "en": "A disguised script run by the server.",
+   "ru": "Замаскированный скрипт, выполненный сервером."
+  },
+  "article": {
+   "what": {
+    "en": "If uploads aren't validated and are stored where the server executes code, an attacker uploads a script and runs it.",
+    "ru": "Если загрузки не проверяются и хранятся там, где сервер исполняет код, атакующий загружает скрипт и запускает его."
+   },
+   "why": {
+    "en": "It can lead to full server takeover from a simple avatar form.",
+    "ru": "Это может привести к полному захвату сервера через простую форму аватарки."
+   },
+   "limits": {
+    "en": "Checking the extension isn't enough; validate real type, store outside web root or in object storage.",
+    "ru": "Проверки расширения мало; проверяйте реальный тип, храните вне web root или в object storage."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "sec.dependencies",
+  "category": "sec",
+  "parent": null,
+  "title": {
+   "en": "Dependency vulnerabilities",
+   "ru": "Уязвимости зависимостей"
+  },
+  "summary": {
+   "en": "Bugs in the libraries you didn't write.",
+   "ru": "Баги в библиотеках, которые вы не писали."
+  },
+  "article": {
+   "what": {
+    "en": "Your app includes many third-party packages; a known vulnerability (CVE) in one becomes your vulnerability.",
+    "ru": "Ваше приложение включает много сторонних пакетов; известная уязвимость (CVE) в одном становится вашей."
+   },
+   "why": {
+    "en": "Most code in a modern app is dependencies; attackers scan for known-vulnerable versions.",
+    "ru": "Большая часть кода современного приложения — зависимости; атакующие сканируют известные уязвимые версии."
+   },
+   "limits": {
+    "en": "Upgrading can break things, so people delay — and stay vulnerable.",
+    "ru": "Обновление может что-то сломать, поэтому его откладывают — и остаются уязвимыми."
+   },
+   "production": {
+    "en": "A dependency scanner in CI flags vulnerable versions automatically.",
+    "ru": "Сканер зависимостей в CI автоматически помечает уязвимые версии."
+   }
+  }
+ },
+ {
+  "id": "sec.ssrf",
+  "category": "sec",
+  "parent": null,
+  "title": {
+   "en": "SSRF",
+   "ru": "SSRF"
+  },
+  "summary": {
+   "en": "Making the server fetch an internal URL.",
+   "ru": "Заставить сервер сходить на внутренний URL."
+  },
+  "article": {
+   "what": {
+    "en": "Server-side request forgery abuses a feature that fetches a user-supplied URL to reach internal services (cloud metadata, admin panels).",
+    "ru": "SSRF злоупотребляет функцией, скачивающей заданный пользователем URL, чтобы достать внутренние сервисы (метаданные облака, админки)."
+   },
+   "why": {
+    "en": "The server can reach things the user can't; attackers borrow that access.",
+    "ru": "Сервер может достать то, что недоступно пользователю; атакующие занимают этот доступ."
+   },
+   "limits": {
+    "en": "Blocking by hostname isn't enough (redirects, DNS tricks); block private IP ranges on the resolved address.",
+    "ru": "Блокировки по имени хоста мало (редиректы, трюки DNS); блокируйте приватные диапазоны IP по разрешённому адресу."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "sec.leastPrivilege",
+  "category": "sec",
+  "parent": "auth.authorization",
+  "title": {
+   "en": "Least privilege",
+   "ru": "Наименьшие привилегии"
+  },
+  "summary": {
+   "en": "Grant only what's needed.",
+   "ru": "Давать только необходимое."
+  },
+  "article": {
+   "what": {
+    "en": "Every account, key and service should have the minimum permissions for its job and no more.",
+    "ru": "Каждый аккаунт, ключ и сервис должны иметь минимум прав для своей задачи и не больше."
+   },
+   "why": {
+    "en": "If a limited credential leaks, the damage is limited; broad admin access turns any leak into a catastrophe.",
+    "ru": "Если ограниченный ключ утёк, ущерб ограничен; широкий админский доступ превращает любую утечку в катастрофу."
+   },
+   "limits": {
+    "en": "It's inconvenient to scope everything, so people over-grant 'to be safe'.",
+    "ru": "Ограничивать всё неудобно, поэтому люди выдают лишнее «на всякий случай»."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "sec.waf",
+  "category": "sec",
+  "parent": null,
+  "title": {
+   "en": "WAF & firewall",
+   "ru": "WAF и firewall"
+  },
+  "summary": {
+   "en": "A filter in front; not a cure.",
+   "ru": "Фильтр впереди; не лекарство."
+  },
+  "article": {
+   "what": {
+    "en": "A firewall controls which ports are reachable; a Web Application Firewall inspects HTTP and blocks known attack patterns.",
+    "ru": "Firewall управляет доступностью портов; Web Application Firewall проверяет HTTP и блокирует известные шаблоны атак."
+   },
+   "why": {
+    "en": "They add a useful layer and buy time, especially against automated scanners.",
+    "ru": "Они добавляют полезный слой и выигрывают время, особенно против автоматических сканеров."
+   },
+   "limits": {
+    "en": "Signatures are bypassable; a WAF is defense in depth, never a substitute for fixing the code.",
+    "ru": "Сигнатуры обходятся; WAF — эшелонированная защита, не замена исправлению кода."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "api.statusCodes",
+  "category": "api",
+  "parent": "web.request",
+  "title": {
+   "en": "Status codes",
+   "ru": "Коды статуса"
+  },
+  "summary": {
+   "en": "The number that says how it went.",
+   "ru": "Число, говорящее, как прошло."
+  },
+  "article": {
+   "what": {
+    "en": "2xx success, 3xx redirect, 4xx the client's fault (404 not found, 401 unauth, 422 invalid), 5xx the server's fault.",
+    "ru": "2xx успех, 3xx редирект, 4xx вина клиента (404 не найдено, 401 не авторизован, 422 невалидно), 5xx вина сервера."
+   },
+   "why": {
+    "en": "Clients and tools branch on the code; a correct code lets them react automatically.",
+    "ru": "Клиенты и инструменты ветвятся по коду; правильный код даёт им реагировать автоматически."
+   },
+   "limits": {
+    "en": "Returning 200 with an error inside breaks retries, monitoring and caching.",
+    "ru": "Ответ 200 с ошибкой внутри ломает повторы, мониторинг и кэширование."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "api.methods",
+  "category": "api",
+  "parent": "web.request",
+  "title": {
+   "en": "HTTP methods",
+   "ru": "HTTP-методы"
+  },
+  "summary": {
+   "en": "GET reads, POST/PUT/PATCH/DELETE change.",
+   "ru": "GET читает, POST/PUT/PATCH/DELETE меняют."
+  },
+  "article": {
+   "what": {
+    "en": "GET fetches and must be safe (no side effects); POST creates, PUT/PATCH update, DELETE removes.",
+    "ru": "GET получает и должен быть безопасным (без побочных эффектов); POST создаёт, PUT/PATCH обновляет, DELETE удаляет."
+   },
+   "why": {
+    "en": "Caches, crawlers and prefetch follow GET freely; a GET that deletes data gets triggered by a crawler.",
+    "ru": "Кэши, краулеры и префетч свободно ходят по GET; GET, который удаляет данные, срабатывает от краулера."
+   },
+   "limits": {
+    "en": "PUT is idempotent (same result if repeated); POST usually isn't.",
+    "ru": "PUT идемпотентен (повтор даёт тот же результат); POST обычно нет."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "api.versioning",
+  "category": "api",
+  "parent": "web.request",
+  "title": {
+   "en": "Versioning & breaking changes",
+   "ru": "Версионирование и ломающие изменения"
+  },
+  "summary": {
+   "en": "Don't break existing clients.",
+   "ru": "Не ломайте существующих клиентов."
+  },
+  "article": {
+   "what": {
+    "en": "A breaking change (renaming a field) breaks clients built on the old shape. Versioning (v1, v2) lets old and new coexist.",
+    "ru": "Ломающее изменение (переименование поля) ломает клиентов на старом формате. Версионирование (v1, v2) даёт старому и новому сосуществовать."
+   },
+   "why": {
+    "en": "Mobile apps and partners can't all update at once; you must keep promises you've made.",
+    "ru": "Мобильные приложения и партнёры не обновятся все разом; нужно держать данные обещания."
+   },
+   "limits": {
+    "en": "Every version you keep is extra code to maintain.",
+    "ru": "Каждая поддерживаемая версия — лишний код в сопровождении."
+   },
+   "production": {
+    "en": "Add fields safely; removing or renaming them is the breaking kind.",
+    "ru": "Добавлять поля безопасно; удалять или переименовывать — ломающее."
+   }
+  }
+ },
+ {
+  "id": "api.contract",
+  "category": "api",
+  "parent": "api.versioning",
+  "title": {
+   "en": "Contract (OpenAPI)",
+   "ru": "Контракт (OpenAPI)"
+  },
+  "summary": {
+   "en": "A written promise of the API's shape.",
+   "ru": "Записанное обещание формата API."
+  },
+  "article": {
+   "what": {
+    "en": "A contract (OpenAPI) describes every endpoint's inputs and outputs so clients and servers agree and tools can check compatibility.",
+    "ru": "Контракт (OpenAPI) описывает входы и выходы каждого endpoint'а, чтобы клиент и сервер согласовались, а инструменты проверяли совместимость."
+   },
+   "why": {
+    "en": "It turns 'the API probably returns this' into a checkable agreement; CI can fail a breaking change.",
+    "ru": "Он превращает «API наверное вернёт это» в проверяемое соглашение; CI может завалить ломающее изменение."
+   },
+   "limits": {
+    "en": "A contract that drifts from the real code is worse than none.",
+    "ru": "Контракт, разошедшийся с реальным кодом, хуже, чем его отсутствие."
+   },
+   "production": {
+    "en": "",
+    "ru": ""
+   }
+  }
+ },
+ {
+  "id": "api.cors",
+  "category": "api",
+  "parent": "sec.csrf",
+  "title": {
+   "en": "CORS",
+   "ru": "CORS"
+  },
+  "summary": {
+   "en": "Which sites' JS may call your API.",
+   "ru": "Чей JS может вызывать ваш API."
+  },
+  "article": {
+   "what": {
+    "en": "Browsers block JavaScript from one origin calling an API on another unless the API returns Access-Control-Allow-Origin.",
+    "ru": "Браузеры блокируют JavaScript одного origin, вызывающий API на другом, пока API не вернёт Access-Control-Allow-Origin."
+   },
+   "why": {
+    "en": "It protects users from malicious sites quietly reading authenticated APIs in their browser.",
+    "ru": "Он защищает пользователей от вредоносных сайтов, тихо читающих авторизованные API в их браузере."
+   },
+   "limits": {
+    "en": "It's a browser rule only — it doesn't protect against server-to-server calls or curl.",
+    "ru": "Это правило только браузера — оно не защищает от вызовов сервер-сервер или curl."
+   },
+   "production": {
+    "en": "'*' with credentials is refused by browsers; echo the specific allowed origin.",
+    "ru": "'*' с учётными данными браузеры отклоняют; возвращайте конкретный разрешённый origin."
+   }
+  }
+ },
+ {
+  "id": "global.regions",
+  "category": "global",
+  "parent": "net.latency",
+  "title": {
+   "en": "Regions",
+   "ru": "Регионы"
+  },
+  "summary": {
+   "en": "Run in more than one place.",
+   "ru": "Работать больше чем в одном месте."
+  },
+  "article": {
+   "what": {
+    "en": "A region is a separate data-center location. Running in several puts servers closer to users and survives the loss of one region.",
+    "ru": "Регион — отдельная площадка дата-центра. Работа в нескольких приближает серверы к пользователям и переживает потерю одного региона."
+   },
+   "why": {
+    "en": "Global users get lower latency, and a regional outage doesn't take everyone down.",
+    "ru": "Глобальные пользователи получают меньшую задержку, а авария региона не роняет всех."
+   },
+   "limits": {
+    "en": "Data must travel between regions, which is slow; keeping it consistent is the hard part.",
+    "ru": "Данным приходится ходить между регионами, это медленно; держать их согласованными — самое сложное."
+   },
+   "production": {
+    "en": null,
+    "ru": null
+   },
+   "underTheHood": {
+    "en": [
+     "global.failover",
+     "dist.consistency"
+    ],
+    "ru": null
+   }
+  }
+ },
+ {
+  "id": "global.failover",
+  "category": "global",
+  "parent": "global.regions",
+  "title": {
+   "en": "Failover",
+   "ru": "Failover"
+  },
+  "summary": {
+   "en": "Automatically switch away from the dead region.",
+   "ru": "Автоматически переключиться с умершего региона."
+  },
+  "article": {
+   "what": {
+    "en": "Failover detects a failed region or server and routes traffic to a healthy one, often via DNS or a load balancer.",
+    "ru": "Failover обнаруживает отказавший регион или сервер и направляет трафик на здоровый, часто через DNS или балансировщик."
+   },
+   "why": {
+    "en": "It turns a region outage into a blip instead of downtime.",
+    "ru": "Он превращает аварию региона в кратковременный сбой вместо простоя."
+   },
+   "limits": {
+    "en": "Detection and DNS TTL add a delay; a promoted replica may be slightly behind.",
+    "ru": "Обнаружение и TTL DNS добавляют задержку; повышенная реплика может немного отставать."
+   },
+   "production": {
+    "en": "Low DNS TTL + health checks + a ready standby make failover fast.",
+    "ru": "Низкий TTL DNS + health check + готовый резерв делают failover быстрым."
+   }
+  }
+ }
+]

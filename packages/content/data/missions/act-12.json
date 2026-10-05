@@ -1,0 +1,1798 @@
+[
+ {
+  "id": "m089",
+  "slug": "regions",
+  "act": 12,
+  "order": 89,
+  "kind": "build",
+  "title": {
+   "en": "Go global",
+   "ru": "Выйти в мир"
+  },
+  "summary": {
+   "en": "Users abroad are slow. Open new regions.",
+   "ru": "Пользователям за рубежом медленно. Открыть новые регионы."
+  },
+  "prerequisites": [
+   "m088"
+  ],
+  "learning": [
+   "global.regions",
+   "net.latency"
+  ],
+  "trigger": {
+   "id": "m089-t",
+   "from": "nika",
+   "subject": {
+    "en": "US and Asia say we're slow",
+    "ru": "США и Азия говорят, у нас медленно"
+   },
+   "body": {
+    "en": "We're getting customers in the US and Asia and they complain the site is sluggish — even though our servers aren't busy. Everything lives in one European data center. Open the US and AP regions on the map.",
+    "ru": "У нас появились клиенты в США и Азии, и они жалуются, что сайт тормозит — хотя серверы не загружены. Всё живёт в одном европейском дата-центре. Открой регионы US и AP на карте."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Open the US and AP regions",
+     "ru": "Открыть регионы US и AP"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "region.us",
+       "truthy": true
+      },
+      {
+       "fact": "region.ap",
+       "truthy": true
+      }
+     ]
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "region.us",
+       "truthy": true
+      },
+      {
+       "fact": "region.ap",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "The map now spans three regions.",
+     "ru": "Карта теперь охватывает три региона."
+    },
+    "effects": [
+     {
+      "users": 100
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Latency grows with physical distance — light in fiber is the hard limit. Opening regions lets you place servers and data closer to users.",
+    "ru": "Задержка растёт с физическим расстоянием — скорость света в оптоволокне это предел. Открытие регионов позволяет ставить серверы и данные ближе к пользователям."
+   },
+   "whyNow": {
+    "en": "Your server load is fine; the problem is the ocean between you and your users.",
+    "ru": "Нагрузка серверов в норме; проблема — океан между вами и пользователями."
+   },
+   "limits": {
+    "en": "More regions mean data must cross oceans and stay consistent — the hard part is ahead.",
+    "ru": "Больше регионов — данным приходится пересекать океаны и оставаться согласованными — сложное впереди."
+   },
+   "article": "global.regions"
+  },
+  "next": "m090",
+  "unlocks": {
+   "features": [
+    "regions"
+   ],
+   "components": [
+    "region"
+   ]
+  },
+  "setup": [
+   {
+    "set": "traffic.users",
+    "value": 1200000
+   },
+   {
+    "set": "traffic.regionMix",
+    "value": {
+     "eu": 0.5,
+     "us": 0.35,
+     "ap": 0.15
+    }
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 2800
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Latency is high for distant users despite low server load.",
+     "ru": "Задержка высокая для далёких пользователей при низкой нагрузке серверов."
+    },
+    "app": "network"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-geo",
+    "app": "network",
+    "hint": {
+     "en": "Compare latency by region",
+     "ru": "Сравнить задержку по регионам"
+    },
+    "text": {
+     "en": "US and AP users pay 100+ ms per round trip to the EU.",
+     "ru": "Пользователи US и AP платят 100+ мс за круг до EU."
+    },
+    "match": {
+     "kind": "metric",
+     "keyPrefix": "p95"
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m090",
+  "slug": "latency-map",
+  "act": 12,
+  "order": 90,
+  "kind": "tutorial",
+  "title": {
+   "en": "Read the latency map",
+   "ru": "Читать карту задержек"
+  },
+  "summary": {
+   "en": "See how distance and routing shape real latency.",
+   "ru": "Увидеть, как расстояние и маршрутизация формируют реальную задержку."
+  },
+  "prerequisites": [
+   "m089"
+  ],
+  "learning": [
+   "net.latency"
+  ],
+  "trigger": {
+   "id": "m090-t",
+   "from": "lev",
+   "subject": {
+    "en": "Look at the latency map",
+    "ru": "Посмотри карту задержек"
+   },
+   "body": {
+    "en": "Open the Network app's latency map. Each user region has a different round-trip to each data center. This is why we can't just 'add a server' — we have to put the right thing in the right place. Study it before we expand.",
+    "ru": "Открой карту задержек в приложении Network. У каждого региона пользователей свой круг до каждого дата-центра. Поэтому нельзя просто «добавить сервер» — надо ставить нужное в нужное место. Изучи её перед расширением."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Study the latency map",
+     "ru": "Изучить карту задержек"
+    },
+    "check": {
+     "fact": "mission.evidence.e-map",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You can reason about latency geographically now.",
+     "ru": "Теперь вы рассуждаете о задержке географически."
+    },
+    "effects": [
+     {
+      "users": 50
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "The latency map shows round-trip times between user regions and data centers. It's the tool for deciding what to place where as you expand globally.",
+    "ru": "Карта задержек показывает время круга между регионами пользователей и дата-центрами. Это инструмент для решения, что и где размещать при глобальном росте."
+   },
+   "whyNow": {
+    "en": "Global decisions are latency decisions; the map makes them concrete.",
+    "ru": "Глобальные решения — это решения о задержке; карта делает их конкретными."
+   },
+   "limits": {
+    "en": "Fewer round trips matter as much as distance — a chatty flow across an ocean is painful.",
+    "ru": "Меньше кругов важно не меньше расстояния — болтливый флоу через океан мучителен."
+   },
+   "article": "net.latency"
+  },
+  "next": "m091",
+  "evidence": [
+   {
+    "id": "e-map",
+    "app": "network",
+    "hint": {
+     "en": "Study the region latency map",
+     "ru": "Изучить карту задержек регионов"
+    },
+    "text": {
+     "en": "Round-trip time rises sharply with distance between regions.",
+     "ru": "Время круга резко растёт с расстоянием между регионами."
+    },
+    "match": {
+     "kind": "metric",
+     "keyPrefix": "p95"
+    }
+   }
+  ]
+ },
+ {
+  "id": "m091",
+  "slug": "cdn-expansion",
+  "act": 12,
+  "order": 91,
+  "kind": "build",
+  "title": {
+   "en": "CDN to every edge",
+   "ru": "CDN на каждый край"
+  },
+  "summary": {
+   "en": "Serve static assets from edges worldwide.",
+   "ru": "Отдавать статику с edge по всему миру."
+  },
+  "prerequisites": [
+   "m090"
+  ],
+  "learning": [
+   "cache.cdn",
+   "net.latency"
+  ],
+  "trigger": {
+   "id": "m091-t",
+   "from": "lev",
+   "subject": {
+    "en": "Static first — add a CDN everywhere",
+    "ru": "Сначала статика — CDN повсюду"
+   },
+   "body": {
+    "en": "The quickest global win: serve CSS, JS and images from a CDN with edges in EU, US and AP. Add the CDN in front, enable all edge locations, and cache static assets. Dynamic data we'll handle next.",
+    "ru": "Быстрейший глобальный выигрыш: отдавать CSS, JS и картинки через CDN с edge в EU, US и AP. Добавь CDN спереди, включи все точки присутствия и кэшируй статику. Динамику разберём следующим шагом."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A CDN is in the path with multiple edges",
+     "ru": "CDN в пути с несколькими edge"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "role.cdn",
+       "gte": 1
+      },
+      {
+       "fact": "node.cdn.edges",
+       "eq": "eu,us,ap"
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Global page load improves",
+     "ru": "Глобальная загрузка улучшается"
+    },
+    "check": {
+     "fact": "m.pageLoad",
+     "lt": 2200
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "role.cdn",
+     "gte": 1
+    },
+    "text": {
+     "en": "Static assets load fast from the nearest edge.",
+     "ru": "Статика грузится быстро с ближайшего edge."
+    },
+    "effects": [
+     {
+      "users": 300
+     },
+     {
+      "cash": -20
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A CDN caches static files on edge servers worldwide, so users download them from nearby instead of crossing an ocean to your origin.",
+    "ru": "CDN кэширует статику на edge-серверах по миру, поэтому пользователи скачивают её рядом, а не через океан до origin."
+   },
+   "whyNow": {
+    "en": "Static content is the same everywhere, so it's the easiest thing to move close to users.",
+    "ru": "Статика одинакова везде, поэтому её проще всего приблизить к пользователям."
+   },
+   "limits": {
+    "en": "The CDN only helps static (and cacheable) content; dynamic, personalized data still travels.",
+    "ru": "CDN помогает только статике (и кэшируемому); динамические персональные данные всё равно идут."
+   },
+   "article": "cache.cdn"
+  },
+  "next": "m092",
+  "unlocks": {
+   "components": [
+    "cdn"
+   ]
+  },
+  "checkpoint": true
+ },
+ {
+  "id": "m092",
+  "slug": "multi-region",
+  "act": 12,
+  "order": 92,
+  "kind": "build",
+  "title": {
+   "en": "Multi-region backends",
+   "ru": "Мульти-региональные бэкенды"
+  },
+  "summary": {
+   "en": "Run backends in each region and route users to the nearest.",
+   "ru": "Запустить бэкенды в каждом регионе и направлять к ближайшему."
+  },
+  "prerequisites": [
+   "m091"
+  ],
+  "learning": [
+   "global.regions",
+   "global.failover"
+  ],
+  "trigger": {
+   "id": "m092-t",
+   "from": "lev",
+   "subject": {
+    "en": "Put compute near the users",
+    "ru": "Разместить вычисления рядом с пользователями"
+   },
+   "body": {
+    "en": "CDN handles static, but dynamic requests still cross the ocean. Add backends (and a load balancer or replica) in the US and AP regions, and enable GeoDNS so users resolve to the nearest region.",
+    "ru": "CDN держит статику, но динамика всё ещё идёт через океан. Добавь бэкенды (и балансировщик или реплику) в регионах US и AP и включи GeoDNS, чтобы пользователи резолвились в ближайший регион."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Backends run in at least two regions",
+     "ru": "Бэкенды работают минимум в двух регионах"
+    },
+    "check": {
+     "any": [
+      {
+       "all": [
+        {
+         "fact": "regionNodes.us.backend",
+         "gte": 1
+        }
+       ]
+      },
+      {
+       "all": [
+        {
+         "fact": "regionNodes.ap.backend",
+         "gte": 1
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "GeoDNS routes users to the nearest region",
+     "ru": "GeoDNS направляет к ближайшему региону"
+    },
+    "check": {
+     "fact": "dns.geo",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "Distant users get lower latency",
+     "ru": "Далёкие пользователи получают меньшую задержку"
+    },
+    "check": {
+     "fact": "m.p95.us",
+     "lt": 400
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "dns.geo",
+     "truthy": true
+    },
+    "text": {
+     "en": "Users hit compute in their own region.",
+     "ru": "Пользователи попадают на вычисления в своём регионе."
+    },
+    "effects": [
+     {
+      "users": 400
+     },
+     {
+      "cash": -40
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Running backends in each region and using GeoDNS to route users to the nearest one cuts latency for dynamic requests too — not just static assets.",
+    "ru": "Запуск бэкендов в каждом регионе и GeoDNS, направляющий к ближайшему, сокращает задержку и для динамики — не только статики."
+   },
+   "whyNow": {
+    "en": "A CDN fixed static; multi-region compute fixes the dynamic requests users actually interact with.",
+    "ru": "CDN починил статику; мульти-региональные вычисления чинят динамику, с которой пользователи реально работают."
+   },
+   "limits": {
+    "en": "Now data exists in several places — keeping it consistent across regions is the next challenge.",
+    "ru": "Теперь данные есть в нескольких местах — держать их согласованными между регионами — следующий вызов."
+   },
+   "article": "global.regions"
+  },
+  "next": "m093",
+  "unlocks": {
+   "settings": []
+  },
+  "checkpoint": true
+ },
+ {
+  "id": "m093",
+  "slug": "region-outage",
+  "act": 12,
+  "order": 93,
+  "kind": "incident",
+  "title": {
+   "en": "A whole region goes dark",
+   "ru": "Целый регион гаснет"
+  },
+  "summary": {
+   "en": "The EU region fails. Users there can't reach the site at all.",
+   "ru": "Регион EU падает. Тамошние пользователи вообще не достучатся."
+  },
+  "prerequisites": [
+   "m092"
+  ],
+  "learning": [
+   "global.failover",
+   "global.regions"
+  ],
+  "trigger": {
+   "id": "m093-t",
+   "from": "nika",
+   "subject": {
+    "en": "Europe is completely down!",
+    "ru": "Европа полностью лежит!"
+   },
+   "body": {
+    "en": "Our EU data center just went offline — power issue on their end. Half our users are in Europe and they get nothing. The other regions are healthy. Why can't EU users just use another region?",
+    "ru": "Наш европейский дата-центр только что отключился — у них проблема с питанием. Половина пользователей в Европе и не получает ничего. Другие регионы здоровы. Почему пользователи EU не могут просто пойти в другой регион?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Recognise the missing failover",
+     "ru": "Осознать отсутствие failover"
+    },
+    "check": {
+     "fact": "mission.hypothesis",
+     "eq": "h1"
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You've diagnosed the single-region trap. Next: failover.",
+     "ru": "Вы диагностировали ловушку одного региона. Дальше: failover."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Running in several regions only helps outages if traffic can move away from a dead one. Without failover, users pinned to the failed region get nothing.",
+    "ru": "Работа в нескольких регионах помогает против аварий, только если трафик может уйти от мёртвого. Без failover пользователи, привязанные к упавшему региону, не получают ничего."
+   },
+   "whyNow": {
+    "en": "Multi-region gave you redundancy; now you must actually use it when a region dies.",
+    "ru": "Мульти-регион дал вам избыточность; теперь нужно реально ею воспользоваться, когда регион умирает."
+   },
+   "limits": {
+    "en": "Detection and DNS TTL add delay — failover is fast only if you prepared for it.",
+    "ru": "Обнаружение и TTL DNS добавляют задержку — failover быстр, только если вы подготовились."
+   },
+   "article": "global.failover"
+  },
+  "next": "m094",
+  "setup": [
+   {
+    "incident": {
+     "id": "euout",
+     "kind": "regionDown",
+     "title": {
+      "en": "EU region outage",
+      "ru": "Авария региона EU"
+     },
+     "target": "eu",
+     "startTick": 5,
+     "endTick": 55,
+     "source": "mission",
+     "active": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "EU users get connection errors; other regions are fine.",
+     "ru": "Пользователи EU получают ошибки соединения; другие регионы в порядке."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-region",
+    "app": "monitoring",
+    "hint": {
+     "en": "See EU down while US/AP serve traffic",
+     "ru": "Увидеть EU упавшим, пока US/AP обслуживают"
+    },
+    "text": {
+     "en": "EU users have no healthy region to fall back to.",
+     "ru": "Пользователям EU некуда переключиться на здоровый регион."
+    },
+    "match": {
+     "kind": "metric",
+     "keyPrefix": "p95"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "There's no automatic failover away from a dead region",
+     "ru": "Нет автоматического failover от мёртвого региона"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. DNS failover plus health checks should reroute EU users.",
+     "ru": "Верно. DNS failover плюс health check должны перенаправить пользователей EU."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Wait for the EU data center to come back",
+     "ru": "Ждать, пока EU дата-центр вернётся"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Hoping isn't a strategy; reroute to a healthy region now.",
+     "ru": "Надежда — не стратегия; перенаправьте на здоровый регион сейчас."
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m094",
+  "slug": "failover",
+  "act": 12,
+  "order": 94,
+  "kind": "build",
+  "title": {
+   "en": "Automatic failover",
+   "ru": "Автоматический failover"
+  },
+  "summary": {
+   "en": "Reroute users away from a failed region automatically.",
+   "ru": "Автоматически перенаправлять пользователей от упавшего региона."
+  },
+  "prerequisites": [
+   "m093"
+  ],
+  "learning": [
+   "global.failover",
+   "net.ttl"
+  ],
+  "trigger": {
+   "id": "m094-t",
+   "from": "lev",
+   "subject": {
+    "en": "Set up failover properly",
+    "ru": "Настрой failover как надо"
+   },
+   "body": {
+    "en": "Enable DNS failover with health checks, keep the DNS TTL low so reroutes take effect fast, and allow a replica to be promoted if a region's database is lost. Then EU users ride out the outage on US/AP.",
+    "ru": "Включи DNS failover с health check, держи низкий TTL DNS, чтобы перенаправления срабатывали быстро, и разреши повышение реплики, если база региона потеряна. Тогда пользователи EU переживут аварию на US/AP."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "DNS failover is enabled",
+     "ru": "DNS failover включён"
+    },
+    "check": {
+     "fact": "dns.failover",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "DNS TTL is low for fast reroute",
+     "ru": "TTL DNS низкий для быстрого перенаправления"
+    },
+    "check": {
+     "fact": "dns.ttl.@.A",
+     "lte": 300
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "The site stays available during the region outage",
+     "ru": "Сайт остаётся доступным во время аварии региона"
+    },
+    "check": {
+     "fact": "m.availability",
+     "gte": 0.9
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "dns.failover",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "A region can die and users barely notice.",
+     "ru": "Регион может умереть, а пользователи едва заметят."
+    },
+    "effects": [
+     {
+      "users": 400
+     },
+     {
+      "cash": -20
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Failover detects a dead region (health checks) and reroutes traffic to a healthy one via DNS. A low TTL makes the switch fast; a promotable replica keeps the data available.",
+    "ru": "Failover обнаруживает мёртвый регион (health check) и перенаправляет трафик на здоровый через DNS. Низкий TTL делает переключение быстрым; повышаемая реплика держит данные доступными."
+   },
+   "whyNow": {
+    "en": "You have the regions; failover is what turns an outage into a blip.",
+    "ru": "Регионы у вас есть; failover превращает аварию в кратковременный сбой."
+   },
+   "limits": {
+    "en": "A promoted replica may be slightly behind, and DNS caches add a short delay — plan for both.",
+    "ru": "Повышенная реплика может немного отставать, а кэши DNS добавляют задержку — учтите оба."
+   },
+   "article": "global.failover"
+  },
+  "next": "m095",
+  "achievements": [
+   {
+    "id": "zero-downtime",
+    "when": {
+     "fact": "completed.m094",
+     "truthy": true
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m095",
+  "slug": "budget-vs-reliability",
+  "act": 12,
+  "order": 95,
+  "kind": "decision",
+  "title": {
+   "en": "How many nines can we afford?",
+   "ru": "Сколько девяток мы потянем?"
+  },
+  "summary": {
+   "en": "Full active-active everywhere is reliable but expensive. Choose a balance.",
+   "ru": "Полный active-active везде надёжен, но дорог. Выбрать баланс."
+  },
+  "prerequisites": [
+   "m094"
+  ],
+  "learning": [
+   "obs.slo",
+   "perf.scaling"
+  ],
+  "trigger": {
+   "id": "m095-t",
+   "from": "nika",
+   "subject": {
+    "en": "The cloud bill is scary",
+    "ru": "Счёт за облако пугает"
+   },
+   "body": {
+    "en": "Finance is alarmed — running full redundancy in three regions is burning cash. But downtime costs sales and trust. Pick a balance: enough reliability to meet our SLO, without gold-plating every component. What's your call?",
+    "ru": "Финансы в тревоге — полная избыточность в трёх регионах жжёт деньги. Но простой стоит продаж и доверия. Выбери баланс: надёжности хватает под наш SLO, но без золочения каждого компонента. Твоё решение?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Meet the SLO within a healthy cost ratio",
+     "ru": "Выполнить SLO при здоровом соотношении затрат"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "m.availability",
+       "gte": 0.99
+      },
+      {
+       "fact": "q.cost",
+       "gte": 45
+      }
+     ]
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "balanced",
+    "kind": "good",
+    "when": {
+     "fact": "q.cost",
+     "gte": 55
+    },
+    "text": {
+     "en": "You hit the SLO without burning the budget.",
+     "ru": "Вы попали в SLO, не спалив бюджет."
+    },
+    "effects": [
+     {
+      "users": 200
+     },
+     {
+      "cash": 100
+     }
+    ]
+   },
+   {
+    "id": "gold",
+    "kind": "overkill",
+    "when": {
+     "fact": "q.cost",
+     "lt": 45
+    },
+    "text": {
+     "en": "Extremely reliable, uncomfortably expensive.",
+     "ru": "Чрезвычайно надёжно, некомфортно дорого."
+    },
+    "effects": [
+     {
+      "users": 200
+     }
+    ],
+    "debt": 4
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Reliability costs money and complexity; perfect uptime is impossible and ruinously expensive. The SLO and error budget tell you how many nines are worth paying for.",
+    "ru": "Надёжность стоит денег и сложности; идеальный аптайм невозможен и разорительно дорог. SLO и бюджет ошибок говорят, сколько девяток стоит оплачивать."
+   },
+   "whyNow": {
+    "en": "At global scale, reliability trade-offs become real money decisions.",
+    "ru": "На глобальном масштабе компромиссы надёжности становятся реальными денежными решениями."
+   },
+   "limits": {
+    "en": "Spend reliability where users feel it; don't gold-plate the parts that don't move the SLO.",
+    "ru": "Тратьте надёжность там, где её чувствуют пользователи; не золотите то, что не двигает SLO."
+   },
+   "article": "obs.slo"
+  },
+  "next": "m096",
+  "dialogue": [
+   {
+    "id": "d",
+    "npc": "nika",
+    "text": {
+     "en": "Max redundancy everywhere, or right-size to the SLO?",
+     "ru": "Максимальная избыточность везде или по SLO?"
+    },
+    "choices": [
+     {
+      "id": "c1",
+      "text": {
+       "en": "Right-size to the SLO — reliability where it pays, savings elsewhere.",
+       "ru": "По SLO — надёжность там, где окупается, экономия в остальном."
+      },
+      "reply": {
+       "en": "Sensible. Reliability is a budget, not a religion.",
+       "ru": "Разумно. Надёжность — это бюджет, а не религия."
+      }
+     },
+     {
+      "id": "c2",
+      "text": {
+       "en": "Gold-plate everything, cost be damned.",
+       "ru": "Золотить всё, плевать на цену."
+      },
+      "reply": {
+       "en": "We'll be very reliable and very broke.",
+       "ru": "Будем очень надёжны и очень без денег."
+      }
+     }
+    ]
+   }
+  ],
+  "achievements": [
+   {
+    "id": "it-depends",
+    "when": {
+     "all": [
+      {
+       "fact": "q.cost",
+       "gte": 55
+      },
+      {
+       "fact": "m.availability",
+       "gte": 0.99
+      }
+     ]
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m096",
+  "slug": "final-incident",
+  "act": 12,
+  "order": 96,
+  "kind": "incident",
+  "title": {
+   "en": "The perfect storm",
+   "ru": "Идеальный шторм"
+  },
+  "summary": {
+   "en": "A spike, a slow provider and a tired cache hit at once. Diagnose and stabilise.",
+   "ru": "Всплеск, медленный провайдер и уставший кэш разом. Диагностировать и стабилизировать."
+  },
+  "prerequisites": [
+   "m095"
+  ],
+  "learning": [
+   "dist.circuitBreaker",
+   "cache.redis",
+   "obs.metrics"
+  ],
+  "trigger": {
+   "id": "m096-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Everything is on fire at once",
+    "ru": "Всё горит одновременно"
+   },
+   "body": {
+    "en": "A marketing push caused a huge spike, a deploy flushed the cache so the DB is getting hammered, AND the payment provider is slow. Three things at once. The war room is you. Hold it together.",
+    "ru": "Маркетинговый запуск вызвал огромный всплеск, деплой сбросил кэш, и БД получает по полной, И платёжный провайдер медленный. Три вещи разом. Командный центр — это ты. Удержи всё."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Keep the site available through the storm",
+     "ru": "Удержать сайт доступным сквозь шторм"
+    },
+    "check": {
+     "fact": "m.availability",
+     "gte": 0.9
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Error budget isn't blown catastrophically",
+     "ru": "Бюджет ошибок не разнесён в клочья"
+    },
+    "check": {
+     "fact": "m.errorBudgetUsed",
+     "lt": 15
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "m.availability",
+     "gte": 0.9
+    },
+    "text": {
+     "en": "You stabilised a genuinely multi-cause incident.",
+     "ru": "Вы стабилизировали инцидент с несколькими причинами."
+    },
+    "effects": [
+     {
+      "users": 300
+     },
+     {
+      "cash": 100
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Real incidents are often several independent failures overlapping. You stabilise each: protect the database when the cache is cold, break the circuit on the slow provider, and let autoscaling and failover absorb the spike.",
+    "ru": "Реальные инциденты часто это несколько независимых отказов, наложившихся друг на друга. Вы стабилизируете каждый: защищаете базу при холодном кэше, размыкаете circuit на медленном провайдере, даёте автомасштабированию и failover поглотить всплеск."
+   },
+   "whyNow": {
+    "en": "This is the final exam: every tool you've learned, used together under pressure.",
+    "ru": "Это финальный экзамен: все изученные инструменты, применённые вместе под давлением."
+   },
+   "limits": {
+    "en": "Resist the urge to find one root cause — treat each symptom and keep users served.",
+    "ru": "Сопротивляйтесь желанию найти одну причину — лечите каждый симптом и держите пользователей обслуженными."
+   },
+   "article": "obs.metrics"
+  },
+  "next": "m097",
+  "setup": [
+   {
+    "set": "traffic.pattern",
+    "value": "spike"
+   },
+   {
+    "set": "traffic.spikeMultiplier",
+    "value": 5
+   },
+   {
+    "set": "traffic.spikeStart",
+    "value": 10
+   },
+   {
+    "set": "traffic.spikeEnd",
+    "value": 45
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 3200
+   },
+   {
+    "incident": {
+     "id": "storm-cache",
+     "kind": "cacheFlush",
+     "title": {
+      "en": "Cache flushed by a deploy",
+      "ru": "Кэш сброшен деплоем"
+     },
+     "startTick": 10,
+     "endTick": 45,
+     "source": "mission",
+     "active": true
+    }
+   },
+   {
+    "incident": {
+     "id": "storm-pay",
+     "kind": "providerSlow",
+     "title": {
+      "en": "Payment provider slow",
+      "ru": "Платёжный провайдер медленный"
+     },
+     "target": "payment",
+     "params": {
+      "latencyMs": 4000,
+      "errorRate": 0.3
+     },
+     "startTick": 12,
+     "endTick": 42,
+     "source": "mission",
+     "active": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Error rate and latency spike across the board.",
+     "ru": "Доля ошибок и задержка взлетают повсюду."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-storm",
+    "app": "monitoring",
+    "hint": {
+     "en": "Identify the overlapping causes",
+     "ru": "Определить наложившиеся причины"
+    },
+    "text": {
+     "en": "A traffic spike, a cold cache and a slow provider overlap.",
+     "ru": "Всплеск трафика, холодный кэш и медленный провайдер накладываются."
+    },
+    "match": {
+     "kind": "metric",
+     "key": "errorRate"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Several independent problems overlap; stabilise each",
+     "ru": "Несколько независимых проблем наложились; стабилизировать каждую"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Protect the DB (cache warming / fail-open), breaker on the provider, ride the spike.",
+     "ru": "Верно. Защитить БД (прогрев кэша / fail-open), breaker на провайдере, пережить всплеск."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "It must be one root cause",
+     "ru": "Это точно одна первопричина"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Not always — real incidents are often several things at once.",
+     "ru": "Не всегда — реальные инциденты часто это несколько вещей сразу."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "warm",
+    "app": "cache",
+    "label": {
+     "en": "Enable cache warming / fail-open to protect the DB",
+     "ru": "Включить прогрев кэша / fail-open для защиты БД"
+    },
+    "effects": [
+     {
+      "set": "app.cacheWarming",
+      "value": true
+     },
+     {
+      "set": "app.cacheFailOpen",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   },
+   {
+    "id": "breaker",
+    "app": "architecture",
+    "label": {
+     "en": "Ensure the payment circuit breaker is on",
+     "ru": "Убедиться, что circuit breaker платежей включён"
+    },
+    "effects": [
+     {
+      "set": "app.circuitBreaker",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m097",
+  "slug": "final-postmortem",
+  "act": 12,
+  "order": 97,
+  "kind": "build",
+  "title": {
+   "en": "The big postmortem",
+   "ru": "Большой постмортем"
+  },
+  "summary": {
+   "en": "Document the perfect storm and the systemic fixes.",
+   "ru": "Задокументировать идеальный шторм и системные исправления."
+  },
+  "prerequisites": [
+   "m096"
+  ],
+  "learning": [
+   "obs.postmortem",
+   "obs.slo"
+  ],
+  "trigger": {
+   "id": "m097-t",
+   "from": "nika",
+   "subject": {
+    "en": "Write up the storm",
+    "ru": "Опиши шторм"
+   },
+   "body": {
+    "en": "That was our biggest incident. Declare it, order the timeline, and write a postmortem with real action items — cache warming on deploy, a standing breaker, autoscaling headroom. Then submit it for the board.",
+    "ru": "Это был наш крупнейший инцидент. Объяви его, упорядочи таймлайн и напиши постмортем с реальными действиями — прогрев кэша при деплое, постоянный breaker, запас автомасштабирования. Затем отправь для совета."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Declare and order the incident",
+     "ru": "Объявить и упорядочить инцидент"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "incident.inc-storm.declared",
+       "truthy": true
+      },
+      {
+       "fact": "incident.inc-storm.ordered",
+       "truthy": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Submit the postmortem",
+     "ru": "Отправить постмортем"
+    },
+    "check": {
+     "fact": "postmortem.inc-storm.submitted",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "A thorough, blameless postmortem with systemic fixes.",
+     "ru": "Тщательный безобвинительный постмортем с системными исправлениями."
+    },
+    "effects": [
+     {
+      "users": 100
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A big incident deserves a careful postmortem: a correct timeline, the (often multiple) root causes, and systemic action items that remove whole classes of failure, not just this one.",
+    "ru": "Крупный инцидент заслуживает тщательного постмортема: верный таймлайн, (часто несколько) первопричин и системные действия, убирающие целые классы отказов, а не только этот."
+   },
+   "whyNow": {
+    "en": "The campaign's hardest incident is also its best teacher — capture everything.",
+    "ru": "Самый сложный инцидент кампании — её лучший учитель — зафиксируйте всё."
+   },
+   "limits": {
+    "en": "Action items without owners and deadlines don't prevent the next storm.",
+    "ru": "Действия без владельцев и сроков не предотвратят следующий шторм."
+   },
+   "article": "obs.postmortem"
+  },
+  "next": "m098",
+  "setup": [
+   {
+    "resolveIncident": "storm-cache"
+   },
+   {
+    "resolveIncident": "storm-pay"
+   },
+   {
+    "push": "observability.incidents",
+    "value": {
+     "id": "inc-storm",
+     "title": {
+      "en": "The perfect storm",
+      "ru": "Идеальный шторм"
+     },
+     "severity": null,
+     "status": "open",
+     "declaredAt": null,
+     "utcView": true,
+     "order": [],
+     "events": [
+      {
+       "id": "s1",
+       "source": "monitoring",
+       "raw": "10:00",
+       "tz": 0,
+       "text": {
+        "en": "Traffic spike begins",
+        "ru": "Начинается всплеск трафика"
+       }
+      },
+      {
+       "id": "s2",
+       "source": "cicd",
+       "raw": "10:02",
+       "tz": 0,
+       "text": {
+        "en": "Deploy flushes the cache",
+        "ru": "Деплой сбрасывает кэш"
+       }
+      },
+      {
+       "id": "s3",
+       "source": "payments",
+       "raw": "10:04",
+       "tz": 0,
+       "text": {
+        "en": "Payment provider slows",
+        "ru": "Платёжный провайдер замедляется"
+       }
+      },
+      {
+       "id": "s4",
+       "source": "oncall",
+       "raw": "10:20",
+       "tz": 0,
+       "text": {
+        "en": "Mitigations applied, error rate falls",
+        "ru": "Применены меры, доля ошибок падает"
+       }
+      }
+     ]
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "declare",
+    "app": "incidents",
+    "label": {
+     "en": "Declare the incident (SEV1)",
+     "ru": "Объявить инцидент (SEV1)"
+    },
+    "effects": [
+     {
+      "set": "observability.incidents[id=inc-storm].severity",
+      "value": "SEV1"
+     },
+     {
+      "set": "observability.incidents[id=inc-storm].declaredAt",
+      "value": 1
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "order",
+    "app": "incidents",
+    "label": {
+     "en": "Order the timeline",
+     "ru": "Упорядочить таймлайн"
+    },
+    "effects": [
+     {
+      "set": "observability.incidents[id=inc-storm].order",
+      "value": [
+       "s1",
+       "s2",
+       "s3",
+       "s4"
+      ]
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "submit",
+    "app": "incidents",
+    "label": {
+     "en": "Write and submit the postmortem",
+     "ru": "Написать и отправить постмортем"
+    },
+    "effects": [
+     {
+      "set": "observability.postmortems[incidentId=inc-storm]",
+      "value": {
+       "incidentId": "inc-storm",
+       "answers": {
+        "rootCause": "multi",
+        "action": "warm+breaker+headroom"
+       },
+       "submitted": true
+      }
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m098",
+  "slug": "one-million",
+  "act": 12,
+  "order": 98,
+  "kind": "build",
+  "title": {
+   "en": "One million users",
+   "ru": "Миллион пользователей"
+  },
+  "summary": {
+   "en": "Cross a million users with the system healthy.",
+   "ru": "Перейти миллион пользователей со здоровой системой."
+  },
+  "prerequisites": [
+   "m097"
+  ],
+  "learning": [
+   "perf.scaling",
+   "obs.slo"
+  ],
+  "trigger": {
+   "id": "m098-t",
+   "from": "nika",
+   "subject": {
+    "en": "We're about to hit a million!",
+    "ru": "Мы вот-вот возьмём миллион!"
+   },
+   "body": {
+    "en": "We're approaching one million users. I want to cross that line without a single wobble. Check the whole system is healthy under a full day's traffic — green metrics, within SLO, costs sane. Make it boring.",
+    "ru": "Мы подходим к миллиону пользователей. Хочу перейти эту черту без единого качка. Проверь, что вся система здорова под трафиком полного дня — зелёные метрики, в рамках SLO, затраты адекватны. Сделай это скучным."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Serve a million users healthily",
+     "ru": "Обслуживать миллион здорово"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "users",
+       "gte": 1000000
+      },
+      {
+       "fact": "m.availability",
+       "gte": 0.99
+      },
+      {
+       "fact": "m.p95",
+       "lt": 600
+      }
+     ]
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "users",
+     "gte": 1000000
+    },
+    "text": {
+     "en": "A million users, served smoothly.",
+     "ru": "Миллион пользователей, обслужены гладко."
+    },
+    "effects": [
+     {
+      "users": 50000
+     },
+     {
+      "cash": 300
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A million users healthy is the payoff of everything so far: indexes, cache, queues, statelessness, replicas, pooling, multi-region and observability all working together.",
+    "ru": "Здоровый миллион пользователей — это выхлоп всего до сих пор: индексы, кэш, очереди, отсутствие состояния, реплики, пулы, мульти-регион и наблюдаемость — всё работает вместе."
+   },
+   "whyNow": {
+    "en": "Scale isn't one trick; it's many correct decisions that each removed a bottleneck.",
+    "ru": "Масштаб — не один трюк; это много верных решений, каждое из которых убрало узкое место."
+   },
+   "limits": {
+    "en": "'Boring' is the highest compliment in production — it means the system just works.",
+    "ru": "«Скучно» — высшая похвала в проде — значит система просто работает."
+   },
+   "article": "perf.scaling"
+  },
+  "next": "m099",
+  "setup": [
+   {
+    "set": "traffic.users",
+    "value": 1000000
+   },
+   {
+    "set": "traffic.pattern",
+    "value": "daily"
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 3500
+   }
+  ],
+  "achievements": [
+   {
+    "id": "one-million",
+    "when": {
+     "fact": "users",
+     "gte": 1000000
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m099",
+  "slug": "international",
+  "act": 12,
+  "order": 99,
+  "kind": "build",
+  "title": {
+   "en": "International expansion",
+   "ru": "Международная экспансия"
+  },
+  "summary": {
+   "en": "Handle timezones and data locality for a global user base.",
+   "ru": "Обработать часовые пояса и локальность данных для глобальной базы."
+  },
+  "prerequisites": [
+   "m098"
+  ],
+  "learning": [
+   "obs.timezones",
+   "dist.consistency"
+  ],
+  "trigger": {
+   "id": "m099-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Dates and reports are wrong abroad",
+    "ru": "Даты и отчёты врут за рубежом"
+   },
+   "body": {
+    "en": "Now that users are spread across the globe, daily reports and 'order placed' dates are off by hours for some regions, and scheduled jobs fire at the wrong local time. We never standardised on UTC. Let's fix time once and for all.",
+    "ru": "Теперь, когда пользователи по всему миру, ежедневные отчёты и даты «заказ оформлен» сдвинуты на часы для части регионов, а задачи по расписанию срабатывают не в то местное время. Мы так и не стандартизировали UTC. Давай починим время раз и навсегда."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "All time handling is UTC",
+     "ru": "Всё время в UTC"
+    },
+    "check": {
+     "fact": "app.timezone",
+     "eq": "utc"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The system stays healthy globally",
+     "ru": "Система здорова глобально"
+    },
+    "check": {
+     "fact": "m.availability",
+     "gte": 0.99
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.timezone",
+     "eq": "utc"
+    },
+    "text": {
+     "en": "Store UTC, display local — dates agree everywhere.",
+     "ru": "Хранить UTC, показывать местное — даты сходятся везде."
+    },
+    "effects": [
+     {
+      "users": 50000
+     },
+     {
+      "cash": 200
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Store and compare time in UTC; convert to local only for display. A globally distributed system with mixed local times produces wrong dates, reports and schedules.",
+    "ru": "Храните и сравнивайте время в UTC; переводите в местное только для показа. Глобально распределённая система со смешанным местным временем даёт неверные даты, отчёты и расписания."
+   },
+   "whyNow": {
+    "en": "A global user base makes timezone bugs constant and visible.",
+    "ru": "Глобальная база делает баги часовых поясов постоянными и заметными."
+   },
+   "limits": {
+    "en": "Local time is for humans on a screen, never for storage, comparison or scheduling.",
+    "ru": "Местное время — для людей на экране, не для хранения, сравнения и расписаний."
+   },
+   "article": "obs.timezones"
+  },
+  "next": "m100",
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "timezone": "server-local"
+    }
+   },
+   {
+    "set": "traffic.regionMix",
+    "value": {
+     "eu": 0.34,
+     "us": 0.33,
+     "ap": 0.33
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Dates and schedules differ by server timezone.",
+     "ru": "Даты и расписания отличаются из-за часового пояса сервера."
+    },
+    "app": "logs"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-tz",
+    "app": "logs",
+    "hint": {
+     "en": "See inconsistent timezones across regions",
+     "ru": "Увидеть несогласованные пояса между регионами"
+    },
+    "text": {
+     "en": "Servers log and compute in their own local times.",
+     "ru": "Серверы логируют и считают в своём местном времени."
+    },
+    "match": {
+     "kind": "log",
+     "keyPrefix": ""
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "utc",
+    "app": "network",
+    "label": {
+     "en": "Standardise all time handling on UTC",
+     "ru": "Стандартизировать всё время на UTC"
+    },
+    "effects": [
+     {
+      "set": "app.timezone",
+      "value": "utc"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m100",
+  "slug": "epilogue",
+  "act": 12,
+  "order": 100,
+  "kind": "epilogue",
+  "title": {
+   "en": "Living production",
+   "ru": "Живой продакшен"
+  },
+  "summary": {
+   "en": "The build is done. Production never is — welcome to steady state.",
+   "ru": "Стройка окончена. Продакшен — никогда. Добро пожаловать в рабочий режим."
+  },
+  "prerequisites": [
+   "m099"
+  ],
+  "learning": [
+   "obs.slo",
+   "perf.scaling"
+  ],
+  "trigger": {
+   "id": "m100-t",
+   "from": "nika",
+   "subject": {
+    "en": "We did it",
+    "ru": "Мы сделали это"
+   },
+   "body": {
+    "en": "Look how far we came: from a single ugly default page on one rented box to a global, observable, secure, multi-region production system serving millions. You understand every component and every trade-off now. Production is never 'finished' — but it's healthy, and it's yours. From here, it lives: new incidents will come, and you'll handle them. Thank you.",
+    "ru": "Посмотри, как далеко мы зашли: от одной уродливой дефолтной страницы на арендованной машине до глобальной, наблюдаемой, безопасной, мульти-региональной продакшен-системы на миллионы. Ты понимаешь каждый компонент и каждый компромисс. Продакшен никогда не «готов» — но он здоров, и он твой. Дальше он живёт: придут новые инциденты, и ты с ними справишься. Спасибо."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Reach a healthy steady state",
+     "ru": "Достичь здорового рабочего режима"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "m.availability",
+       "gte": 0.99
+      },
+      {
+       "fact": "vulns",
+       "lte": 1
+      }
+     ]
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "The campaign is complete. Living production begins.",
+     "ru": "Кампания завершена. Начинается живой продакшен."
+    },
+    "effects": [
+     {
+      "users": 0
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "You've built, broken and scaled a real production system end to end. Production is a living thing: it keeps running, keeps changing, and keeps surprising you — which is exactly the job.",
+    "ru": "Вы построили, сломали и отмасштабировали реальную продакшен-систему от начала до конца. Продакшен — живое существо: он продолжает работать, меняться и удивлять — в этом и есть работа."
+   },
+   "whyNow": {
+    "en": "The campaign ends; the understanding stays. You can now explain how the web really works.",
+    "ru": "Кампания заканчивается; понимание остаётся. Теперь вы можете объяснить, как на самом деле работает веб."
+   },
+   "limits": {
+    "en": "In Living Production mode, new incidents keep arriving — the system is yours to keep healthy.",
+    "ru": "В режиме Living Production новые инциденты продолжают приходить — система ваша, держите её здоровой."
+   },
+   "article": "obs.slo"
+  },
+  "next": null,
+  "dialogue": [
+   {
+    "id": "d",
+    "npc": "nika",
+    "text": {
+     "en": "Ready for whatever production throws next?",
+     "ru": "Готов к тому, что подкинет продакшен дальше?"
+    },
+    "choices": [
+     {
+      "id": "c1",
+      "text": {
+       "en": "Always. Build it, break it, scale it.",
+       "ru": "Всегда. Build it, break it, scale it."
+      },
+      "reply": {
+       "en": "That's the whole job. Onward.",
+       "ru": "В этом вся работа. Вперёд."
+      }
+     }
+    ]
+   }
+  ],
+  "achievements": [
+   {
+    "id": "epilogue",
+    "when": {
+     "fact": "campaignFinished",
+     "truthy": true
+    }
+   }
+  ],
+  "rewards": {
+   "cash": 1000
+  },
+  "checkpoint": true
+ }
+]

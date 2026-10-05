@@ -1,0 +1,1194 @@
+[
+ {
+  "id": "m035",
+  "slug": "slow-checkout",
+  "act": 6,
+  "order": 35,
+  "kind": "incident",
+  "title": {
+   "en": "Checkout hangs for 8 seconds",
+   "ru": "Оформление висит 8 секунд"
+  },
+  "summary": {
+   "en": "Sending email and invoices inside the request makes checkout slow.",
+   "ru": "Отправка письма и счетов внутри запроса делает оформление медленным."
+  },
+  "prerequisites": [
+   "m034"
+  ],
+  "learning": [
+   "async.queue",
+   "dist.providers"
+  ],
+  "trigger": {
+   "id": "m035-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Checkout feels broken",
+    "ru": "Оформление будто сломано"
+   },
+   "body": {
+    "en": "People click 'Pay' and the page just spins for ages — some give up and try again. Orders do go through eventually. It got worse after Lev added the PDF invoice and confirmation email.",
+    "ru": "Люди жмут «Оплатить», и страница крутится целую вечность — кто-то сдаётся и жмёт снова. Заказы в итоге проходят. Стало хуже после того, как Лёва добавил PDF-счёт и письмо-подтверждение."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Identify the slow synchronous work",
+     "ru": "Найти медленную синхронную работу"
+    },
+    "check": {
+     "fact": "mission.hypothesis",
+     "eq": "h1"
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You've found the work that should move off the request path.",
+     "ru": "Вы нашли работу, которую нужно убрать с пути запроса."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A trace breaks a request into timed spans. Here checkout waits on a 1.2 s PDF render and a mail API call — work the user doesn't need before seeing 'order placed'.",
+    "ru": "Трасса разбивает запрос на спаны со временем. Здесь оформление ждёт рендер PDF 1,2 с и вызов почтового API — работу, которая пользователю не нужна до «заказ оформлен»."
+   },
+   "whyNow": {
+    "en": "Checkout is your money path; its latency directly costs sales.",
+    "ru": "Оформление — ваш денежный путь; его задержка напрямую стоит продаж."
+   },
+   "limits": {
+    "en": "Some work must be synchronous (charging the card); the rest can wait.",
+    "ru": "Часть работы обязана быть синхронной (списание карты); остальное может подождать."
+   },
+   "article": "async.queue"
+  },
+  "next": "m036",
+  "unlocks": {
+   "components": [
+    "payment",
+    "mail"
+   ]
+  },
+  "setup": [
+   {
+    "push": "tables",
+    "value": {
+     "name": "orders",
+     "rows": 50000,
+     "rowKb": 1,
+     "columns": [
+      {
+       "name": "id",
+       "type": "bigint",
+       "pk": true
+      },
+      {
+       "name": "user_id",
+       "type": "bigint",
+       "fk": "users.id"
+      },
+      {
+       "name": "total_cents",
+       "type": "int"
+      },
+      {
+       "name": "status",
+       "type": "varchar"
+      },
+      {
+       "name": "created_at",
+       "type": "datetime"
+      }
+     ],
+     "indexes": []
+    }
+   },
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "checkout",
+     "method": "POST",
+     "path": "/checkout",
+     "target": "backend",
+     "weight": 4,
+     "cpuMs": 20,
+     "responseKb": 2,
+     "auth": "user",
+     "product": {
+      "en": "A user places an order",
+      "ru": "Пользователь оформляет заказ"
+     },
+     "queries": [
+      {
+       "id": "ord_ins",
+       "table": "orders",
+       "op": "insert"
+      },
+      {
+       "id": "stock_upd",
+       "table": "products",
+       "op": "update",
+       "where": [
+        "id"
+       ],
+       "match": "one"
+      }
+     ],
+     "handler": "CheckoutController@store",
+     "writes": true,
+     "jobs": [
+      {
+       "id": "orderEmail",
+       "label": {
+        "en": "Order confirmation email",
+        "ru": "Письмо о заказе"
+       },
+       "cpuMs": 40,
+       "ioMs": 0,
+       "external": "mail",
+       "asyncSetting": "asyncEmail"
+      },
+      {
+       "id": "invoice",
+       "label": {
+        "en": "PDF invoice",
+        "ru": "PDF-счёт"
+       },
+       "cpuMs": 1200,
+       "ioMs": 0,
+       "asyncSetting": "asyncInvoice"
+      }
+     ],
+     "external": [
+      {
+       "provider": "payment",
+       "latencyMs": 400
+      }
+     ]
+    }
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 140
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Checkout latency is several seconds.",
+     "ru": "Задержка оформления — несколько секунд."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-trace",
+    "app": "traces",
+    "hint": {
+     "en": "Trace a checkout request",
+     "ru": "Трассировать запрос оформления"
+    },
+    "text": {
+     "en": "Most of the time is spent generating a PDF and calling the mail provider — synchronously.",
+     "ru": "Большая часть времени уходит на генерацию PDF и вызов почтового провайдера — синхронно."
+    },
+    "match": {
+     "kind": "request",
+     "key": "checkout"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Slow non-essential work runs inside the request",
+     "ru": "Медленная необязательная работа внутри запроса"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Exactly. The invoice and email don't need to block the user.",
+     "ru": "Именно. Счёт и письмо не должны блокировать пользователя."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The database is the bottleneck",
+     "ru": "Узкое место — база"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "The DB write is fast; the time is in the PDF and email.",
+     "ru": "Запись в БД быстрая; время в PDF и письме."
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m036",
+  "slug": "queue",
+  "act": 6,
+  "order": 36,
+  "kind": "build",
+  "title": {
+   "en": "Add a queue",
+   "ru": "Добавить очередь"
+  },
+  "summary": {
+   "en": "Move the slow work into a background queue.",
+   "ru": "Вынести медленную работу в фоновую очередь."
+  },
+  "prerequisites": [
+   "m035"
+  ],
+  "learning": [
+   "async.queue",
+   "async.worker"
+  ],
+  "trigger": {
+   "id": "m036-t",
+   "from": "lev",
+   "subject": {
+    "en": "Let's make it async",
+    "ru": "Давай сделаем асинхронно"
+   },
+   "body": {
+    "en": "Plan: add a Queue and a Worker. The checkout handler pushes 'send email' and 'make invoice' jobs to the queue and returns immediately; the worker does them in the background. Wire it up and switch those two to async.",
+    "ru": "План: добавить Queue и Worker. Обработчик оформления кладёт задачи «отправить письмо» и «сделать счёт» в очередь и сразу возвращает ответ; воркер делает их в фоне. Собери схему и переключи эти две на async."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A queue and a worker exist and are connected",
+     "ru": "Очередь и воркер существуют и соединены"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "role.queue",
+       "gte": 1
+      },
+      {
+       "fact": "role.worker",
+       "gte": 1
+      },
+      {
+       "fact": "edgeRole.backend>queue",
+       "truthy": true
+      },
+      {
+       "fact": "edgeRole.queue>worker",
+       "truthy": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Email and invoice run asynchronously",
+     "ru": "Письмо и счёт идут асинхронно"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "app.asyncEmail",
+       "truthy": true
+      },
+      {
+       "fact": "app.asyncInvoice",
+       "truthy": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "Checkout is fast again",
+     "ru": "Оформление снова быстрое"
+    },
+    "check": {
+     "fact": "ep.checkout.p95",
+     "lt": 900
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "ep.checkout.p95",
+     "lt": 900
+    },
+    "text": {
+     "en": "Checkout returns fast; the rest happens in the background.",
+     "ru": "Оформление отвечает быстро; остальное в фоне."
+    },
+    "effects": [
+     {
+      "users": 400
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A queue holds jobs the backend pushes; a worker processes them later. The user's request returns as soon as the essential work (charge + save order) is done.",
+    "ru": "Очередь хранит задачи, которые кладёт бэкенд; воркер обрабатывает их позже. Запрос пользователя возвращается, как только сделана обязательная работа (списание + сохранение заказа)."
+   },
+   "whyNow": {
+    "en": "This is how you keep user-facing requests fast while still doing slow work.",
+    "ru": "Так вы держите пользовательские запросы быстрыми, продолжая делать медленную работу."
+   },
+   "limits": {
+    "en": "Async means the result isn't ready when the response returns — the email arrives a moment later.",
+    "ru": "Асинхронность значит, что результат не готов к ответу — письмо придёт чуть позже."
+   },
+   "article": "async.queue"
+  },
+  "next": "m037",
+  "unlocks": {
+   "apps": [
+    "queue"
+   ],
+   "components": [
+    "queue",
+    "worker"
+   ],
+   "settings": [
+    "asyncEmail",
+    "asyncInvoice"
+   ]
+  },
+  "checkpoint": true
+ },
+ {
+  "id": "m037",
+  "slug": "workers",
+  "act": 6,
+  "order": 37,
+  "kind": "build",
+  "title": {
+   "en": "Scale the workers",
+   "ru": "Масштабировать воркеров"
+  },
+  "summary": {
+   "en": "One worker can't keep up with order volume.",
+   "ru": "Один воркер не успевает за объёмом заказов."
+  },
+  "prerequisites": [
+   "m036"
+  ],
+  "learning": [
+   "async.worker",
+   "async.backlog"
+  ],
+  "trigger": {
+   "id": "m037-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Confirmation emails arrive hours late",
+    "ru": "Письма приходят с опозданием на часы"
+   },
+   "body": {
+    "en": "Orders go through instantly now, but the confirmation email sometimes arrives two hours later. Customers think the order failed and email us. Is the background stuff falling behind?",
+    "ru": "Заказы проходят мгновенно, но письмо-подтверждение иногда приходит через два часа. Клиенты думают, что заказ не прошёл, и пишут нам. Фоновые задачи отстают?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "The backlog stays small",
+     "ru": "Бэклог остаётся малым"
+    },
+    "check": {
+     "fact": "queue.any.backlog",
+     "lt": 500
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Jobs wait seconds, not hours",
+     "ru": "Задачи ждут секунды, не часы"
+    },
+    "check": {
+     "fact": "queue.maxWait",
+     "lt": 120
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "queue.any.backlog",
+     "lt": 500
+    },
+    "text": {
+     "en": "Enough worker throughput to keep up.",
+     "ru": "Достаточно пропускной способности воркеров."
+    },
+    "effects": [
+     {
+      "users": 200
+     },
+     {
+      "cash": -8
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Throughput = workers × concurrency × jobs/sec each. If jobs arrive faster than that, the backlog grows and waits get longer and longer.",
+    "ru": "Пропускная способность = воркеры × параллельность × задач/с. Если задачи приходят быстрее, бэклог растёт, а ожидание всё дольше."
+   },
+   "whyNow": {
+    "en": "Order volume outgrew a single worker; add capacity where the work actually is.",
+    "ru": "Объём заказов перерос одного воркера; добавьте мощность туда, где реально работа."
+   },
+   "limits": {
+    "en": "More workers compete for the same DB and providers — don't over-add.",
+    "ru": "Больше воркеров конкурируют за ту же БД и провайдеров — не перебарщивайте."
+   },
+   "article": "async.worker"
+  },
+  "next": "m038",
+  "setup": [
+   {
+    "set": "traffic.baseRps",
+    "value": 260
+   },
+   {
+    "set": "traffic.users",
+    "value": 120000
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "The job queue backlog keeps growing.",
+     "ru": "Бэклог очереди задач растёт."
+    },
+    "app": "queue"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-backlog",
+    "app": "queue",
+    "hint": {
+     "en": "Check the queue backlog and wait time",
+     "ru": "Проверить бэклог очереди и время ожидания"
+    },
+    "text": {
+     "en": "Jobs arrive faster than one worker can process them.",
+     "ru": "Задачи приходят быстрее, чем один воркер успевает."
+    },
+    "match": {
+     "kind": "queue",
+     "keyPrefix": "default"
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m038",
+  "slug": "backlog",
+  "act": 6,
+  "order": 38,
+  "kind": "incident",
+  "title": {
+   "en": "A newsletter buries the order emails",
+   "ru": "Рассылка хоронит письма о заказах"
+  },
+  "summary": {
+   "en": "A bulk job floods the queue and delays critical jobs.",
+   "ru": "Массовая задача заливает очередь и задерживает критичные."
+  },
+  "prerequisites": [
+   "m037"
+  ],
+  "learning": [
+   "async.backlog"
+  ],
+  "trigger": {
+   "id": "m038-t",
+   "from": "nika",
+   "subject": {
+    "en": "Order emails stopped again",
+    "ru": "Письма о заказах снова встали"
+   },
+   "body": {
+    "en": "Marketing fired off a 200,000-email newsletter and now order confirmations are stuck behind it in the same queue. The important, time-sensitive emails are waiting behind bulk marketing. Separate them?",
+    "ru": "Маркетинг запустил рассылку на 200 тысяч писем, и подтверждения заказов застряли за ней в той же очереди. Важные срочные письма ждут за массовым маркетингом. Разделим их?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Queues are separated",
+     "ru": "Очереди разделены"
+    },
+    "check": {
+     "fact": "app.queueSeparation",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Critical jobs don't wait for bulk",
+     "ru": "Критичные задачи не ждут массовые"
+    },
+    "check": {
+     "fact": "queue.maxWait",
+     "lt": 300
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.queueSeparation",
+     "truthy": true
+    },
+    "text": {
+     "en": "Critical jobs run on their own lane now.",
+     "ru": "Критичные задачи теперь на своей полосе."
+    },
+    "effects": [
+     {
+      "users": 100
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A single queue serves jobs in order, so a huge bulk batch delays everything behind it. Separate queues (and dedicated workers) isolate critical work from bulk.",
+    "ru": "Одна очередь обслуживает задачи по порядку, поэтому огромная массовая пачка задерживает всё за ней. Отдельные очереди (и выделенные воркеры) изолируют критичную работу от массовой."
+   },
+   "whyNow": {
+    "en": "Marketing and transactional email have different urgency; they shouldn't share a lane.",
+    "ru": "У маркетинговой и транзакционной почты разная срочность; им не место на одной полосе."
+   },
+   "limits": {
+    "en": "Prioritisation is a scheduling choice — decide what 'critical' means for you.",
+    "ru": "Приоритизация — это выбор планирования; решите, что «критично» для вас."
+   },
+   "article": "async.backlog"
+  },
+  "next": "m039",
+  "unlocks": {
+   "settings": [
+    "queueSeparation"
+   ]
+  },
+  "setup": [
+   {
+    "incident": {
+     "id": "bulk",
+     "kind": "bulkJobs",
+     "title": {
+      "en": "Marketing newsletter: 200k emails",
+      "ru": "Рассылка маркетинга: 200 тыс писем"
+     },
+     "params": {
+      "queue": "bulk",
+      "jobs": 200000
+     },
+     "startTick": 5,
+     "source": "mission",
+     "active": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Critical emails wait behind a huge bulk job.",
+     "ru": "Критичные письма ждут за огромной массовой задачей."
+    },
+    "app": "queue"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-mixed",
+    "app": "queue",
+    "hint": {
+     "en": "See both job types in one queue",
+     "ru": "Увидеть оба типа задач в одной очереди"
+    },
+    "text": {
+     "en": "Order confirmations sit behind 200k newsletter jobs.",
+     "ru": "Подтверждения заказов стоят за 200 тыс задач рассылки."
+    },
+    "match": {
+     "kind": "queue"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Critical and bulk jobs share one queue",
+     "ru": "Критичные и массовые задачи в одной очереди"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right — a big bulk batch starves the time-sensitive jobs.",
+     "ru": "Верно — большая массовая пачка морит срочные задачи."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The mail provider is down",
+     "ru": "Почтовый провайдер лежит"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "The provider is fine; the jobs are just stuck in line.",
+     "ru": "Провайдер в порядке; задачи просто стоят в очереди."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "sep",
+    "app": "queue",
+    "label": {
+     "en": "Split into critical and bulk queues with dedicated workers",
+     "ru": "Разделить на очереди critical и bulk с выделенными воркерами"
+    },
+    "effects": [
+     {
+      "set": "app.queueSeparation",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m039",
+  "slug": "retry",
+  "act": 6,
+  "order": 39,
+  "kind": "incident",
+  "title": {
+   "en": "The mail provider blips and jobs vanish",
+   "ru": "Почтовый провайдер моргнул, и задачи пропали"
+  },
+  "summary": {
+   "en": "Failed jobs are lost. Add retries with backoff and a dead-letter queue.",
+   "ru": "Упавшие задачи теряются. Добавить повторы с backoff и dead-letter."
+  },
+  "prerequisites": [
+   "m038"
+  ],
+  "learning": [
+   "async.retry",
+   "dist.circuitBreaker"
+  ],
+  "trigger": {
+   "id": "m039-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Some customers never get their email",
+    "ru": "Некоторые клиенты не получают письмо"
+   },
+   "body": {
+    "en": "The mail provider had a rough hour and a chunk of confirmation emails just... didn't send. No retry, no record. We only know because customers complained. Can we not lose jobs on a temporary failure?",
+    "ru": "У почтового провайдера был тяжёлый час, и часть писем-подтверждений просто... не отправилась. Ни повтора, ни записи. Мы знаем только из жалоб. Можно не терять задачи при временном сбое?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Retries use exponential backoff",
+     "ru": "Повторы с экспоненциальным backoff"
+    },
+    "check": {
+     "fact": "app.retryPolicy",
+     "eq": "exponential"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Failed jobs land in a dead-letter queue",
+     "ru": "Упавшие задачи попадают в dead-letter"
+    },
+    "check": {
+     "fact": "app.deadLetterQueue",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No emails are silently lost",
+     "ru": "Письма не теряются молча"
+    },
+    "check": {
+     "fact": "anomaly.lostEmails",
+     "lt": 5
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "app.retryPolicy",
+       "eq": "exponential"
+      },
+      {
+       "fact": "app.deadLetterQueue",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "Transient failures retry and survive; permanent ones are kept for review.",
+     "ru": "Временные сбои повторяются и выживают; постоянные хранятся для разбора."
+    },
+    "effects": [
+     {
+      "users": 150
+     }
+    ]
+   },
+   {
+    "id": "immediate",
+    "kind": "bad",
+    "when": {
+     "fact": "app.retryPolicy",
+     "eq": "immediate"
+    },
+    "text": {
+     "en": "Immediate infinite retries hammer the struggling provider and make it worse.",
+     "ru": "Мгновенные бесконечные повторы долбят страдающего провайдера и делают хуже."
+    },
+    "debt": 10,
+    "consequences": [
+     {
+      "id": "c-storm",
+      "delay": 2,
+      "when": {
+       "fact": "app.retryPolicy",
+       "eq": "immediate"
+      },
+      "effects": [],
+      "mail": {
+       "id": "c-storm-m",
+       "from": "mark",
+       "subject": {
+        "en": "Your retries caused a retry storm",
+        "ru": "Ваши повторы устроили шторм повторов"
+       },
+       "body": {
+        "en": "Immediate retries against the slow provider multiplied your outbound load and got you rate-limited. Use backoff.",
+        "ru": "Мгновенные повторы к медленному провайдеру умножили исходящую нагрузку и вас зарейтлимитили. Используйте backoff."
+       }
+      }
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Retry transient failures with growing delays (exponential backoff + jitter); after max attempts, park the job in a dead-letter queue instead of losing it or looping forever.",
+    "ru": "Повторяйте временные сбои с растущими задержками (экспоненциальный backoff + jitter); после лимита попыток паркуйте задачу в dead-letter, а не теряйте и не зацикливайте."
+   },
+   "whyNow": {
+    "en": "Dependencies fail briefly all the time; your jobs must survive a blip.",
+    "ru": "Зависимости постоянно кратко падают; ваши задачи должны переживать моргание."
+   },
+   "limits": {
+    "en": "Immediate retries against a struggling dependency make the outage worse (retry storm).",
+    "ru": "Мгновенные повторы к страдающей зависимости усугубляют аварию (шторм повторов)."
+   },
+   "article": "async.retry"
+  },
+  "next": "m040",
+  "unlocks": {
+   "settings": [
+    "retryPolicy",
+    "maxRetries",
+    "deadLetterQueue",
+    "providerTimeoutMs",
+    "retries",
+    "retryJitter",
+    "circuitBreaker",
+    "retryJitter"
+   ]
+  },
+  "setup": [
+   {
+    "incident": {
+     "id": "mailblip",
+     "kind": "providerSlow",
+     "title": {
+      "en": "Mail provider degraded",
+      "ru": "Почтовый провайдер деградировал"
+     },
+     "target": "mail",
+     "params": {
+      "latencyMs": 4000,
+      "errorRate": 0.35
+     },
+     "startTick": 6,
+     "endTick": 40,
+     "source": "mission",
+     "active": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Failed jobs disappear with no retry.",
+     "ru": "Упавшие задачи исчезают без повтора."
+    },
+    "app": "queue"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-fail",
+    "app": "logs",
+    "hint": {
+     "en": "Find the failed-job log lines",
+     "ru": "Найти строки о упавших задачах"
+    },
+    "text": {
+     "en": "Jobs fail once and are gone — no retry, no dead-letter record.",
+     "ru": "Задачи падают один раз и исчезают — ни повтора, ни dead-letter."
+    },
+    "match": {
+     "kind": "log",
+     "key": "JOB_FAILED"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Transient failures aren't retried and jobs are lost",
+     "ru": "Временные сбои не повторяются и задачи теряются"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. A brief provider blip shouldn't lose a job forever.",
+     "ru": "Верно. Краткий сбой провайдера не должен терять задачу навсегда."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "We should email customers to apologise",
+     "ru": "Надо извиниться письмом"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Treat the cause: retry transient failures safely.",
+     "ru": "Лечите причину: безопасно повторяйте временные сбои."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "retry",
+    "app": "queue",
+    "label": {
+     "en": "Enable exponential backoff with jitter and a dead-letter queue",
+     "ru": "Включить экспоненциальный backoff с jitter и dead-letter"
+    },
+    "effects": [
+     {
+      "set": "app.retryPolicy",
+      "value": "exponential"
+     },
+     {
+      "set": "app.maxRetries",
+      "value": 4
+     },
+     {
+      "set": "app.deadLetterQueue",
+      "value": true
+     },
+     {
+      "set": "app.retryJitter",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m040",
+  "slug": "idempotency",
+  "act": 6,
+  "order": 40,
+  "kind": "incident",
+  "title": {
+   "en": "Customers charged twice",
+   "ru": "Клиентов списали дважды"
+  },
+  "summary": {
+   "en": "Impatient double-clicks and job redelivery cause duplicate effects.",
+   "ru": "Нетерпеливые двойные клики и повторная доставка задач дают дубликаты."
+  },
+  "prerequisites": [
+   "m039"
+  ],
+  "learning": [
+   "async.idempotency"
+  ],
+  "trigger": {
+   "id": "m040-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Double charges and double emails",
+    "ru": "Двойные списания и двойные письма"
+   },
+   "body": {
+    "en": "Two problems. On flaky mobile, people tap 'Pay' twice and get charged twice. And since we added retries, some invoices generate twice. We need operations that are safe to repeat.",
+    "ru": "Две проблемы. На нестабильном мобильном люди жмут «Оплатить» дважды и платят дважды. И с тех пор как добавили повторы, часть счетов генерится дважды. Нужны операции, которые безопасно повторять."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Payments use an idempotency key",
+     "ru": "Платежи используют ключ идемпотентности"
+    },
+    "check": {
+     "fact": "app.paymentIdempotency",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Jobs are idempotent",
+     "ru": "Задачи идемпотентны"
+    },
+    "check": {
+     "fact": "app.jobIdempotency",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No double charges",
+     "ru": "Нет двойных списаний"
+    },
+    "check": {
+     "fact": "anomaly.doubleCharges",
+     "lt": 1
+    },
+    "sim": true
+   },
+   {
+    "id": "o4",
+    "text": {
+     "en": "No duplicate jobs",
+     "ru": "Нет двойных задач"
+    },
+    "check": {
+     "fact": "anomaly.duplicateJobs",
+     "lt": 1
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "app.paymentIdempotency",
+       "truthy": true
+      },
+      {
+       "fact": "app.jobIdempotency",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "Repeating an action now has the same effect as doing it once.",
+     "ru": "Повтор действия теперь даёт тот же эффект, что один раз."
+    },
+    "effects": [
+     {
+      "users": 300
+     },
+     {
+      "cash": 50
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "An idempotent operation has the same effect once or many times, by de-duplicating on a stable key (cart id, event id). Queues deliver at-least-once and users double-click — both demand it.",
+    "ru": "Идемпотентная операция даёт тот же эффект один или много раз за счёт дедупликации по стабильному ключу (id корзины, id события). Очереди доставляют «хотя бы раз», а пользователи кликают дважды — оба требуют этого."
+   },
+   "whyNow": {
+    "en": "Money and emails are things you must never do twice by accident.",
+    "ru": "Деньги и письма — то, что нельзя случайно сделать дважды."
+   },
+   "limits": {
+    "en": "A UNIQUE constraint on the key turns a duplicate into a harmless error.",
+    "ru": "UNIQUE по ключу превращает дубль в безобидную ошибку."
+   },
+   "article": "async.idempotency"
+  },
+  "next": "m041",
+  "unlocks": {
+   "settings": [
+    "jobIdempotency",
+    "paymentIdempotency"
+   ]
+  },
+  "setup": [
+   {
+    "resolveIncident": "mailblip"
+   },
+   {
+    "set": "endpoints[id=checkout].doubleSubmit",
+    "value": true
+   },
+   {
+    "set": "traffic.mobileShare",
+    "value": 0.6
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Duplicate charges and duplicate jobs appear.",
+     "ru": "Появляются двойные списания и двойные задачи."
+    },
+    "app": "logs"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-dup",
+    "app": "logs",
+    "hint": {
+     "en": "Find duplicate charge / duplicate job lines",
+     "ru": "Найти строки о двойных списаниях / задачах"
+    },
+    "text": {
+     "en": "The same cart is charged twice; the same job runs twice.",
+     "ru": "Одна корзина списана дважды; одна задача выполнена дважды."
+    },
+    "match": {
+     "kind": "log",
+     "key": "ANOMALY_DOUBLECHARGES"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Repeatable actions aren't idempotent",
+     "ru": "Повторяемые действия не идемпотентны"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. At-least-once delivery and double-clicks need idempotency keys.",
+     "ru": "Верно. Доставка «хотя бы раз» и двойные клики требуют ключей идемпотентности."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The payment provider is buggy",
+     "ru": "Платёжный провайдер глючит"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "The provider does what we ask — twice, because we ask twice.",
+     "ru": "Провайдер делает что просим — дважды, потому что мы просим дважды."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "idem",
+    "app": "queue",
+    "label": {
+     "en": "Make payments and jobs idempotent (dedupe by key)",
+     "ru": "Сделать платежи и задачи идемпотентными (дедуп по ключу)"
+    },
+    "effects": [
+     {
+      "set": "app.paymentIdempotency",
+      "value": true
+     },
+     {
+      "set": "app.jobIdempotency",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ }
+]

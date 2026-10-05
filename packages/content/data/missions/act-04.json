@@ -1,0 +1,906 @@
+[
+ {
+  "id": "m021",
+  "slug": "domain",
+  "act": 4,
+  "order": 21,
+  "kind": "build",
+  "title": {
+   "en": "Get a domain",
+   "ru": "Получить домен"
+  },
+  "summary": {
+   "en": "Replace the raw IP with a real domain name.",
+   "ru": "Заменить голый IP настоящим доменным именем."
+  },
+  "prerequisites": [
+   "m020"
+  ],
+  "learning": [
+   "net.dns"
+  ],
+  "trigger": {
+   "id": "m021-t",
+   "from": "nika",
+   "subject": {
+    "en": "People can't remember our IP",
+    "ru": "Люди не помнят наш IP"
+   },
+   "body": {
+    "en": "Telling customers to visit 203.0.113.10 is a bad look. I bought us a domain idea — register it in the DNS app and point it at our server with an A record.",
+    "ru": "Говорить клиентам заходить на 203.0.113.10 — так себе. Я придумала нам домен — зарегистрируй его в приложении DNS и направь на наш сервер A-записью."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A domain is set",
+     "ru": "Домен задан"
+    },
+    "check": {
+     "fact": "dns.domain",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "An A record points the apex at the server",
+     "ru": "A-запись указывает apex на сервер"
+    },
+    "check": {
+     "fact": "dns.@.A",
+     "eq": "203.0.113.10"
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "A www record exists",
+     "ru": "Есть запись www"
+    },
+    "check": {
+     "fact": "dns.www.A",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o4",
+    "text": {
+     "en": "The site loads by name",
+     "ru": "Сайт грузится по имени"
+    },
+    "check": {
+     "fact": "m.errorRate",
+     "lt": 0.02
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Your site has a real address.",
+     "ru": "У сайта настоящий адрес."
+    },
+    "effects": [
+     {
+      "users": 80
+     },
+     {
+      "cash": -12
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "DNS maps a name to an IP. An A record points your domain at the server's address; browsers look it up before connecting.",
+    "ru": "DNS сопоставляет имя с IP. A-запись указывает домен на адрес сервера; браузер ищет её перед подключением."
+   },
+   "whyNow": {
+    "en": "A memorable name is step one of looking like a real business.",
+    "ru": "Запоминающееся имя — первый шаг к виду настоящего бизнеса."
+   },
+   "limits": {
+    "en": "Requests don't flow through DNS; the browser just asks it where to go, then connects directly.",
+    "ru": "Запросы не идут через DNS; браузер лишь спрашивает, куда идти, и подключается напрямую."
+   },
+   "article": "net.dns"
+  },
+  "next": "m022",
+  "unlocks": {
+   "apps": [
+    "dns"
+   ],
+   "features": [
+    "domains"
+   ],
+   "commands": [
+    "dig"
+   ]
+  },
+  "checkpoint": true
+ },
+ {
+  "id": "m022",
+  "slug": "dns-records",
+  "act": 4,
+  "order": 22,
+  "kind": "build",
+  "title": {
+   "en": "DNS records beyond A",
+   "ru": "DNS-записи помимо A"
+  },
+  "summary": {
+   "en": "Set up www and mail/verification records.",
+   "ru": "Настроить www и записи почты/верификации."
+  },
+  "prerequisites": [
+   "m021"
+  ],
+  "learning": [
+   "net.dns"
+  ],
+  "trigger": {
+   "id": "m022-t",
+   "from": "nika",
+   "subject": {
+    "en": "Email and 'www' aren't working",
+    "ru": "Почта и «www» не работают"
+   },
+   "body": {
+    "en": "Two things: people typing www.<us> get nothing, and our mail provider says we need to 'verify the domain' with some TXT record. Can you sort the DNS?",
+    "ru": "Две вещи: кто вводит www.<нас> — ничего не получает, и почтовый провайдер говорит «подтвердите домен» какой-то TXT-записью. Разберёшься с DNS?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "www resolves",
+     "ru": "www резолвится"
+    },
+    "check": {
+     "fact": "dns.www.A",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "A TXT verification record exists",
+     "ru": "Есть TXT-запись верификации"
+    },
+    "check": {
+     "fact": "dns.@.TXT",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "DNS is fully set up.",
+     "ru": "DNS полностью настроен."
+    },
+    "effects": [
+     {
+      "users": 20
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Besides A records, CNAME aliases one name to another, MX points mail, and TXT holds verification strings. Each record type answers a different question about your domain.",
+    "ru": "Кроме A-записей, CNAME делает псевдоним имени, MX указывает почту, а TXT хранит строки верификации. Каждый тип записи отвечает на свой вопрос о домене."
+   },
+   "whyNow": {
+    "en": "Providers prove you own a domain by asking you to publish a record only you can set.",
+    "ru": "Провайдеры подтверждают владение доменом, прося опубликовать запись, которую можете поставить только вы."
+   },
+   "limits": {
+    "en": "A CNAME can't be used on the apex (@) — use an A record there.",
+    "ru": "CNAME нельзя использовать на apex (@) — там A-запись."
+   },
+   "article": "net.dns"
+  },
+  "next": "m023",
+  "ops": [
+   {
+    "id": "txt",
+    "app": "dns",
+    "label": {
+     "en": "Add the provider's TXT verification record",
+     "ru": "Добавить TXT-запись верификации провайдера"
+    },
+    "effects": [
+     {
+      "push": "dns.records",
+      "value": {
+       "id": "txt-verify",
+       "type": "TXT",
+       "name": "@",
+       "value": "prod-verify=ok",
+       "ttl": 3600
+      }
+     }
+    ],
+    "once": true
+   }
+  ]
+ },
+ {
+  "id": "m023",
+  "slug": "ttl",
+  "act": 4,
+  "order": 23,
+  "kind": "incident",
+  "title": {
+   "en": "Half the users hit the old server",
+   "ru": "Половина пользователей на старом сервере"
+  },
+  "summary": {
+   "en": "After an IP change, a high TTL leaves users stuck on a dead address.",
+   "ru": "После смены IP высокий TTL держит часть пользователей на мёртвом адресе."
+  },
+  "prerequisites": [
+   "m022"
+  ],
+  "learning": [
+   "net.ttl"
+  ],
+  "trigger": {
+   "id": "m023-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Works for some, broken for others",
+    "ru": "У кого работает, у кого нет"
+   },
+   "body": {
+    "en": "We moved to a new server and updated the DNS A record, but it's chaos — some people load fine, others get connection errors. Same link! It's slowly getting better on its own. What's going on?",
+    "ru": "Мы переехали на новый сервер и обновили A-запись, но хаос — у кого грузится, у кого ошибки соединения. Ссылка одна! Само понемногу налаживается. Что происходит?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Lower the TTL for faster future changes",
+     "ru": "Снизить TTL для быстрых будущих изменений"
+    },
+    "check": {
+     "fact": "dns.ttl.@.A",
+     "lte": 600
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Everyone reaches the new server",
+     "ru": "Все попадают на новый сервер"
+    },
+    "check": {
+     "fact": "m.errorRate",
+     "lt": 0.02
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "dns.ttl.@.A",
+     "lte": 600
+    },
+    "text": {
+     "en": "TTL lowered and caches drained — traffic lands on the new server.",
+     "ru": "TTL снижен, кэши истекли — трафик идёт на новый сервер."
+    },
+    "effects": [
+     {
+      "users": 20
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "TTL is how long a DNS answer may be cached. A 24-hour TTL means resolvers keep sending users to the old IP for up to a day after you change it.",
+    "ru": "TTL — сколько ответ DNS можно кэшировать. TTL в 24 часа значит, что резолверы шлют пользователей на старый IP ещё до суток после смены."
+   },
+   "whyNow": {
+    "en": "You just moved servers; the TTL decides how long the pain lasts.",
+    "ru": "Вы только что сменили сервер; TTL решает, как долго продлится боль."
+   },
+   "limits": {
+    "en": "Lower the TTL a day before a planned IP change, then raise it back.",
+    "ru": "Снизьте TTL за сутки до плановой смены IP, потом поднимите обратно."
+   },
+   "article": "net.ttl"
+  },
+  "next": "m024",
+  "setup": [
+   {
+    "set": "dns.records[name=@].ttl",
+    "value": 86400
+   },
+   {
+    "set": "nodes[id=web1].ip",
+    "value": "203.0.113.11"
+   },
+   {
+    "set": "nodes[id=web1].publicPorts",
+    "value": [
+     80,
+     22
+    ]
+   },
+   {
+    "set": "site.ip",
+    "value": "203.0.113.11"
+   },
+   {
+    "push": "dns.changes",
+    "value": {
+     "name": "@",
+     "type": "A",
+     "oldValue": "203.0.113.10",
+     "oldTtl": 86400,
+     "at": 0
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "A fraction of users still reach the old IP.",
+     "ru": "Часть пользователей всё ещё попадает на старый IP."
+    },
+    "app": "inspector"
+   },
+   {
+    "text": {
+     "en": "The share failing shrinks over time.",
+     "ru": "Доля с ошибками со временем уменьшается."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-ttl",
+    "app": "dns",
+    "hint": {
+     "en": "Check the A record's TTL and recent change",
+     "ru": "Проверить TTL A-записи и недавнюю смену"
+    },
+    "text": {
+     "en": "The record had a 24h TTL, so resolvers cache the old IP for up to a day.",
+     "ru": "У записи был TTL 24ч, поэтому резолверы кэшируют старый IP до суток."
+    },
+    "match": {
+     "kind": "dns",
+     "key": "@:A"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "A high TTL cached the old IP across resolvers",
+     "ru": "Высокий TTL закэшировал старый IP у резолверов"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Exactly. DNS answers are cached for the TTL; changes spread slowly.",
+     "ru": "Именно. Ответы DNS кэшируются на TTL; изменения расходятся медленно."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The new server is misconfigured",
+     "ru": "Новый сервер настроен неверно"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "The new server is fine; users reaching it work. The rest are on the old cached IP.",
+     "ru": "Новый сервер в порядке; кто на него попал — работает. Остальные на старом кэшированном IP."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "lowttl",
+    "app": "dns",
+    "label": {
+     "en": "Lower the A record TTL to 300s",
+     "ru": "Снизить TTL A-записи до 300с"
+    },
+    "effects": [
+     {
+      "set": "dns.records[name=@].ttl",
+      "value": 300
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "wait",
+    "app": "dns",
+    "label": {
+     "en": "Wait for resolver caches to expire",
+     "ru": "Подождать истечения кэшей резолверов"
+    },
+    "effects": [
+     {
+      "advance": 1440
+     }
+    ],
+    "once": true,
+    "when": {
+     "fact": "dns.ttl.@.A",
+     "lte": 600
+    }
+   }
+  ],
+  "achievements": [
+   {
+    "id": "it-was-dns",
+    "when": {
+     "fact": "completed.m023",
+     "truthy": true
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m024",
+  "slug": "https",
+  "act": 4,
+  "order": 24,
+  "kind": "security",
+  "title": {
+   "en": "Browsers say 'Not secure'",
+   "ru": "Браузеры пишут «Не защищено»"
+  },
+  "summary": {
+   "en": "Add HTTPS with TLS so logins aren't sent in the clear.",
+   "ru": "Добавить HTTPS с TLS, чтобы вход не шёл открытым текстом."
+  },
+  "prerequisites": [
+   "m023"
+  ],
+  "learning": [
+   "net.tls"
+  ],
+  "trigger": {
+   "id": "m024-t",
+   "from": "mark",
+   "subject": {
+    "en": "Passwords are flying in plaintext",
+    "ru": "Пароли летят открытым текстом"
+   },
+   "body": {
+    "en": "Your login form posts over plain HTTP. Anyone on the same Wi-Fi can read passwords. Browsers also now mark the site 'Not secure'. Get a TLS certificate and force HTTPS.",
+    "ru": "Ваша форма входа шлёт данные по обычному HTTP. Любой в той же Wi-Fi читает пароли. Браузеры ещё и помечают сайт «Не защищено». Получите TLS-сертификат и включите принудительный HTTPS."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "TLS is enabled with a trusted cert",
+     "ru": "TLS включён с доверенным сертификатом"
+    },
+    "check": {
+     "fact": "tls.issuer",
+     "eq": "letsencrypt"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "HTTP redirects to HTTPS",
+     "ru": "HTTP перенаправляет на HTTPS"
+    },
+    "check": {
+     "fact": "tls.redirect",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No plaintext-login vulnerability",
+     "ru": "Нет уязвимости входа по plaintext"
+    },
+    "check": {
+     "fact": "vuln.noHttps",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "tls.enabled",
+       "truthy": true
+      },
+      {
+       "fact": "tls.redirect",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "HTTPS everywhere; logins are encrypted.",
+     "ru": "HTTPS везде; вход зашифрован."
+    },
+    "effects": [
+     {
+      "users": 60
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "TLS encrypts the connection and proves the server's identity with a certificate. HTTPS is HTTP over TLS; redirecting HTTP→HTTPS makes it mandatory.",
+    "ru": "TLS шифрует соединение и подтверждает личность сервера сертификатом. HTTPS — это HTTP поверх TLS; редирект HTTP→HTTPS делает его обязательным."
+   },
+   "whyNow": {
+    "en": "You now accept passwords and run payments-adjacent flows; plaintext is unacceptable.",
+    "ru": "Вы принимаете пароли и ведёте процессы рядом с платежами; открытый текст недопустим."
+   },
+   "limits": {
+    "en": "Certificates expire (Let's Encrypt every 90 days) — automate renewal.",
+    "ru": "Сертификаты истекают (Let's Encrypt каждые 90 дней) — автоматизируйте обновление."
+   },
+   "article": "net.tls"
+  },
+  "next": "m025",
+  "unlocks": {
+   "apps": [
+    "network"
+   ],
+   "commands": [
+    "openssl"
+   ]
+  },
+  "symptoms": [
+   {
+    "text": {
+     "en": "The browser shows 'Not secure' on every page.",
+     "ru": "Браузер пишет «Не защищено» на каждой странице."
+    },
+    "app": "browser"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-tls",
+    "app": "network",
+    "hint": {
+     "en": "Check whether TLS is enabled",
+     "ru": "Проверить, включён ли TLS"
+    },
+    "text": {
+     "en": "Traffic is plain HTTP; there's no certificate.",
+     "ru": "Трафик — обычный HTTP; сертификата нет."
+    },
+    "match": {
+     "kind": "tls"
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m025",
+  "slug": "reverse-proxy",
+  "act": 4,
+  "order": 25,
+  "kind": "build",
+  "title": {
+   "en": "Harden the front door",
+   "ru": "Укрепить входную дверь"
+  },
+  "summary": {
+   "en": "Use the reverse proxy properly: HTTP/2, compression, hide the backend.",
+   "ru": "Правильно использовать reverse proxy: HTTP/2, сжатие, спрятать бэкенд."
+  },
+  "prerequisites": [
+   "m024"
+  ],
+  "learning": [
+   "net.reverseProxy"
+  ],
+  "trigger": {
+   "id": "m025-t",
+   "from": "lev",
+   "subject": {
+    "en": "The backend port is open to the world",
+    "ru": "Порт бэкенда открыт наружу"
+   },
+   "body": {
+    "en": "I noticed our backend is directly reachable from the internet on port 8000, bypassing Nginx entirely. People can hit it raw. Let's make Nginx the only front door and turn on HTTP/2 and gzip while we're there.",
+    "ru": "Заметил, что наш бэкенд напрямую доступен из интернета на порту 8000, минуя Nginx. На него можно стучаться напрямую. Давай сделаем Nginx единственной дверью и заодно включим HTTP/2 и gzip."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Enable gzip and HTTP/2 on the proxy",
+     "ru": "Включить gzip и HTTP/2 на прокси"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "node.nginx.gzip",
+       "truthy": true
+      },
+      {
+       "fact": "node.nginx.http2",
+       "truthy": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The backend is not publicly exposed",
+     "ru": "Бэкенд не открыт публично"
+    },
+    "check": {
+     "fact": "vuln.exposedBackend",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "vuln.exposedBackend",
+     "falsy": true
+    },
+    "text": {
+     "en": "Nginx is the single, efficient front door.",
+     "ru": "Nginx — единственная эффективная входная дверь."
+    },
+    "effects": [
+     {
+      "users": 20
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A reverse proxy handles TLS, compression and HTTP/2 for you and hides how many backends exist. Backends should only accept traffic from the proxy, never the internet.",
+    "ru": "Reverse proxy берёт на себя TLS, сжатие и HTTP/2 и скрывает число бэкендов. Бэкенды должны принимать трафик только от прокси, не из интернета."
+   },
+   "whyNow": {
+    "en": "With real users and TLS, the proxy is doing serious work — configure it on purpose.",
+    "ru": "С реальными пользователями и TLS прокси делает серьёзную работу — настройте его осознанно."
+   },
+   "limits": {
+    "en": "An exposed backend port skips every protection the proxy adds.",
+    "ru": "Открытый порт бэкенда минует всю защиту прокси."
+   },
+   "article": "net.reverseProxy"
+  },
+  "next": "m026",
+  "setup": [],
+  "symptoms": [
+   {
+    "text": {
+     "en": "The backend answers directly on :8000 from outside.",
+     "ru": "Бэкенд отвечает напрямую на :8000 снаружи."
+    },
+    "app": "security"
+   }
+  ],
+  "ops": [
+   {
+    "id": "closebe",
+    "app": "servers",
+    "label": {
+     "en": "Close the backend's public port",
+     "ru": "Закрыть публичный порт бэкенда"
+    },
+    "effects": [
+     {
+      "set": "flags.beClosed",
+      "value": true
+     }
+    ],
+    "once": true,
+    "when": {
+     "fact": "vuln.exposedBackend",
+     "truthy": true
+    }
+   }
+  ]
+ },
+ {
+  "id": "m026",
+  "slug": "object-storage",
+  "act": 4,
+  "order": 26,
+  "kind": "build",
+  "title": {
+   "en": "User avatars fill the disk",
+   "ru": "Аватарки заполняют диск"
+  },
+  "summary": {
+   "en": "Move uploaded files to object storage instead of the server disk.",
+   "ru": "Перенести загруженные файлы в object storage вместо диска сервера."
+  },
+  "prerequisites": [
+   "m025"
+  ],
+  "learning": [
+   "files.objectStorage"
+  ],
+  "trigger": {
+   "id": "m026-t",
+   "from": "lev",
+   "subject": {
+    "en": "We're running out of disk",
+    "ru": "Кончается диск"
+   },
+   "body": {
+    "en": "Avatar uploads are piling up in public/uploads on the server. Disk is 72% full and climbing. Also, when we add a second server later, uploads on one won't exist on the other. Let's use object storage.",
+    "ru": "Загрузки аватаров копятся в public/uploads на сервере. Диск заполнен на 72% и растёт. И ещё: когда позже добавим второй сервер, загрузки с одного не будут видны на другом. Давай использовать object storage."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Object storage exists and is connected",
+     "ru": "Object storage существует и подключён"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "role.storage",
+       "gte": 1
+      },
+      {
+       "fact": "edgeRole.backend>storage",
+       "truthy": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Uploads go to object storage",
+     "ru": "Загрузки идут в object storage"
+    },
+    "check": {
+     "fact": "app.uploadsTarget",
+     "eq": "object-storage"
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "Avatar upload works",
+     "ru": "Загрузка аватара работает"
+    },
+    "check": {
+     "fact": "ep.avatar.ok",
+     "truthy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.uploadsTarget",
+     "eq": "object-storage"
+    },
+    "text": {
+     "en": "Files live in object storage, off the server disk.",
+     "ru": "Файлы в object storage, не на диске сервера."
+    },
+    "effects": [
+     {
+      "users": 30
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Object storage keeps files as objects behind an HTTP API, shared and effectively unlimited, independent of any one server's disk.",
+    "ru": "Object storage хранит файлы объектами за HTTP API — общими и практически безграничными, независимо от диска любого сервера."
+   },
+   "whyNow": {
+    "en": "Server disks fill up and aren't shared; you'll soon have several servers that must see the same files.",
+    "ru": "Диски серверов заполняются и не общие; скоро у вас будет несколько серверов, которым нужны одни файлы."
+   },
+   "limits": {
+    "en": "Each file access is now a network call with its own latency.",
+    "ru": "Каждый доступ к файлу теперь сетевой вызов со своей задержкой."
+   },
+   "article": "files.objectStorage"
+  },
+  "next": "m027",
+  "unlocks": {
+   "components": [
+    "storage"
+   ],
+   "settings": [
+    "uploadsTarget"
+   ]
+  },
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "avatar",
+     "method": "POST",
+     "path": "/account/avatar",
+     "target": "backend",
+     "weight": 1,
+     "cpuMs": 12,
+     "responseKb": 1,
+     "auth": "user",
+     "product": {
+      "en": "A user uploads an avatar",
+      "ru": "Пользователь загружает аватар"
+     },
+     "queries": [],
+     "handler": "AvatarController@store",
+     "writes": true,
+     "upload": true
+    }
+   },
+   {
+    "set": "flags.diskUsedPct",
+    "value": 72
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Disk usage climbs with every upload.",
+     "ru": "Использование диска растёт с каждой загрузкой."
+    },
+    "app": "servers"
+   }
+  ],
+  "checkpoint": true
+ }
+]

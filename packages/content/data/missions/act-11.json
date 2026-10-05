@@ -1,0 +1,1481 @@
+[
+ {
+  "id": "m081",
+  "slug": "duplicate-webhook",
+  "act": 11,
+  "order": 81,
+  "kind": "incident",
+  "title": {
+   "en": "Double fulfillment from webhooks",
+   "ru": "Двойное исполнение из вебхуков"
+  },
+  "summary": {
+   "en": "The payment provider delivers webhooks more than once. Deduplicate them.",
+   "ru": "Платёжный провайдер доставляет вебхуки не раз. Дедуплицировать их."
+  },
+  "prerequisites": [
+   "m080"
+  ],
+  "learning": [
+   "dist.webhooks",
+   "async.idempotency"
+  ],
+  "trigger": {
+   "id": "m081-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Some orders ship twice",
+    "ru": "Часть заказов отгружается дважды"
+   },
+   "body": {
+    "en": "The payment provider sometimes sends the 'payment succeeded' webhook two or three times for one payment. We fulfill the order each time, so a few customers got two parcels. We need to handle the same event arriving more than once.",
+    "ru": "Платёжный провайдер иногда присылает вебхук «оплата прошла» два-три раза на один платёж. Мы исполняем заказ каждый раз, поэтому пара клиентов получила по две посылки. Нужно обрабатывать одно и то же событие, приходящее не раз."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Webhooks are idempotent",
+     "ru": "Вебхуки идемпотентны"
+    },
+    "check": {
+     "fact": "app.webhookIdempotency",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "No duplicate fulfillments",
+     "ru": "Нет двойных исполнений"
+    },
+    "check": {
+     "fact": "anomaly.duplicateFulfillments",
+     "lt": 1
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.webhookIdempotency",
+     "truthy": true
+    },
+    "text": {
+     "en": "Repeat deliveries are recognised and ignored.",
+     "ru": "Повторные доставки распознаются и игнорируются."
+    },
+    "effects": [
+     {
+      "users": 200
+     },
+     {
+      "cash": 60
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Providers deliver webhooks at-least-once and retry if you're slow. Deduplicate by event id (UNIQUE constraint) and acknowledge fast, processing in the background.",
+    "ru": "Провайдеры доставляют вебхуки «хотя бы раз» и повторяют, если вы медленны. Дедуплицируйте по id события (UNIQUE) и быстро подтверждайте, обрабатывая в фоне."
+   },
+   "whyNow": {
+    "en": "You now depend on an external system calling you back — its delivery guarantees are yours to handle.",
+    "ru": "Теперь вы зависите от внешней системы, которая вам перезванивает — её гарантии доставки обрабатывать вам."
+   },
+   "limits": {
+    "en": "A slow webhook handler makes the provider time out and retry, creating more duplicates.",
+    "ru": "Медленный обработчик вебхука заставляет провайдера таймаутить и повторять, создавая ещё дубли."
+   },
+   "article": "dist.webhooks"
+  },
+  "next": "m082",
+  "unlocks": {
+   "settings": [
+    "webhookIdempotency",
+    "webhookAsync"
+   ]
+  },
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "webhook",
+     "method": "POST",
+     "path": "/webhooks/payment",
+     "target": "backend",
+     "weight": 2,
+     "cpuMs": 15,
+     "responseKb": 1,
+     "auth": "none",
+     "product": {
+      "en": "The payment provider confirms a payment",
+      "ru": "Платёжный провайдер подтверждает оплату"
+     },
+     "queries": [
+      {
+       "id": "wh_ord",
+       "table": "orders",
+       "op": "update",
+       "where": [
+        "id"
+       ],
+       "match": "one"
+      }
+     ],
+     "handler": "WebhookController@payment",
+     "writes": true
+    }
+   },
+   {
+    "set": "traffic.users",
+    "value": 1000000
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "The same payment event is processed multiple times.",
+     "ru": "Одно событие оплаты обрабатывается несколько раз."
+    },
+    "app": "logs"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-dup",
+    "app": "logs",
+    "hint": {
+     "en": "Find the duplicate-webhook lines",
+     "ru": "Найти строки о двойных вебхуках"
+    },
+    "text": {
+     "en": "A payment event with the same id is processed again.",
+     "ru": "Событие оплаты с тем же id обрабатывается снова."
+    },
+    "match": {
+     "kind": "log",
+     "key": "ANOMALY_DUPLICATEFULFILLMENTS"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Webhooks are delivered at-least-once and we don't dedupe",
+     "ru": "Вебхуки доставляются «хотя бы раз», и мы не дедуплицируем"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Store processed event ids with a UNIQUE constraint and ignore repeats.",
+     "ru": "Верно. Храните id обработанных событий с UNIQUE и игнорируйте повторы."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The provider is broken",
+     "ru": "Провайдер сломан"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "At-least-once delivery is normal and documented; we must be idempotent.",
+     "ru": "Доставка «хотя бы раз» нормальна и задокументирована; мы должны быть идемпотентны."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "idem",
+    "app": "queue",
+    "label": {
+     "en": "Deduplicate webhooks by event id",
+     "ru": "Дедуплицировать вебхуки по id события"
+    },
+    "effects": [
+     {
+      "set": "app.webhookIdempotency",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   },
+   {
+    "id": "async",
+    "app": "queue",
+    "label": {
+     "en": "Acknowledge fast, process in the background",
+     "ru": "Быстро подтверждать, обрабатывать в фоне"
+    },
+    "effects": [
+     {
+      "set": "app.webhookAsync",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m082",
+  "slug": "eventual-consistency",
+  "act": 11,
+  "order": 82,
+  "kind": "incident",
+  "title": {
+   "en": "'I paid but it says pending'",
+   "ru": "«Я оплатил, а висит в ожидании»"
+  },
+  "summary": {
+   "en": "Reading a replica right after a write shows stale state. Read your writes.",
+   "ru": "Чтение реплики сразу после записи показывает старое. Читать свои записи."
+  },
+  "prerequisites": [
+   "m081"
+  ],
+  "learning": [
+   "dist.consistency",
+   "db.replica"
+  ],
+  "trigger": {
+   "id": "m082-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Order shows 'pending' right after payment",
+    "ru": "Заказ «в ожидании» сразу после оплаты"
+   },
+   "body": {
+    "en": "Customers pay, then immediately see their order as 'pending' — refreshing a few seconds later fixes it. We route reads to replicas, which lag behind the primary by a moment. Right after a user's own write, read from the primary.",
+    "ru": "Клиенты платят и сразу видят заказ как «в ожидании» — обновление через пару секунд чинит. Мы шлём чтения в реплики, которые на миг отстают от primary. Сразу после собственной записи читайте из primary."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Read-your-writes is enabled",
+     "ru": "Включён read-your-writes"
+    },
+    "check": {
+     "fact": "app.readRouting",
+     "eq": "read-your-writes"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Stale reads after a write stop",
+     "ru": "Устаревшие чтения после записи прекращаются"
+    },
+    "check": {
+     "fact": "anomaly.staleReads",
+     "lt": 1
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.readRouting",
+     "eq": "read-your-writes"
+    },
+    "text": {
+     "en": "Users always see their own latest change.",
+     "ru": "Пользователи всегда видят своё последнее изменение."
+    },
+    "effects": [
+     {
+      "users": 150
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Data copied to replicas isn't updated everywhere at once; they converge after a short lag. Eventual consistency is fine for most reads, but a user must see their own write — so route that one to the primary.",
+    "ru": "Данные, скопированные в реплики, не обновляются везде сразу; они сходятся после короткой задержки. Итоговая согласованность годится для большинства чтений, но пользователь должен видеть свою запись — направьте её на primary."
+   },
+   "whyNow": {
+    "en": "Replicas scaled reads, but introduced a window where copies disagree.",
+    "ru": "Реплики масштабировали чтение, но внесли окно, где копии расходятся."
+   },
+   "limits": {
+    "en": "Insisting every copy always matches (strong consistency) is slow and fragile across a network.",
+    "ru": "Требовать, чтобы все копии всегда совпадали (строгая согласованность), медленно и хрупко через сеть."
+   },
+   "article": "dist.consistency"
+  },
+  "next": "m083",
+  "symptoms": [
+   {
+    "text": {
+     "en": "A user doesn't see their own just-made change.",
+     "ru": "Пользователь не видит собственное только что сделанное изменение."
+    },
+    "app": "inspector"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-stale",
+    "app": "logs",
+    "hint": {
+     "en": "Find stale-read-after-write lines",
+     "ru": "Найти строки устаревшего чтения после записи"
+    },
+    "text": {
+     "en": "A read hits a replica that hasn't caught up yet.",
+     "ru": "Чтение попадает в реплику, которая ещё не догнала."
+    },
+    "match": {
+     "kind": "log",
+     "key": "ANOMALY_STALEREADS"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Replica lag causes read-after-write staleness",
+     "ru": "Задержка реплики даёт устаревшее чтение после записи"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Route the user's own read right after a write to the primary.",
+     "ru": "Верно. Направляйте собственное чтение пользователя сразу после записи на primary."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The payment failed",
+     "ru": "Платёж не прошёл"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Payment succeeded; the replica just hadn't caught up.",
+     "ru": "Платёж прошёл; реплика просто не догнала."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "ryw",
+    "app": "database",
+    "label": {
+     "en": "Enable read-your-writes routing",
+     "ru": "Включить маршрутизацию read-your-writes"
+    },
+    "effects": [
+     {
+      "set": "app.readRouting",
+      "value": "read-your-writes"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m083",
+  "slug": "split-services",
+  "act": 11,
+  "order": 83,
+  "kind": "build",
+  "title": {
+   "en": "Split off the payments service",
+   "ru": "Выделить сервис платежей"
+  },
+  "summary": {
+   "en": "Carve a service around clear data ownership.",
+   "ru": "Выделить сервис вокруг ясного владения данными."
+  },
+  "prerequisites": [
+   "m082"
+  ],
+  "learning": [
+   "dist.services"
+  ],
+  "trigger": {
+   "id": "m083-t",
+   "from": "lev",
+   "subject": {
+    "en": "The monolith is slowing us down",
+    "ru": "Монолит нас тормозит"
+   },
+   "body": {
+    "en": "Payments has different scaling and release needs from the rest. Let's extract it into its own service: add a backend running the 'payments' service, connect it, and route payment and webhook endpoints to it. Keep boundaries around data ownership.",
+    "ru": "У платежей другие нужды по масштабированию и релизам, чем у остального. Давай вынесем их в отдельный сервис: добавь бэкенд с сервисом «payments», подключи его и направь endpoint'ы платежей и вебхуков на него. Держи границы вокруг владения данными."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A dedicated payments service exists",
+     "ru": "Есть выделенный сервис платежей"
+    },
+    "check": {
+     "fact": "service.payments",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "There is more than one service",
+     "ru": "Сервисов больше одного"
+    },
+    "check": {
+     "fact": "services.count",
+     "gte": 2
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "The system still works",
+     "ru": "Система по-прежнему работает"
+    },
+    "check": {
+     "fact": "m.errorRate",
+     "lt": 0.05
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "service.payments",
+     "truthy": true
+    },
+    "text": {
+     "en": "Payments deploys and scales on its own now.",
+     "ru": "Платежи теперь деплоятся и масштабируются сами."
+    },
+    "effects": [
+     {
+      "users": 200
+     },
+     {
+      "cash": -15
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Splitting a monolith into services draws boundaries around data and responsibilities. A service owns its data; others ask through its API. Independent deploys and scaling follow — if the boundaries are right.",
+    "ru": "Разбиение монолита на сервисы проводит границы вокруг данных и ответственности. Сервис владеет своими данными; другие спрашивают через его API. Независимые деплой и масштабирование следуют — если границы верны."
+   },
+   "whyNow": {
+    "en": "Different parts now have different needs; separating them lets each evolve.",
+    "ru": "У разных частей теперь разные нужды; разделение даёт каждой развиваться."
+   },
+   "limits": {
+    "en": "Services add network calls and operational overhead — don't split without a reason.",
+    "ru": "Сервисы добавляют сетевые вызовы и операционные издержки — не дробите без причины."
+   },
+   "article": "dist.services"
+  },
+  "next": "m084",
+  "unlocks": {
+   "features": [
+    "services"
+   ]
+  },
+  "setup": [
+   {
+    "set": "traffic.baseRps",
+    "value": 2600
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m084",
+  "slug": "distributed-monolith",
+  "act": 11,
+  "order": 84,
+  "kind": "incident",
+  "title": {
+   "en": "A distributed monolith",
+   "ru": "Распределённый монолит"
+  },
+  "summary": {
+   "en": "Services sharing one database must deploy together. Untangle them.",
+   "ru": "Сервисы, делящие одну базу, деплоятся вместе. Распутать их."
+  },
+  "prerequisites": [
+   "m083"
+  ],
+  "learning": [
+   "dist.services"
+  ],
+  "trigger": {
+   "id": "m084-t",
+   "from": "lev",
+   "subject": {
+    "en": "We made it worse, honestly",
+    "ru": "Честно, мы сделали хуже"
+   },
+   "body": {
+    "en": "The payments service still reads and writes the main database's tables directly. So a schema change breaks both services, and we can't deploy them independently. We built a distributed monolith — all the overhead, none of the benefit. Give payments its own data ownership.",
+    "ru": "Сервис платежей всё ещё читает и пишет таблицы основной базы напрямую. Поэтому изменение схемы ломает оба сервиса, и деплоить независимо нельзя. Мы собрали распределённый монолит — все издержки, никакой выгоды. Дай платежам своё владение данными."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Services don't share a database",
+     "ru": "Сервисы не делят базу"
+    },
+    "check": {
+     "fact": "services.sharedDb",
+     "falsy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The system works",
+     "ru": "Система работает"
+    },
+    "check": {
+     "fact": "m.errorRate",
+     "lt": 0.05
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "services.sharedDb",
+     "falsy": true
+    },
+    "text": {
+     "en": "Clear data ownership — services can finally deploy on their own.",
+     "ru": "Ясное владение данными — сервисы наконец деплоятся сами."
+    },
+    "effects": [
+     {
+      "users": 150
+     }
+    ]
+   },
+   {
+    "id": "shared",
+    "kind": "bad",
+    "when": {
+     "fact": "services.sharedDb",
+     "truthy": true
+    },
+    "text": {
+     "en": "Still sharing the database — you kept the distributed monolith.",
+     "ru": "Всё ещё делите базу — вы оставили распределённый монолит."
+    },
+    "debt": 10
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "If services share a database, a schema change breaks all of them and they must deploy together — a distributed monolith with all the cost and none of the benefit. A service must own its data; others use its API.",
+    "ru": "Если сервисы делят базу, изменение схемы ломает их все, и они деплоятся вместе — распределённый монолит со всеми издержками и без выгоды. Сервис должен владеть своими данными; другие используют его API."
+   },
+   "whyNow": {
+    "en": "You split the service but not the data, which is the half that mattered.",
+    "ru": "Вы разделили сервис, но не данные — а именно это и было важно."
+   },
+   "limits": {
+    "en": "Good boundaries follow data ownership, not org charts or code size.",
+    "ru": "Хорошие границы следуют владению данными, а не оргструктуре и не размеру кода."
+   },
+   "article": "dist.services"
+  },
+  "next": "m085",
+  "symptoms": [
+   {
+    "text": {
+     "en": "Two services share one database and deploy together.",
+     "ru": "Два сервиса делят одну базу и деплоятся вместе."
+    },
+    "app": "architecture"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-shared",
+    "app": "architecture",
+    "hint": {
+     "en": "See both services wired to the same database",
+     "ru": "Увидеть оба сервиса, подключённые к одной базе"
+    },
+    "text": {
+     "en": "The payments service reaches into the main DB's tables.",
+     "ru": "Сервис платежей лезет в таблицы основной БД."
+    },
+    "match": {
+     "kind": "schema",
+     "keyPrefix": "orders"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Services sharing a database can't be independent",
+     "ru": "Сервисы, делящие базу, не могут быть независимыми"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Each service should own its data and talk via APIs.",
+     "ru": "Верно. Каждый сервис должен владеть своими данными и общаться через API."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Merge them back into one service",
+     "ru": "Слить их обратно в один сервис"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "That throws away the win; fix the boundary instead.",
+     "ru": "Это выбрасывает выгоду; почините границу."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "own",
+    "app": "architecture",
+    "label": {
+     "en": "Give payments its own database",
+     "ru": "Дать платежам свою базу"
+    },
+    "effects": [
+     {
+      "set": "flags.paymentsOwnsData",
+      "value": true
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m085",
+  "slug": "partial-outage",
+  "act": 11,
+  "order": 85,
+  "kind": "incident",
+  "title": {
+   "en": "Recommendations take down the whole page",
+   "ru": "Рекомендации роняют всю страницу"
+  },
+  "summary": {
+   "en": "One slow service fails every page. Degrade gracefully.",
+   "ru": "Один медленный сервис роняет каждую страницу. Деградировать мягко."
+  },
+  "prerequisites": [
+   "m084"
+  ],
+  "learning": [
+   "dist.partialFailure"
+  ],
+  "trigger": {
+   "id": "m085-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Product pages are totally down",
+    "ru": "Страницы товаров полностью лежат"
+   },
+   "body": {
+    "en": "The recommendations service crashed and now every product page returns an error — even though recommendations are just a sidebar. One non-critical service is taking down the whole page. Make the page survive without it.",
+    "ru": "Сервис рекомендаций упал, и теперь каждая страница товара отдаёт ошибку — хотя рекомендации это просто боковая панель. Один некритичный сервис роняет всю страницу. Сделай так, чтобы страница выживала без него."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Graceful degradation is enabled",
+     "ru": "Включена мягкая деградация"
+    },
+    "check": {
+     "fact": "app.fallbacks",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Product pages stay up without recommendations",
+     "ru": "Страницы товаров держатся без рекомендаций"
+    },
+    "check": {
+     "fact": "ep.product_page.errorRate",
+     "lt": 0.05
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.fallbacks",
+     "truthy": true
+    },
+    "text": {
+     "en": "Recommendations fail silently; the page still sells.",
+     "ru": "Рекомендации тихо отказывают; страница всё равно продаёт."
+    },
+    "effects": [
+     {
+      "users": 200
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "In a distributed system one service can fail while others are fine. Isolate non-critical dependencies with a timeout and a fallback so a sidebar outage doesn't fail the whole page.",
+    "ru": "В распределённой системе один сервис может упасть, пока другие в порядке. Изолируйте некритичные зависимости таймаутом и fallback, чтобы авария боковой панели не роняла всю страницу."
+   },
+   "whyNow": {
+    "en": "As you split into services, each call is a new way for the page to fail.",
+    "ru": "Когда вы дробите на сервисы, каждый вызов — новый способ для страницы упасть."
+   },
+   "limits": {
+    "en": "Deciding what's essential vs optional is a product call, not just technical.",
+    "ru": "Решение, что обязательно, а что опционально, — продуктовое, не только техническое."
+   },
+   "article": "dist.partialFailure"
+  },
+  "next": "m086",
+  "unlocks": {
+   "settings": [
+    "fallbacks",
+    "providerTimeoutMs"
+   ]
+  },
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "product_page",
+     "method": "GET",
+     "path": "/p/:id",
+     "target": "backend",
+     "weight": 6,
+     "cpuMs": 10,
+     "responseKb": 8,
+     "auth": "none",
+     "product": {
+      "en": "A user views a product page",
+      "ru": "Пользователь смотрит страницу товара"
+     },
+     "queries": [
+      {
+       "id": "pp",
+       "table": "products",
+       "op": "select",
+       "where": [
+        "id"
+       ],
+       "match": "one"
+      }
+     ],
+     "handler": "ProductController@show",
+     "calls": [
+      "recommendations"
+     ]
+    }
+   },
+   {
+    "incident": {
+     "id": "recsdown",
+     "kind": "serviceDown",
+     "title": {
+      "en": "Recommendations service down",
+      "ru": "Сервис рекомендаций упал"
+     },
+     "target": "recommendations",
+     "startTick": 5,
+     "endTick": 50,
+     "source": "mission",
+     "active": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Product pages fail entirely when one sub-service is down.",
+     "ru": "Страницы товаров падают полностью, когда один под-сервис лежит."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-cascade",
+    "app": "traces",
+    "hint": {
+     "en": "Trace a product page while recommendations is down",
+     "ru": "Трассировать страницу товара, пока рекомендации лежат"
+    },
+    "text": {
+     "en": "The page waits on and then fails with the recommendations call.",
+     "ru": "Страница ждёт и падает на вызове рекомендаций."
+    },
+    "match": {
+     "kind": "request",
+     "key": "product_page"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "A non-critical dependency isn't isolated",
+     "ru": "Некритичная зависимость не изолирована"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Set a timeout and a fallback so the page renders without recommendations.",
+     "ru": "Верно. Поставьте таймаут и fallback, чтобы страница рисовалась без рекомендаций."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Scale the recommendations service",
+     "ru": "Масштабировать рекомендации"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "It's down, not slow; the page must tolerate its absence.",
+     "ru": "Он лежит, не тормозит; страница должна переживать его отсутствие."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "fallback",
+    "app": "architecture",
+    "label": {
+     "en": "Add timeouts and graceful fallback for recommendations",
+     "ru": "Добавить таймауты и мягкий fallback для рекомендаций"
+    },
+    "effects": [
+     {
+      "set": "app.fallbacks",
+      "value": true
+     },
+     {
+      "set": "app.providerTimeoutMs",
+      "value": 800
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m086",
+  "slug": "circuit-breaker",
+  "act": 11,
+  "order": 86,
+  "kind": "incident",
+  "title": {
+   "en": "A retry storm",
+   "ru": "Шторм повторов"
+  },
+  "summary": {
+   "en": "Retries against a slow service amplify load. Add a circuit breaker.",
+   "ru": "Повторы к медленному сервису умножают нагрузку. Добавить circuit breaker."
+  },
+  "prerequisites": [
+   "m085"
+  ],
+  "learning": [
+   "dist.circuitBreaker",
+   "dist.timeouts"
+  ],
+  "trigger": {
+   "id": "m086-t",
+   "from": "lev",
+   "subject": {
+    "en": "Our retries are making it worse",
+    "ru": "Наши повторы делают хуже"
+   },
+   "body": {
+    "en": "The payment provider got slow, so every layer retries — client, service, worker — and we're now sending them several times the traffic, which keeps them down. We need a circuit breaker to stop hammering a struggling dependency, plus sane timeouts and jitter.",
+    "ru": "Платёжный провайдер замедлился, и каждый слой повторяет — клиент, сервис, воркер — и мы шлём им в несколько раз больше трафика, из-за чего они не встают. Нужен circuit breaker, чтобы перестать долбить страдающую зависимость, плюс разумные таймауты и jitter."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A circuit breaker is enabled",
+     "ru": "Circuit breaker включён"
+    },
+    "check": {
+     "fact": "app.circuitBreaker",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Retry amplification is controlled",
+     "ru": "Усиление повторов под контролем"
+    },
+    "check": {
+     "fact": "m.amplification",
+     "lt": 3
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.circuitBreaker",
+     "truthy": true
+    },
+    "text": {
+     "en": "The breaker sheds load so the provider can recover.",
+     "ru": "Breaker сбрасывает нагрузку, чтобы провайдер восстановился."
+    },
+    "effects": [
+     {
+      "users": 200
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Retries help transient errors but, stacked across layers, multiply load and turn a blip into an outage. A circuit breaker trips after repeated failures and fails fast, shedding load so the dependency recovers.",
+    "ru": "Повторы помогают при временных ошибках, но, сложенные по слоям, умножают нагрузку и превращают сбой в аварию. Circuit breaker размыкается после серии ошибок и быстро отказывает, сбрасывая нагрузку, чтобы зависимость восстановилась."
+   },
+   "whyNow": {
+    "en": "With many services retrying each other, amplification is a real failure mode.",
+    "ru": "С множеством сервисов, повторяющих друг к другу, усиление — реальный вид отказа."
+   },
+   "limits": {
+    "en": "A breaker also fails some requests that might have worked — a deliberate trade-off.",
+    "ru": "Breaker также роняет часть запросов, которые могли бы пройти — осознанный компромисс."
+   },
+   "article": "dist.circuitBreaker"
+  },
+  "next": "m087",
+  "unlocks": {
+   "settings": [
+    "retries",
+    "retryJitter",
+    "circuitBreaker"
+   ]
+  },
+  "setup": [
+   {
+    "resolveIncident": "recsdown"
+   },
+   {
+    "merge": "app",
+    "value": {
+     "retries": 3,
+     "circuitBreaker": false
+    }
+   },
+   {
+    "set": "flags.retryLayers",
+    "value": 3
+   },
+   {
+    "incident": {
+     "id": "payslow",
+     "kind": "providerSlow",
+     "title": {
+      "en": "Payment provider degraded",
+      "ru": "Платёжный провайдер деградировал"
+     },
+     "target": "payment",
+     "params": {
+      "latencyMs": 5000,
+      "errorRate": 0.4
+     },
+     "startTick": 5,
+     "endTick": 48,
+     "source": "mission",
+     "active": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Outbound load to the provider multiplies during the slowdown.",
+     "ru": "Исходящая нагрузка на провайдера умножается во время замедления."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-ampl",
+    "app": "monitoring",
+    "hint": {
+     "en": "See the retry amplification",
+     "ru": "Увидеть усиление повторов"
+    },
+    "text": {
+     "en": "Stacked retries multiply the load on the failing dependency.",
+     "ru": "Сложенные повторы умножают нагрузку на падающую зависимость."
+    },
+    "match": {
+     "kind": "metric",
+     "key": "amplification"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Stacked retries amplify load into a storm",
+     "ru": "Сложенные повторы раздувают нагрузку в шторм"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. A circuit breaker fails fast and lets the dependency recover.",
+     "ru": "Верно. Circuit breaker быстро отказывает и даёт зависимости восстановиться."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Retry even harder",
+     "ru": "Повторять ещё сильнее"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "More retries make the storm worse, not better.",
+     "ru": "Больше повторов усугубляют шторм, а не чинят."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "breaker",
+    "app": "architecture",
+    "label": {
+     "en": "Add a circuit breaker and backoff with jitter",
+     "ru": "Добавить circuit breaker и backoff с jitter"
+    },
+    "effects": [
+     {
+      "set": "app.circuitBreaker",
+      "value": true
+     },
+     {
+      "set": "app.retryJitter",
+      "value": true
+     },
+     {
+      "set": "app.retries",
+      "value": 2
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m087",
+  "slug": "service-contract",
+  "act": 11,
+  "order": 87,
+  "kind": "build",
+  "title": {
+   "en": "Contracts between services",
+   "ru": "Контракты между сервисами"
+  },
+  "summary": {
+   "en": "A service changed its response and broke a caller. Add contract tests.",
+   "ru": "Сервис сменил ответ и сломал вызывающего. Добавить контрактные тесты."
+  },
+  "prerequisites": [
+   "m086"
+  ],
+  "learning": [
+   "api.contract",
+   "dist.services"
+  ],
+  "trigger": {
+   "id": "m087-t",
+   "from": "lev",
+   "subject": {
+    "en": "Services breaking each other now",
+    "ru": "Сервисы ломают друг друга"
+   },
+   "body": {
+    "en": "A PR changes the payments service's response shape, and the orders service depends on the old one. Internal APIs are contracts too. Turn on contract testing in CI so a breaking change between services fails the build.",
+    "ru": "PR меняет формат ответа сервиса платежей, а сервис заказов зависит от старого. Внутренние API — тоже контракты. Включи контрактное тестирование в CI, чтобы ломающее изменение между сервисами валило сборку."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Contract testing runs in CI",
+     "ru": "Контрактное тестирование в CI"
+    },
+    "check": {
+     "fact": "ci.contract",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The breaking PR is caught",
+     "ru": "Ломающий PR пойман"
+    },
+    "check": {
+     "fact": "pr.21.checks",
+     "eq": "failed"
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "ci.contract",
+     "truthy": true
+    },
+    "text": {
+     "en": "Services can't silently break each other anymore.",
+     "ru": "Сервисы больше не ломают друг друга молча."
+    },
+    "effects": [
+     {
+      "users": 100
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Internal APIs between services are contracts, just like public ones. Contract tests in CI check that a producer's change still satisfies its consumers, failing the build on a breaking change.",
+    "ru": "Внутренние API между сервисами — контракты, как и публичные. Контрактные тесты в CI проверяют, что изменение поставщика всё ещё устраивает потребителей, и валят сборку на ломающем изменении."
+   },
+   "whyNow": {
+    "en": "Now that services call each other, the same breaking-change pain applies inside your own system.",
+    "ru": "Теперь, когда сервисы зовут друг друга, та же боль ломающих изменений действует внутри вашей системы."
+   },
+   "limits": {
+    "en": "A contract that drifts from the real code is worse than none — keep it generated and checked.",
+    "ru": "Контракт, разошедшийся с кодом, хуже отсутствия — держите его генерируемым и проверяемым."
+   },
+   "article": "api.contract"
+  },
+  "next": "m088",
+  "setup": [
+   {
+    "resolveIncident": "payslow"
+   },
+   {
+    "push": "git.prs",
+    "value": {
+     "id": 21,
+     "title": "Payments: rename field",
+     "from": "pay/rename",
+     "to": "main",
+     "author": "lev",
+     "status": "open",
+     "checks": "passed",
+     "bugs": [
+      "svc-break"
+     ]
+    }
+   },
+   {
+    "addBug": {
+     "id": "svc-break",
+     "title": {
+      "en": "Payments response field renamed",
+      "ru": "Поле ответа платежей переименовано"
+     },
+     "endpoint": "checkout",
+     "errorRate": 0.2,
+     "logCode": "CONTRACT",
+     "logMessage": "orders service: unexpected payments response shape",
+     "version": 99,
+     "caughtBy": "contract",
+     "fixed": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "A service change would break a dependent service.",
+     "ru": "Изменение сервиса сломало бы зависимый сервис."
+    },
+    "app": "cicd"
+   }
+  ],
+  "ops": [
+   {
+    "id": "contract",
+    "app": "cicd",
+    "label": {
+     "en": "Enable contract testing in CI",
+     "ru": "Включить контрактное тестирование в CI"
+    },
+    "effects": [
+     {
+      "set": "ci.stages.contract",
+      "value": true
+     },
+     {
+      "set": "ci.tests[id=t-contract]",
+      "value": {
+       "id": "t-contract",
+       "covers": "contract",
+       "label": {
+        "en": "Payments↔orders contract",
+        "ru": "Контракт платежи↔заказы"
+       }
+      }
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m088",
+  "slug": "event-consistency",
+  "act": 11,
+  "order": 88,
+  "kind": "incident",
+  "title": {
+   "en": "Lost events after commit",
+   "ru": "Потерянные события после коммита"
+  },
+  "summary": {
+   "en": "An event published after the DB commit can be lost. Use an outbox.",
+   "ru": "Событие, опубликованное после коммита БД, может потеряться. Использовать outbox."
+  },
+  "prerequisites": [
+   "m087"
+  ],
+  "learning": [
+   "dist.outbox",
+   "dist.consistency"
+  ],
+  "trigger": {
+   "id": "m088-t",
+   "from": "lev",
+   "subject": {
+    "en": "Some orders never notify shipping",
+    "ru": "Часть заказов не уведомляет доставку"
+   },
+   "body": {
+    "en": "When an order is placed, we commit it to the DB and then publish an 'OrderCreated' event to the broker so the shipping service picks it up. But if the broker call fails after the commit, the order exists with no event — and never ships. Use a transactional outbox.",
+    "ru": "Когда оформляют заказ, мы коммитим его в БД и затем публикуем событие «OrderCreated» в брокер, чтобы его подхватил сервис доставки. Но если вызов брокера падает после коммита, заказ есть, а события нет — и он не отгружается. Используй transactional outbox."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A transactional outbox is enabled",
+     "ru": "Transactional outbox включён"
+    },
+    "check": {
+     "fact": "app.outbox",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "No lost events",
+     "ru": "Нет потерянных событий"
+    },
+    "check": {
+     "fact": "anomaly.lostEvents",
+     "lt": 1
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.outbox",
+     "truthy": true
+    },
+    "text": {
+     "en": "The event is committed with the data and published reliably.",
+     "ru": "Событие коммитится с данными и публикуется надёжно."
+    },
+    "effects": [
+     {
+      "users": 200
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Write the event into the same DB transaction as the change; a relay publishes it afterward. The commit and the event can never disagree, even if the process dies in between.",
+    "ru": "Записывайте событие в ту же транзакцию БД, что и изменение; отдельный процесс публикует его потом. Коммит и событие не разойдутся, даже если процесс умрёт между ними."
+   },
+   "whyNow": {
+    "en": "Event-driven services need the data change and its event to be atomic.",
+    "ru": "Событийным сервисам нужно, чтобы изменение данных и его событие были атомарны."
+   },
+   "limits": {
+    "en": "The outbox adds a relay and a little latency before the event is visible.",
+    "ru": "Outbox добавляет процесс-ретранслятор и небольшую задержку до появления события."
+   },
+   "article": "dist.outbox"
+  },
+  "next": "m089",
+  "unlocks": {
+   "settings": [
+    "outbox"
+   ]
+  },
+  "setup": [
+   {
+    "flag": "eventsViaBroker",
+    "value": true
+   },
+   {
+    "merge": "app",
+    "value": {
+     "outbox": false
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Orders exist in the DB with no matching event.",
+     "ru": "Заказы есть в БД без соответствующего события."
+    },
+    "app": "logs"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-lost",
+    "app": "logs",
+    "hint": {
+     "en": "Find the lost-event lines",
+     "ru": "Найти строки о потерянных событиях"
+    },
+    "text": {
+     "en": "The DB committed but the event wasn't published.",
+     "ru": "БД закоммитила, но событие не опубликовано."
+    },
+    "match": {
+     "kind": "log",
+     "key": "ANOMALY_LOSTEVENTS"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "The commit and the event can disagree",
+     "ru": "Коммит и событие могут разойтись"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Write the event in the same transaction; a relay publishes it after.",
+     "ru": "Верно. Пишите событие в ту же транзакцию; отдельный процесс публикует его потом."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Retry the broker call harder",
+     "ru": "Сильнее повторять вызов брокера"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "If the process dies after commit, there's nothing to retry — use an outbox.",
+     "ru": "Если процесс умрёт после коммита, повторять нечего — используйте outbox."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "outbox",
+    "app": "architecture",
+    "label": {
+     "en": "Enable the transactional outbox",
+     "ru": "Включить transactional outbox"
+    },
+    "effects": [
+     {
+      "set": "app.outbox",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ }
+]

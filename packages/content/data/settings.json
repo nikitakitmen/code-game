@@ -1,0 +1,390 @@
+[
+  {
+    "key": "dataSource", "area": "data", "type": "enum", "default": "json-file", "code": true, "knowledge": "db.basics",
+    "label": { "en": "Where product data lives", "ru": "Где хранятся данные о товарах" },
+    "help": { "en": "A JSON file on disk is fine for one person editing. A database handles concurrent reads and writes.", "ru": "JSON-файл на диске подходит, пока его правит один человек. БД справляется с одновременным чтением и записью." },
+    "options": [
+      { "value": "json-file", "label": { "en": "products.json on the server", "ru": "products.json на сервере" }, "code": "$products = json_decode(file_get_contents('products.json'), true);" },
+      { "value": "mysql", "label": { "en": "MySQL tables", "ru": "Таблицы MySQL" }, "code": "$products = DB::table('products')->where('category_id', $id)->get();" }
+    ]
+  },
+  {
+    "key": "inputValidation", "area": "api", "type": "bool", "default": false, "code": true, "knowledge": "api.statusCodes",
+    "label": { "en": "Validate input", "ru": "Валидировать входные данные" },
+    "help": { "en": "Reject malformed input with 422 instead of storing garbage.", "ru": "Отклонять некорректный ввод ответом 422, а не сохранять мусор." },
+    "options": [
+      { "value": false, "label": { "en": "Off", "ru": "Выключено" }, "code": "User::create($request->all());" },
+      { "value": true, "label": { "en": "On", "ru": "Включено" }, "code": "$data = $request->validate([\n  'email' => 'required|email|unique:users',\n  'password' => 'required|min:8',\n]);" }
+    ]
+  },
+  {
+    "key": "authErrors", "area": "auth", "type": "enum", "default": "specific", "code": true, "knowledge": "auth.authentication",
+    "label": { "en": "Login error message", "ru": "Сообщение об ошибке входа" },
+    "help": { "en": "Specific messages tell attackers which emails exist.", "ru": "Конкретные сообщения подсказывают атакующим, какие email существуют." },
+    "options": [
+      { "value": "specific", "label": { "en": "\"No user with this email\" / \"Wrong password\"", "ru": "«Нет такого email» / «Неверный пароль»" } },
+      { "value": "generic", "label": { "en": "\"Wrong email or password\"", "ru": "«Неверный email или пароль»" } }
+    ]
+  },
+  {
+    "key": "authMode", "area": "auth", "type": "enum", "default": "none", "code": true, "knowledge": "auth.session",
+    "label": { "en": "How the server remembers who you are", "ru": "Как сервер помнит, кто вы" },
+    "help": { "en": "HTTP is stateless: every request must carry proof of identity.", "ru": "HTTP не хранит состояние: каждый запрос должен нести подтверждение личности." },
+    "options": [
+      { "value": "none", "label": { "en": "It doesn't", "ru": "Никак" } },
+      { "value": "url-param", "label": { "en": "?user_id=42 in every link", "ru": "?user_id=42 в каждой ссылке" }, "note": { "en": "Anyone can change the number and become someone else.", "ru": "Любой может поменять число и стать другим пользователем." } },
+      { "value": "plain-cookie", "label": { "en": "Cookie user_id=42", "ru": "Cookie user_id=42" }, "note": { "en": "Cookies are editable in DevTools.", "ru": "Cookie редактируются в DevTools." } },
+      { "value": "session", "label": { "en": "Random session ID in a cookie + server-side session", "ru": "Случайный ID сессии в cookie + сессия на сервере" }, "code": "Set-Cookie: session=Xk3…9a; HttpOnly; Secure; SameSite=Lax" },
+      { "value": "jwt", "label": { "en": "Signed token (JWT)", "ru": "Подписанный токен (JWT)" }, "code": "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjQyfQ.…", "note": { "en": "Stateless, but hard to revoke before it expires.", "ru": "Без состояния, но его сложно отозвать до истечения." } }
+    ]
+  },
+  {
+    "key": "sessionStore", "area": "auth", "type": "enum", "default": "memory", "code": true, "knowledge": "scale.stateless",
+    "label": { "en": "Session storage", "ru": "Хранилище сессий" },
+    "help": { "en": "Where server-side sessions live. Local memory is invisible to other servers.", "ru": "Где живут серверные сессии. Локальная память не видна другим серверам." },
+    "options": [
+      { "value": "memory", "label": { "en": "Local memory / files of each server", "ru": "Локальная память / файлы каждого сервера" }, "code": "SESSION_DRIVER=file" },
+      { "value": "redis", "label": { "en": "Shared Redis", "ru": "Общий Redis" }, "code": "SESSION_DRIVER=redis" }
+    ]
+  },
+  {
+    "key": "adminRoleCheck", "area": "auth", "type": "bool", "default": false, "code": true, "knowledge": "auth.authorization",
+    "label": { "en": "Check role on admin actions", "ru": "Проверять роль в админ-действиях" },
+    "help": { "en": "Authentication says who you are. Authorization says what you may do.", "ru": "Аутентификация отвечает «кто ты». Авторизация — «что тебе можно»." },
+    "options": [
+      { "value": false, "label": { "en": "Any logged-in user", "ru": "Любой вошедший" }, "code": "Route::put('/admin/products/{id}', …)->middleware('auth');" },
+      { "value": true, "label": { "en": "Only role=admin", "ru": "Только role=admin" }, "code": "Route::put('/admin/products/{id}', …)->middleware(['auth', 'can:manage-catalog']);" }
+    ]
+  },
+  {
+    "key": "passwordStorage", "area": "security", "type": "enum", "default": "plaintext", "code": true, "knowledge": "sec.hashing",
+    "label": { "en": "Password storage", "ru": "Хранение паролей" },
+    "help": { "en": "Store a slow, salted hash — never the password itself.", "ru": "Храните медленный хеш с солью — никогда сам пароль." },
+    "options": [
+      { "value": "plaintext", "label": { "en": "Plain text", "ru": "Открытым текстом" }, "code": "'password' => $request->password" },
+      { "value": "md5", "label": { "en": "MD5", "ru": "MD5" }, "note": { "en": "Fast and unsalted: billions of guesses per second, rainbow tables.", "ru": "Быстрый и без соли: миллиарды попыток в секунду, радужные таблицы." }, "code": "'password' => md5($request->password)" },
+      { "value": "sha256", "label": { "en": "SHA-256 without salt", "ru": "SHA-256 без соли" }, "note": { "en": "Still fast, still the same hash for the same password.", "ru": "Всё ещё быстро, у одинаковых паролей одинаковый хеш." } },
+      { "value": "bcrypt", "label": { "en": "bcrypt (cost 12)", "ru": "bcrypt (cost 12)" }, "code": "'password' => Hash::make($request->password) // $2y$12$…", "note": { "en": "Salted and deliberately slow (~60 ms CPU per check).", "ru": "С солью и намеренно медленный (~60 мс CPU на проверку)." } },
+      { "value": "argon2id", "label": { "en": "Argon2id", "ru": "Argon2id" }, "note": { "en": "Memory-hard: expensive on GPUs too.", "ru": "Требует много памяти: дорого даже на GPU." } }
+    ]
+  },
+  {
+    "key": "cookieHttpOnly", "area": "security", "type": "bool", "default": false, "code": true, "knowledge": "auth.cookie",
+    "label": { "en": "HttpOnly + Secure session cookie", "ru": "Cookie сессии с HttpOnly + Secure" },
+    "help": { "en": "JavaScript can't read HttpOnly cookies, so XSS can't steal them directly.", "ru": "JavaScript не может прочитать HttpOnly cookie, поэтому XSS не украдёт её напрямую." }
+  },
+  {
+    "key": "loginRateLimit", "area": "security", "type": "bool", "default": false, "code": true, "knowledge": "sec.rateLimit",
+    "label": { "en": "Throttle login attempts", "ru": "Ограничивать попытки входа" },
+    "help": { "en": "e.g. 5 attempts per minute per IP and per account.", "ru": "Например, 5 попыток в минуту на IP и на аккаунт." },
+    "options": [
+      { "value": false, "label": { "en": "Off", "ru": "Выключено" } },
+      { "value": true, "label": { "en": "On", "ru": "Включено" }, "code": "RateLimiter::for('login', fn ($r) => Limit::perMinute(5)->by($r->email.$r->ip()));" }
+    ]
+  },
+  {
+    "key": "lockout", "area": "security", "type": "enum", "default": "none", "code": true, "knowledge": "sec.rateLimit",
+    "label": { "en": "After many failed logins", "ru": "После многих неудачных входов" },
+    "help": { "en": "Permanent lockouts let attackers lock real users out.", "ru": "Постоянная блокировка позволяет атакующим заблокировать настоящих пользователей." },
+    "options": [
+      { "value": "none", "label": { "en": "Nothing", "ru": "Ничего" } },
+      { "value": "backoff", "label": { "en": "Growing delay + CAPTCHA", "ru": "Растущая задержка + CAPTCHA" } },
+      { "value": "permanent", "label": { "en": "Lock the account until support unlocks it", "ru": "Блокировать аккаунт до разблокировки поддержкой" } }
+    ]
+  },
+  {
+    "key": "queryMode", "area": "security", "type": "enum", "default": "concat", "code": true, "knowledge": "sec.sqli",
+    "label": { "en": "How SQL is built", "ru": "Как строится SQL" },
+    "help": { "en": "Concatenating user input into SQL lets the input become code.", "ru": "Склейка пользовательского ввода с SQL позволяет вводу стать кодом." },
+    "options": [
+      { "value": "concat", "label": { "en": "String concatenation", "ru": "Склейка строк" }, "code": "DB::select(\"SELECT * FROM products WHERE name LIKE '%\" . $q . \"%'\");" },
+      { "value": "parameterized", "label": { "en": "Prepared statements / bindings", "ru": "Подготовленные запросы / bindings" }, "code": "DB::select('SELECT * FROM products WHERE name LIKE ?', ['%'.$q.'%']);" }
+    ]
+  },
+  {
+    "key": "outputEscaping", "area": "security", "type": "bool", "default": false, "code": true, "knowledge": "sec.xss",
+    "label": { "en": "Escape user content in HTML", "ru": "Экранировать пользовательский контент в HTML" },
+    "help": { "en": "<script> becomes &lt;script&gt; — text, not code.", "ru": "<script> превращается в &lt;script&gt; — текст, а не код." },
+    "options": [
+      { "value": false, "label": { "en": "Raw output", "ru": "Сырой вывод" }, "code": "{!! $review->text !!}" },
+      { "value": true, "label": { "en": "Escaped output", "ru": "Экранированный вывод" }, "code": "{{ $review->text }}" }
+    ]
+  },
+  {
+    "key": "csp", "area": "security", "type": "bool", "default": false, "code": true, "knowledge": "sec.xss",
+    "label": { "en": "Content-Security-Policy header", "ru": "Заголовок Content-Security-Policy" },
+    "help": { "en": "Tells the browser which scripts may run. Defense in depth against XSS.", "ru": "Говорит браузеру, какие скрипты можно запускать. Эшелонированная защита от XSS." }
+  },
+  {
+    "key": "csrfProtection", "area": "security", "type": "enum", "default": "none", "code": true, "knowledge": "sec.csrf",
+    "label": { "en": "CSRF protection", "ru": "Защита от CSRF" },
+    "help": { "en": "Browsers attach cookies to requests from any site unless told otherwise.", "ru": "Браузеры прикладывают cookie к запросам с любых сайтов, если им не запретить." },
+    "options": [
+      { "value": "none", "label": { "en": "None", "ru": "Нет" } },
+      { "value": "token", "label": { "en": "CSRF token in every form", "ru": "CSRF-токен в каждой форме" }, "code": "<input type=\"hidden\" name=\"_token\" value=\"{{ csrf_token() }}\">" },
+      { "value": "samesite", "label": { "en": "SameSite=Lax cookies", "ru": "Cookie SameSite=Lax" }, "code": "Set-Cookie: session=…; SameSite=Lax" }
+    ]
+  },
+  {
+    "key": "ownershipChecks", "area": "security", "type": "bool", "default": false, "code": true, "knowledge": "sec.idor",
+    "label": { "en": "Check object ownership", "ru": "Проверять владельца объекта" },
+    "help": { "en": "Being logged in doesn't mean order #1002 is yours.", "ru": "То, что вы вошли, не значит, что заказ #1002 ваш." },
+    "options": [
+      { "value": false, "label": { "en": "Off", "ru": "Выключено" }, "code": "return Order::findOrFail($id);" },
+      { "value": true, "label": { "en": "On", "ru": "Включено" }, "code": "$order = Order::findOrFail($id);\n$this->authorize('view', $order); // user_id must match" }
+    ]
+  },
+  {
+    "key": "uploadValidation", "area": "security", "type": "bool", "default": false, "code": true, "knowledge": "sec.upload",
+    "label": { "en": "Validate uploads", "ru": "Проверять загрузки" },
+    "help": { "en": "Check real file type (magic bytes), size, random names, store outside the web root.", "ru": "Проверять реальный тип файла (magic bytes), размер, случайные имена, хранить вне web root." },
+    "options": [
+      { "value": false, "label": { "en": "Save as is", "ru": "Сохранять как есть" }, "code": "$request->file('avatar')->move(public_path('uploads'), $request->file('avatar')->getClientOriginalName());" },
+      { "value": true, "label": { "en": "Validate & rename", "ru": "Проверять и переименовывать" }, "code": "$request->validate(['avatar' => 'required|image|mimes:jpg,png,webp|max:2048']);\n$path = $request->file('avatar')->store('avatars', 's3');" }
+    ]
+  },
+  {
+    "key": "ssrfProtection", "area": "security", "type": "bool", "default": false, "code": true, "knowledge": "sec.ssrf",
+    "label": { "en": "Block internal addresses in URL imports", "ru": "Блокировать внутренние адреса при импорте по URL" },
+    "help": { "en": "The server must not fetch 169.254.169.254, localhost or private networks on a user's behalf.", "ru": "Сервер не должен ходить на 169.254.169.254, localhost и в приватные сети по просьбе пользователя." }
+  },
+  {
+    "key": "leastPrivilegeKeys", "area": "security", "type": "bool", "default": true, "code": false, "knowledge": "sec.leastPrivilege",
+    "label": { "en": "Scoped credentials (least privilege)", "ru": "Ограниченные ключи (least privilege)" },
+    "help": { "en": "Each key can only do what its owner needs — the uploads key can't read backups.", "ru": "Каждый ключ может только то, что нужно владельцу — ключ загрузок не читает бэкапы." }
+  },
+  {
+    "key": "cors", "area": "api", "type": "enum", "default": "none", "code": true, "knowledge": "api.cors",
+    "label": { "en": "CORS policy", "ru": "Политика CORS" },
+    "help": { "en": "Which other origins may call this API from browser JavaScript.", "ru": "Каким другим источникам (origin) можно вызывать этот API из JavaScript браузера." },
+    "options": [
+      { "value": "none", "label": { "en": "No CORS headers", "ru": "Без заголовков CORS" } },
+      { "value": "wildcard", "label": { "en": "Access-Control-Allow-Origin: *", "ru": "Access-Control-Allow-Origin: *" }, "note": { "en": "Browsers refuse * together with cookies.", "ru": "Браузеры не принимают * вместе с cookie." } },
+      { "value": "origin", "label": { "en": "Only our site's origin", "ru": "Только origin нашего сайта" }, "code": "Access-Control-Allow-Origin: https://our-site\nAccess-Control-Allow-Credentials: true" }
+    ]
+  },
+  {
+    "key": "apiStatusCodes", "area": "api", "type": "enum", "default": "proper", "code": true, "knowledge": "api.statusCodes",
+    "label": { "en": "Error responses", "ru": "Ответы с ошибками" },
+    "help": { "en": "Clients branch on the status code, not on prose in the body.", "ru": "Клиенты ветвятся по коду статуса, а не по тексту в теле." },
+    "options": [
+      { "value": "always-200", "label": { "en": "200 OK + {\"error\": …}", "ru": "200 OK + {\"error\": …}" } },
+      { "value": "proper", "label": { "en": "Real status codes (404, 422, 500…)", "ru": "Настоящие коды (404, 422, 500…)" } }
+    ]
+  },
+  {
+    "key": "deleteMethod", "area": "api", "type": "enum", "default": "DELETE", "code": true, "knowledge": "api.methods",
+    "label": { "en": "How products are deleted", "ru": "Как удаляются товары" },
+    "help": { "en": "GET must be safe: crawlers and link previews follow GET links.", "ru": "GET должен быть безопасным: краулеры и превью ссылок переходят по GET-ссылкам." },
+    "options": [
+      { "value": "GET", "label": { "en": "GET /products/5/delete link", "ru": "Ссылка GET /products/5/delete" } },
+      { "value": "DELETE", "label": { "en": "DELETE /products/5 (authenticated)", "ru": "DELETE /products/5 (с авторизацией)" } }
+    ]
+  },
+  {
+    "key": "apiVersioning", "area": "api", "type": "enum", "default": "none", "code": true, "knowledge": "api.versioning",
+    "label": { "en": "API versioning", "ru": "Версионирование API" },
+    "help": { "en": "Old clients keep working while new ones use the new shape.", "ru": "Старые клиенты продолжают работать, пока новые используют новый формат." },
+    "options": [
+      { "value": "none", "label": { "en": "None", "ru": "Нет" } },
+      { "value": "url", "label": { "en": "/api/v1, /api/v2", "ru": "/api/v1, /api/v2" } },
+      { "value": "header", "label": { "en": "Accept: application/vnd.shop.v2+json", "ru": "Accept: application/vnd.shop.v2+json" } }
+    ]
+  },
+  {
+    "key": "apiContract", "area": "api", "type": "bool", "default": false, "code": true, "knowledge": "api.contract",
+    "label": { "en": "Published OpenAPI contract", "ru": "Опубликованный контракт OpenAPI" },
+    "help": { "en": "A machine-readable promise of what each endpoint accepts and returns.", "ru": "Машиночитаемое обещание, что принимает и возвращает каждый endpoint." }
+  },
+  {
+    "key": "timezone", "area": "data", "type": "enum", "default": "server-local", "code": true, "knowledge": "obs.timezones",
+    "label": { "en": "Time handling", "ru": "Работа со временем" },
+    "help": { "en": "Store and compare in UTC; convert to local time only for display.", "ru": "Храните и сравнивайте в UTC; переводите в местное время только для показа." },
+    "options": [
+      { "value": "server-local", "label": { "en": "Server local time", "ru": "Местное время сервера" }, "code": "date('Y-m-d') // depends on the server's timezone" },
+      { "value": "utc", "label": { "en": "UTC everywhere", "ru": "UTC везде" }, "code": "now('UTC')->toDateString()" }
+    ]
+  },
+  {
+    "key": "uploadsTarget", "area": "data", "type": "enum", "default": "local-disk", "code": true, "knowledge": "files.objectStorage",
+    "label": { "en": "Where uploads are stored", "ru": "Куда сохраняются загрузки" },
+    "help": { "en": "Local disk belongs to one server. Object storage is shared.", "ru": "Локальный диск принадлежит одному серверу. Object storage общий." },
+    "options": [
+      { "value": "local-disk", "label": { "en": "Server disk (public/uploads)", "ru": "Диск сервера (public/uploads)" } },
+      { "value": "object-storage", "label": { "en": "Object storage (S3)", "ru": "Object storage (S3)" }, "code": "Storage::disk('s3')->put($path, $file);" }
+    ]
+  },
+  {
+    "key": "readRouting", "area": "data", "type": "enum", "default": "primary", "code": true, "knowledge": "db.replica",
+    "label": { "en": "Where reads go", "ru": "Куда идут чтения" },
+    "help": { "en": "Replicas are slightly behind the primary.", "ru": "Реплики немного отстают от primary." },
+    "options": [
+      { "value": "primary", "label": { "en": "Everything to primary", "ru": "Всё в primary" } },
+      { "value": "replica", "label": { "en": "Reads to replicas", "ru": "Чтения в реплики" } },
+      { "value": "read-your-writes", "label": { "en": "Reads to replicas, except right after the user's own write", "ru": "Чтения в реплики, кроме сразу после собственной записи" } }
+    ]
+  },
+  {
+    "key": "inventoryUpdate", "area": "data", "type": "enum", "default": "read-then-write", "code": true, "knowledge": "db.race",
+    "label": { "en": "How stock is decremented", "ru": "Как уменьшается остаток" },
+    "help": { "en": "Two requests can read stock=1 at the same moment.", "ru": "Два запроса могут прочитать stock=1 одновременно." },
+    "options": [
+      { "value": "read-then-write", "label": { "en": "Read stock, check, write", "ru": "Прочитать, проверить, записать" }, "code": "if ($p->stock > 0) { $p->stock -= 1; $p->save(); }" },
+      { "value": "atomic", "label": { "en": "Atomic conditional UPDATE", "ru": "Атомарный условный UPDATE" }, "code": "UPDATE products SET stock = stock - 1 WHERE id = ? AND stock > 0;" },
+      { "value": "locking", "label": { "en": "Transaction + SELECT … FOR UPDATE", "ru": "Транзакция + SELECT … FOR UPDATE" }, "code": "DB::transaction(fn () => Product::lockForUpdate()->find($id)->decrement('stock'));" }
+    ]
+  },
+  {
+    "key": "lockOrdering", "area": "data", "type": "enum", "default": "inconsistent", "code": true, "knowledge": "db.deadlock",
+    "label": { "en": "Lock order in transactions", "ru": "Порядок блокировок в транзакциях" },
+    "help": { "en": "Taking locks in the same order everywhere makes deadlocks impossible.", "ru": "Если везде брать блокировки в одном порядке, дедлоки невозможны." },
+    "options": [
+      { "value": "inconsistent", "label": { "en": "Whatever each feature does", "ru": "Как получилось в каждой фиче" } },
+      { "value": "consistent", "label": { "en": "Always products → users → orders", "ru": "Всегда products → users → orders" } }
+    ]
+  },
+  {
+    "key": "deadlockRetry", "area": "data", "type": "bool", "default": false, "code": true, "knowledge": "db.deadlock",
+    "label": { "en": "Retry transaction on deadlock", "ru": "Повторять транзакцию при дедлоке" },
+    "help": { "en": "MySQL kills one transaction of a deadlock; retrying it usually succeeds.", "ru": "MySQL убивает одну из транзакций дедлока; повтор обычно проходит." }
+  },
+  {
+    "key": "outbox", "area": "data", "type": "bool", "default": false, "code": true, "knowledge": "dist.outbox",
+    "label": { "en": "Transactional outbox for events", "ru": "Transactional outbox для событий" },
+    "help": { "en": "Write the event into the same DB transaction; a relay publishes it later.", "ru": "Записывать событие в ту же транзакцию БД; отдельный процесс публикует его позже." }
+  },
+  {
+    "key": "cacheInvalidation", "area": "cache", "type": "enum", "default": "ttl", "code": true, "knowledge": "cache.invalidation",
+    "label": { "en": "Cache invalidation", "ru": "Инвалидация кэша" },
+    "help": { "en": "When data changes, the cached copy is wrong until it expires — or until you delete it.", "ru": "Когда данные меняются, копия в кэше неверна, пока не истечёт — или пока её не удалят." },
+    "options": [
+      { "value": "ttl", "label": { "en": "Only by TTL", "ru": "Только по TTL" } },
+      { "value": "on-write", "label": { "en": "Delete the key when the product changes", "ru": "Удалять ключ при изменении товара" }, "code": "Product::saved(fn ($p) => Cache::forget(\"product:{$p->id}\"));" }
+    ]
+  },
+  {
+    "key": "cacheFailOpen", "area": "cache", "type": "bool", "default": false, "code": true, "knowledge": "cache.redis",
+    "label": { "en": "Fall back to DB when cache fails", "ru": "Идти в БД, если кэш недоступен" },
+    "help": { "en": "Cache errors become misses instead of 500s — the database must survive the extra load.", "ru": "Ошибки кэша превращаются в промахи вместо 500 — БД должна выдержать нагрузку." }
+  },
+  {
+    "key": "cacheWarming", "area": "cache", "type": "bool", "default": false, "code": false, "knowledge": "cache.invalidation",
+    "label": { "en": "Warm cache before switching traffic", "ru": "Прогревать кэш перед переключением трафика" },
+    "help": { "en": "After a flush or deploy, prefill hot keys so the DB isn't stampeded.", "ru": "После сброса или деплоя заранее заполнять горячие ключи, чтобы БД не затоптали." }
+  },
+  {
+    "key": "asyncEmail", "area": "async", "type": "bool", "default": false, "code": true, "knowledge": "async.queue",
+    "label": { "en": "Send order emails in background", "ru": "Отправлять письма о заказе в фоне" },
+    "help": { "en": "The order response doesn't wait for the mail provider.", "ru": "Ответ на заказ не ждёт почтового провайдера." },
+    "options": [
+      { "value": false, "label": { "en": "Synchronously", "ru": "Синхронно" }, "code": "Mail::to($user)->send(new OrderPlaced($order));" },
+      { "value": true, "label": { "en": "Queued", "ru": "Через очередь" }, "code": "Mail::to($user)->queue(new OrderPlaced($order));" }
+    ]
+  },
+  {
+    "key": "asyncInvoice", "area": "async", "type": "bool", "default": false, "code": true, "knowledge": "async.queue",
+    "label": { "en": "Generate PDF invoices in background", "ru": "Генерировать PDF-счета в фоне" },
+    "help": { "en": "PDF rendering is CPU-heavy and nobody reads the invoice in the first second.", "ru": "Рендер PDF тяжёлый, и счёт никто не читает в первую секунду." },
+    "options": [
+      { "value": false, "label": { "en": "Synchronously", "ru": "Синхронно" } },
+      { "value": true, "label": { "en": "Queued", "ru": "Через очередь" }, "code": "GenerateInvoice::dispatch($order);" }
+    ]
+  },
+  {
+    "key": "queueSeparation", "area": "async", "type": "bool", "default": false, "code": true, "knowledge": "async.backlog",
+    "label": { "en": "Separate critical and bulk queues", "ru": "Разделить очереди critical и bulk" },
+    "help": { "en": "A newsletter of 200k emails shouldn't delay an order confirmation.", "ru": "Рассылка на 200 тысяч писем не должна задерживать подтверждение заказа." }
+  },
+  {
+    "key": "retryPolicy", "area": "async", "type": "enum", "default": "none", "code": true, "knowledge": "async.retry",
+    "label": { "en": "Failed job retries", "ru": "Повтор упавших задач" },
+    "help": { "en": "Retry transient failures, but give the other side time to recover.", "ru": "Повторяйте временные ошибки, но дайте другой стороне время восстановиться." },
+    "options": [
+      { "value": "none", "label": { "en": "No retries", "ru": "Без повторов" } },
+      { "value": "immediate", "label": { "en": "Retry immediately, forever", "ru": "Повторять сразу и бесконечно" } },
+      { "value": "exponential", "label": { "en": "Exponential backoff + max attempts", "ru": "Экспоненциальная задержка + лимит попыток" }, "code": "public $tries = 5;\npublic function backoff() { return [10, 30, 90, 270]; }" }
+    ]
+  },
+  {
+    "key": "maxRetries", "area": "async", "type": "number", "default": 3, "min": 0, "max": 10, "code": true, "knowledge": "async.retry",
+    "label": { "en": "Max attempts", "ru": "Максимум попыток" },
+    "help": { "en": "After the last attempt a job goes to the failed-jobs table (dead letter).", "ru": "После последней попытки задача попадает в таблицу failed jobs (dead letter)." }
+  },
+  {
+    "key": "deadLetterQueue", "area": "async", "type": "bool", "default": false, "code": false, "knowledge": "async.retry",
+    "label": { "en": "Keep failed jobs (dead letter queue)", "ru": "Хранить упавшие задачи (dead letter queue)" },
+    "help": { "en": "Failed jobs can be inspected and replayed instead of disappearing.", "ru": "Упавшие задачи можно изучить и перезапустить, а не потерять." }
+  },
+  {
+    "key": "jobIdempotency", "area": "async", "type": "bool", "default": false, "code": true, "knowledge": "async.idempotency",
+    "label": { "en": "Idempotent jobs", "ru": "Идемпотентные задачи" },
+    "help": { "en": "Running a job twice has the same effect as once (dedupe by order id).", "ru": "Двойной запуск задачи даёт тот же эффект, что одинарный (дедупликация по id заказа)." },
+    "options": [
+      { "value": false, "label": { "en": "Off", "ru": "Выключено" } },
+      { "value": true, "label": { "en": "On", "ru": "Включено" }, "code": "if (Invoice::where('order_id', $this->order->id)->exists()) return;" }
+    ]
+  },
+  {
+    "key": "paymentIdempotency", "area": "async", "type": "bool", "default": false, "code": true, "knowledge": "async.idempotency",
+    "label": { "en": "Idempotency-Key on payments", "ru": "Idempotency-Key для платежей" },
+    "help": { "en": "A double click sends the same key twice; the second charge is ignored.", "ru": "Двойной клик отправляет один и тот же ключ; второе списание игнорируется." },
+    "options": [
+      { "value": false, "label": { "en": "Off", "ru": "Выключено" } },
+      { "value": true, "label": { "en": "On", "ru": "Включено" }, "code": "Idempotency-Key: cart_8812_attempt_1" }
+    ]
+  },
+  {
+    "key": "webhookIdempotency", "area": "async", "type": "bool", "default": false, "code": true, "knowledge": "dist.webhooks",
+    "label": { "en": "Deduplicate webhooks by event id", "ru": "Дедуплицировать вебхуки по id события" },
+    "help": { "en": "Providers deliver at least once. Store processed event ids with a UNIQUE constraint.", "ru": "Провайдеры доставляют «хотя бы раз». Храните обработанные id событий с UNIQUE." }
+  },
+  {
+    "key": "webhookAsync", "area": "async", "type": "bool", "default": false, "code": true, "knowledge": "dist.webhooks",
+    "label": { "en": "Acknowledge webhooks fast, process in background", "ru": "Быстро подтверждать вебхук, обрабатывать в фоне" },
+    "help": { "en": "Return 200 in milliseconds; the provider stops retrying.", "ru": "Отвечать 200 за миллисекунды — провайдер перестаёт повторять." }
+  },
+  {
+    "key": "providerTimeoutMs", "area": "reliability", "type": "number", "default": 30000, "min": 500, "max": 30000, "step": 500, "code": false, "knowledge": "dist.timeouts",
+    "label": { "en": "External call timeout (ms)", "ru": "Таймаут внешних вызовов (мс)" },
+    "help": { "en": "How long a request waits for a provider before giving up.", "ru": "Сколько запрос ждёт провайдера, прежде чем сдаться." }
+  },
+  {
+    "key": "retries", "area": "reliability", "type": "number", "default": 0, "min": 0, "max": 5, "code": false, "knowledge": "dist.circuitBreaker",
+    "label": { "en": "HTTP client retries", "ru": "Повторы HTTP-клиента" },
+    "help": { "en": "Each layer that retries multiplies the load on a struggling dependency.", "ru": "Каждый слой с повторами умножает нагрузку на страдающую зависимость." }
+  },
+  {
+    "key": "retryJitter", "area": "reliability", "type": "bool", "default": false, "code": true, "knowledge": "dist.circuitBreaker",
+    "label": { "en": "Backoff with jitter", "ru": "Задержка с jitter" },
+    "help": { "en": "Random spread so thousands of clients don't retry in the same millisecond.", "ru": "Случайный разброс, чтобы тысячи клиентов не повторяли в одну миллисекунду." }
+  },
+  {
+    "key": "circuitBreaker", "area": "reliability", "type": "bool", "default": false, "code": true, "knowledge": "dist.circuitBreaker",
+    "label": { "en": "Circuit breaker", "ru": "Circuit breaker" },
+    "help": { "en": "After too many failures, stop calling the dependency for a while and fail fast.", "ru": "После множества ошибок перестать на время вызывать зависимость и быстро отказывать." }
+  },
+  {
+    "key": "fallbacks", "area": "reliability", "type": "bool", "default": false, "code": true, "knowledge": "dist.partialFailure",
+    "label": { "en": "Graceful degradation", "ru": "Graceful degradation" },
+    "help": { "en": "If recommendations are down, show the page without them instead of a 500.", "ru": "Если рекомендации недоступны — показать страницу без них, а не 500." }
+  },
+  {
+    "key": "autoRestart", "area": "reliability", "type": "bool", "default": false, "code": false, "knowledge": "obs.alerts",
+    "label": { "en": "Auto-restart crashed processes", "ru": "Автоперезапуск упавших процессов" },
+    "help": { "en": "systemd/supervisor bring the process back. Treats the symptom, not the cause.", "ru": "systemd/supervisor поднимают процесс. Лечит симптом, а не причину." }
+  },
+  {
+    "key": "requestIds", "area": "observability", "type": "bool", "default": false, "code": true, "knowledge": "obs.requestId",
+    "label": { "en": "Request ID propagation", "ru": "Сквозной Request ID" },
+    "help": { "en": "Nginx generates X-Request-ID; every service logs and forwards it.", "ru": "Nginx генерирует X-Request-ID; каждый сервис пишет его в логи и передаёт дальше." },
+    "options": [
+      { "value": false, "label": { "en": "Off", "ru": "Выключено" } },
+      { "value": true, "label": { "en": "On", "ru": "Включено" }, "code": "proxy_set_header X-Request-ID $request_id;\nLog::withContext(['request_id' => $request->header('X-Request-ID')]);" }
+    ]
+  },
+  {
+    "key": "tracing", "area": "observability", "type": "bool", "default": false, "code": true, "knowledge": "obs.tracing",
+    "label": { "en": "Distributed tracing (OpenTelemetry)", "ru": "Распределённая трассировка (OpenTelemetry)" },
+    "help": { "en": "Every request records timed spans for each hop and query.", "ru": "Каждый запрос записывает спаны с временем каждого шага и запроса." }
+  }
+]

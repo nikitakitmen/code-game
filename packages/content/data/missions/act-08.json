@@ -1,0 +1,1369 @@
+[
+ {
+  "id": "m050",
+  "slug": "unknown-outage",
+  "act": 8,
+  "order": 50,
+  "kind": "incident",
+  "title": {
+   "en": "Something is wrong and we don't know what",
+   "ru": "Что-то не так, и мы не знаем что"
+  },
+  "summary": {
+   "en": "Users complain but you're flying blind. Add monitoring, logs, tracing.",
+   "ru": "Пользователи жалуются, а вы вслепую. Добавить мониторинг, логи, трассировку."
+  },
+  "prerequisites": [
+   "m049"
+  ],
+  "learning": [
+   "obs.metrics",
+   "obs.logs"
+  ],
+  "trigger": {
+   "id": "m050-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Random errors, no pattern",
+    "ru": "Случайные ошибки без закономерности"
+   },
+   "body": {
+    "en": "People get an error on the account page sometimes, not always, no pattern we can see. We have almost no logs shipped anywhere central. We're guessing. Can we actually see what's happening?",
+    "ru": "Люди иногда получают ошибку на странице аккаунта, не всегда, без видимой закономерности. Логи почти никуда централизованно не идут. Мы гадаем. Можем реально увидеть, что происходит?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Central log storage exists and is connected",
+     "ru": "Централизованное хранилище логов есть и подключено"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "role.logs",
+       "gte": 1
+      },
+      {
+       "fact": "edgeRole.backend>logs",
+       "truthy": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Request IDs are enabled",
+     "ru": "Включены request ID"
+    },
+    "check": {
+     "fact": "app.requestIds",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "role.logs",
+       "gte": 1
+      },
+      {
+       "fact": "app.requestIds",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "Logs flow to one place with request IDs — now you can investigate.",
+     "ru": "Логи текут в одно место с request ID — теперь можно расследовать."
+    },
+    "effects": [
+     {
+      "users": 50
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Observability is metrics, logs and traces. Shipping logs to one place and tagging every request with an ID turns 'random errors' into something you can actually follow.",
+    "ru": "Наблюдаемость — это метрики, логи и трассы. Сбор логов в одно место и метка каждого запроса ID превращают «случайные ошибки» в то, что можно отследить."
+   },
+   "whyNow": {
+    "en": "You can't fix what you can't see; the first move is making the system observable.",
+    "ru": "Нельзя чинить то, чего не видишь; первый шаг — сделать систему наблюдаемой."
+   },
+   "limits": {
+    "en": "Logs cost storage and can drown the signal — log the right things, in UTC.",
+    "ru": "Логи стоят места и могут утопить сигнал — логируйте нужное, в UTC."
+   },
+   "article": "obs.logs"
+  },
+  "next": "m051",
+  "unlocks": {
+   "apps": [
+    "logs"
+   ],
+   "components": [
+    "logs"
+   ],
+   "settings": [
+    "requestIds",
+    "tracing"
+   ]
+  },
+  "setup": [
+   {
+    "addBug": {
+     "id": "mystery",
+     "title": {
+      "en": "Intermittent 500s on account page",
+      "ru": "Периодические 500 на странице аккаунта"
+     },
+     "endpoint": "account",
+     "errorRate": 0.12,
+     "logCode": "MYSTERY",
+     "logMessage": "Unhandled exception rendering account page"
+    }
+   },
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "account",
+     "method": "GET",
+     "path": "/account",
+     "target": "backend",
+     "weight": 4,
+     "cpuMs": 10,
+     "responseKb": 4,
+     "auth": "user",
+     "product": {
+      "en": "A user views their account",
+      "ru": "Пользователь смотрит свой аккаунт"
+     },
+     "queries": [
+      {
+       "id": "acc",
+       "table": "orders",
+       "op": "select",
+       "where": [
+        "user_id"
+       ],
+       "match": "many",
+       "selectivity": 0.001
+      }
+     ],
+     "handler": "AccountController@show",
+     "readAfterWrite": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Intermittent 500s with no obvious cause.",
+     "ru": "Периодические 500 без очевидной причины."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m051",
+  "slug": "logs",
+  "act": 8,
+  "order": 51,
+  "kind": "tutorial",
+  "title": {
+   "en": "Read the logs",
+   "ru": "Читать логи"
+  },
+  "summary": {
+   "en": "Filter the central logs to find the real error.",
+   "ru": "Отфильтровать центральные логи и найти настоящую ошибку."
+  },
+  "prerequisites": [
+   "m050"
+  ],
+  "learning": [
+   "obs.logs"
+  ],
+  "trigger": {
+   "id": "m051-t",
+   "from": "lev",
+   "subject": {
+    "en": "Filter for the error",
+    "ru": "Отфильтруй по ошибке"
+   },
+   "body": {
+    "en": "Now that logs are centralised, open the Logs app, filter to ERROR level on the account endpoint, and find the exception. Pin the line that shows the actual stack.",
+    "ru": "Теперь, когда логи централизованы, открой приложение Logs, отфильтруй по уровню ERROR на endpoint аккаунта и найди исключение. Закрепи строку с реальным стеком."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Find the error in the logs",
+     "ru": "Найти ошибку в логах"
+    },
+    "check": {
+     "fact": "mission.evidence.e-err",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You isolated the error line.",
+     "ru": "Вы вычленили строку ошибки."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Structured logs carry a level and fields you can filter on. Narrowing to ERROR on one endpoint cuts noise down to the lines that matter.",
+    "ru": "Структурированные логи несут уровень и поля для фильтрации. Сужение до ERROR на одном endpoint убирает шум до важных строк."
+   },
+   "whyNow": {
+    "en": "Reading logs well is the core skill of every on-call engineer.",
+    "ru": "Умение читать логи — ключевой навык любого дежурного инженера."
+   },
+   "limits": {
+    "en": "Too much logging hides the signal; levels and filters are how you cope.",
+    "ru": "Слишком много логов прячут сигнал; уровни и фильтры — способ справиться."
+   },
+   "article": "obs.logs"
+  },
+  "next": "m052",
+  "evidence": [
+   {
+    "id": "e-err",
+    "app": "logs",
+    "hint": {
+     "en": "Find the account-page exception",
+     "ru": "Найти исключение страницы аккаунта"
+    },
+    "text": {
+     "en": "An unhandled exception fires on a fraction of account views.",
+     "ru": "Необработанное исключение срабатывает на части просмотров аккаунта."
+    },
+    "match": {
+     "kind": "log",
+     "key": "MYSTERY"
+    }
+   }
+  ]
+ },
+ {
+  "id": "m052",
+  "slug": "request-id",
+  "act": 8,
+  "order": 52,
+  "kind": "incident",
+  "title": {
+   "en": "Follow one request across servers",
+   "ru": "Проследить один запрос через серверы"
+  },
+  "summary": {
+   "en": "Correlate logs from proxy, backend and worker with a request ID.",
+   "ru": "Связать логи прокси, бэкенда и воркера по request ID."
+  },
+  "prerequisites": [
+   "m051"
+  ],
+  "learning": [
+   "obs.requestId"
+  ],
+  "trigger": {
+   "id": "m052-t",
+   "from": "lev",
+   "subject": {
+    "en": "Connect the dots across services",
+    "ru": "Свяжи точки между сервисами"
+   },
+   "body": {
+    "en": "The error only happens when a background job touched the account first. With request IDs on, you can follow one failing request from Nginx to the backend to the worker. Find the correlated lines.",
+    "ru": "Ошибка случается только когда фоновая задача сначала трогала аккаунт. С включёнными request ID можно проследить один падающий запрос от Nginx к бэкенду и к воркеру. Найди связанные строки."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Trace the request across services",
+     "ru": "Проследить запрос через сервисы"
+    },
+    "check": {
+     "fact": "mission.evidence.e-corr",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Fix the account-page error",
+     "ru": "Починить ошибку страницы аккаунта"
+    },
+    "check": {
+     "fact": "ep.account.ok",
+     "truthy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "ep.account.ok",
+     "truthy": true
+    },
+    "text": {
+     "en": "Correlated the request end-to-end and fixed the cause.",
+     "ru": "Связали запрос от края до края и починили причину."
+    },
+    "effects": [
+     {
+      "users": 60
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A request ID generated at the edge and logged by every service lets you gather all logs of one request, even across many machines.",
+    "ru": "Request ID, созданный на входе и записанный каждым сервисом, позволяет собрать все логи одного запроса даже через много машин."
+   },
+   "whyNow": {
+    "en": "With several servers, grepping each one by hand doesn't scale; the ID ties them together.",
+    "ru": "С несколькими серверами грепать каждый вручную не масштабируется; ID связывает их."
+   },
+   "limits": {
+    "en": "It only works if every service forwards and logs the ID.",
+    "ru": "Работает, только если каждый сервис передаёт и логирует ID."
+   },
+   "article": "obs.requestId"
+  },
+  "next": "m053",
+  "evidence": [
+   {
+    "id": "e-corr",
+    "app": "logs",
+    "hint": {
+     "en": "Find logs sharing one request ID",
+     "ru": "Найти логи с одним request ID"
+    },
+    "text": {
+     "en": "The same request ID appears in proxy, backend and worker logs.",
+     "ru": "Один request ID встречается в логах прокси, бэкенда и воркера."
+    },
+    "match": {
+     "kind": "log",
+     "key": "MYSTERY"
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "fix",
+    "app": "logs",
+    "label": {
+     "en": "Fix the null case found via the request ID",
+     "ru": "Починить null-случай, найденный по request ID"
+    },
+    "effects": [
+     {
+      "fixBug": "mystery"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m053",
+  "slug": "trace",
+  "act": 8,
+  "order": 53,
+  "kind": "incident",
+  "title": {
+   "en": "Where did the time go?",
+   "ru": "Куда ушло время?"
+  },
+  "summary": {
+   "en": "A request is slow but no single part looks slow. Use a trace.",
+   "ru": "Запрос медленный, но ни одна часть не выглядит медленной. Используйте трассу."
+  },
+  "prerequisites": [
+   "m052"
+  ],
+  "learning": [
+   "obs.tracing"
+  ],
+  "trigger": {
+   "id": "m053-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Account page is slow but nothing's on fire",
+    "ru": "Страница аккаунта медленная, но ничего не горит"
+   },
+   "body": {
+    "en": "The account page takes a couple of seconds. CPU is fine, the DB is fine, no errors. It's just... slow. Lev says 'enable tracing' — whatever that means. Find where the time actually goes.",
+    "ru": "Страница аккаунта грузится пару секунд. CPU в норме, БД в норме, ошибок нет. Просто... медленно. Лёва говорит «включи трассировку» — что бы это ни значило. Найди, куда реально уходит время."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Trace the slow request",
+     "ru": "Трассировать медленный запрос"
+    },
+    "check": {
+     "fact": "mission.evidence.e-nplus",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Eliminate the N+1 pattern",
+     "ru": "Устранить N+1"
+    },
+    "check": {
+     "fact": "ep.account.p95",
+     "lt": 300
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "ep.account.p95",
+     "lt": 300
+    },
+    "text": {
+     "en": "One query instead of forty — the page is snappy.",
+     "ru": "Один запрос вместо сорока — страница шустрая."
+    },
+    "effects": [
+     {
+      "users": 120
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A trace breaks a request into timed spans. Metrics say the page is slow; the trace shows the time is in 40 tiny repeated queries — the classic N+1.",
+    "ru": "Трасса разбивает запрос на спаны со временем. Метрики говорят «страница медленная»; трасса показывает, что время в 40 крошечных повторных запросах — классический N+1."
+   },
+   "whyNow": {
+    "en": "Averages and component health can all look fine while a request dies of a thousand cuts.",
+    "ru": "Средние и здоровье компонентов могут выглядеть нормально, пока запрос умирает от тысячи порезов."
+   },
+   "limits": {
+    "en": "Tracing everything is expensive; real systems sample a fraction of requests.",
+    "ru": "Трассировать всё дорого; реальные системы берут выборку запросов."
+   },
+   "article": "obs.tracing"
+  },
+  "next": "m054",
+  "unlocks": {
+   "apps": [
+    "traces"
+   ]
+  },
+  "setup": [
+   {
+    "addBug": {
+     "id": "nplusone",
+     "title": {
+      "en": "N+1 queries on account",
+      "ru": "N+1 запросов на аккаунте"
+     },
+     "endpoint": "account",
+     "extraLatencyMs": 0,
+     "logCode": "NPLUSONE",
+     "logMessage": "Account page issued 60 near-identical queries"
+    }
+   },
+   {
+    "set": "endpoints[id=account].queries",
+    "value": [
+     {
+      "id": "acc",
+      "table": "orders",
+      "op": "select",
+      "where": [
+       "user_id"
+      ],
+      "match": "many",
+      "selectivity": 0.001
+     },
+     {
+      "id": "acc_items",
+      "table": "orders",
+      "op": "select",
+      "where": [
+       "id"
+      ],
+      "match": "one",
+      "perRequest": 40
+     }
+    ]
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Slow page, but every component looks healthy.",
+     "ru": "Медленная страница, но каждый компонент выглядит здоровым."
+    },
+    "app": "traces"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-nplus",
+    "app": "traces",
+    "hint": {
+     "en": "Trace the account request",
+     "ru": "Трассировать запрос аккаунта"
+    },
+    "text": {
+     "en": "The handler runs dozens of near-identical queries (N+1).",
+     "ru": "Обработчик делает десятки почти одинаковых запросов (N+1)."
+    },
+    "match": {
+     "kind": "request",
+     "key": "account"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "The handler makes many small repeated queries (N+1)",
+     "ru": "Обработчик делает много мелких повторяющихся запросов (N+1)"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right — no single query is slow, but there are 40 of them per request.",
+     "ru": "Верно — ни один запрос не медленный, но их 40 на запрос."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The network is slow",
+     "ru": "Сеть медленная"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "The trace shows the time is in repeated DB calls, not the network.",
+     "ru": "Трасса показывает, что время в повторных обращениях к БД, не в сети."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "eager",
+    "app": "traces",
+    "label": {
+     "en": "Load related rows in one query (fix N+1)",
+     "ru": "Грузить связанные строки одним запросом (починить N+1)"
+    },
+    "effects": [
+     {
+      "set": "endpoints[id=account].queries",
+      "value": [
+       {
+        "id": "acc",
+        "table": "orders",
+        "op": "select",
+        "where": [
+         "user_id"
+        ],
+        "match": "many",
+        "selectivity": 0.001,
+        "limit": 20
+       }
+      ]
+     },
+     {
+      "fixBug": "nplusone"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m054",
+  "slug": "false-alert",
+  "act": 8,
+  "order": 54,
+  "kind": "incident",
+  "title": {
+   "en": "The alert that cried wolf",
+   "ru": "Алерт, который кричал «волки»"
+  },
+  "summary": {
+   "en": "A noisy alert pages everyone for nothing. Tune it.",
+   "ru": "Шумный алерт будит всех впустую. Настроить его."
+  },
+  "prerequisites": [
+   "m053"
+  ],
+  "learning": [
+   "obs.alerts"
+  ],
+  "trigger": {
+   "id": "m054-t",
+   "from": "lev",
+   "subject": {
+    "en": "I turned off my pager",
+    "ru": "Я выключил пейджер"
+   },
+   "body": {
+    "en": "The CPU alert pages us every time backend CPU briefly touches 50% — which is normal. It fired 14 times last night for nothing. People are muting alerts, which is dangerous. Fix the alert, don't delete alerting.",
+    "ru": "Алерт по CPU будит нас каждый раз, когда CPU бэкенда на миг касается 50% — это нормально. Ночью сработал 14 раз впустую. Люди глушат алерты, а это опасно. Почини алерт, не удаляя алертинг."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Stop the false pages",
+     "ru": "Прекратить ложные пейджи"
+    },
+    "check": {
+     "fact": "alerts.falsePages",
+     "eq": 0
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Still alert on real user-facing problems",
+     "ru": "Всё ещё алертить на реальные проблемы"
+    },
+    "check": {
+     "fact": "obs.alert.errorRate",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "obs.alert.errorRate",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "Alerts fire on real pain now, not on noise.",
+     "ru": "Алерты срабатывают на реальную боль, а не на шум."
+    },
+    "effects": [
+     {
+      "users": 30
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A good alert fires on symptoms users actually feel (errors, latency) for a sustained duration. Too sensitive and you get alert fatigue; muted alerts miss real outages.",
+    "ru": "Хороший алерт срабатывает на симптомы, которые реально чувствуют пользователи (ошибки, задержка), и с выдержкой. Слишком чувствительный — усталость от алертов; заглушенные алерты пропускают реальные аварии."
+   },
+   "whyNow": {
+    "en": "An alert nobody trusts is worse than no alert; tune it until every page means something.",
+    "ru": "Алерт, которому не верят, хуже отсутствия алерта; настройте так, чтобы каждый пейдж что-то значил."
+   },
+   "limits": {
+    "en": "Alert on the symptom (users hurting), not the cause (CPU) — causes are many, symptoms few.",
+    "ru": "Алертьте на симптом (пользователям плохо), а не причину (CPU) — причин много, симптомов мало."
+   },
+   "article": "obs.alerts"
+  },
+  "next": "m055",
+  "unlocks": {
+   "settings": []
+  },
+  "setup": [
+   {
+    "push": "observability.alertRules",
+    "value": {
+     "id": "cpu-twitchy",
+     "metric": "cpu.backend",
+     "op": ">",
+     "threshold": 50,
+     "forMinutes": 1,
+     "severity": "page",
+     "enabled": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "A page fires on a normal, brief CPU blip.",
+     "ru": "Пейдж срабатывает на нормальном кратком скачке CPU."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-false",
+    "app": "monitoring",
+    "hint": {
+     "en": "See the alert fire without user impact",
+     "ru": "Увидеть, как алерт срабатывает без вреда пользователям"
+    },
+    "text": {
+     "en": "The alert pages, but error rate and latency are fine the whole time.",
+     "ru": "Алерт будит, но доля ошибок и задержка всё время в норме."
+    },
+    "match": {
+     "kind": "alert",
+     "key": "cpu.backend"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "The alert threshold/duration is too twitchy",
+     "ru": "Порог/выдержка алерта слишком дёрганые"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Alert on symptoms users feel, with a sensible duration.",
+     "ru": "Верно. Алертить на симптомы, которые чувствуют пользователи, с разумной выдержкой."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The backend is genuinely overloaded",
+     "ru": "Бэкенд реально перегружен"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "No user impact during the pages; it's a false alarm.",
+     "ru": "Во время пейджей вреда пользователям нет; это ложная тревога."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "retune",
+    "app": "monitoring",
+    "label": {
+     "en": "Replace it with an error-rate alert (5%, for 5 min)",
+     "ru": "Заменить алертом по доле ошибок (5%, 5 мин)"
+    },
+    "effects": [
+     {
+      "set": "observability.alertRules[id=cpu-twitchy]",
+      "value": {
+       "id": "cpu-twitchy",
+       "metric": "errorRate",
+       "op": ">",
+       "threshold": 5,
+       "forMinutes": 5,
+       "severity": "page",
+       "enabled": true
+      }
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m055",
+  "slug": "incident-timeline",
+  "act": 8,
+  "order": 55,
+  "kind": "incident",
+  "title": {
+   "en": "Order the chaos",
+   "ru": "Упорядочить хаос"
+  },
+  "summary": {
+   "en": "Build a correct incident timeline despite mixed timezones.",
+   "ru": "Построить верный таймлайн инцидента несмотря на разные часовые пояса."
+  },
+  "prerequisites": [
+   "m054"
+  ],
+  "learning": [
+   "obs.incident",
+   "obs.timezones"
+  ],
+  "trigger": {
+   "id": "m055-t",
+   "from": "nika",
+   "subject": {
+    "en": "What actually happened, in order?",
+    "ru": "Что именно произошло, по порядку?"
+   },
+   "body": {
+    "en": "The board wants a clear timeline of last night's checkout outage. The trouble is our servers log in their own local times — EU, US, AP — so the raw lines look out of order. Put the events in the real order.",
+    "ru": "Совет хочет чёткий таймлайн вчерашней аварии оформления. Беда в том, что серверы логируют в своём местном времени — EU, US, AP — и сырые строки выглядят не по порядку. Расставь события в реальном порядке."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Order the incident events correctly (by UTC)",
+     "ru": "Упорядочить события инцидента верно (по UTC)"
+    },
+    "check": {
+     "fact": "incident.inc-101.ordered",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Declare the incident with a severity",
+     "ru": "Объявить инцидент с серьёзностью"
+    },
+    "check": {
+     "fact": "incident.inc-101.declared",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "A correct, UTC-ordered timeline.",
+     "ru": "Верный таймлайн, упорядоченный по UTC."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "An incident timeline coordinates the response and the postmortem. Servers logging in local time scramble the order — convert everything to UTC to see true cause and effect.",
+    "ru": "Таймлайн инцидента координирует реакцию и постмортем. Серверы, логирующие в местном времени, путают порядок — переведите всё в UTC, чтобы увидеть истинную причину и следствие."
+   },
+   "whyNow": {
+    "en": "During an incident, a one-hour offset can make the cause look like the effect.",
+    "ru": "Во время инцидента смещение в час может сделать причину похожей на следствие."
+   },
+   "limits": {
+    "en": "Store and compare in UTC; show local time only to humans reading a screen.",
+    "ru": "Храните и сравнивайте в UTC; местное время — только людям на экране."
+   },
+   "article": "obs.timezones"
+  },
+  "next": "m056",
+  "unlocks": {
+   "apps": [
+    "incidents"
+   ],
+   "settings": []
+  },
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "timezone": "server-local"
+    }
+   },
+   {
+    "set": "nodes[id=web1].config.tz",
+    "value": 0
+   },
+   {
+    "push": "observability.incidents",
+    "value": {
+     "id": "inc-101",
+     "title": {
+      "en": "Checkout outage",
+      "ru": "Авария оформления"
+     },
+     "severity": null,
+     "status": "open",
+     "declaredAt": null,
+     "utcView": false,
+     "order": [],
+     "events": [
+      {
+       "id": "ev1",
+       "source": "proxy-eu",
+       "raw": "14:02",
+       "tz": 0,
+       "text": {
+        "en": "First 502s on checkout",
+        "ru": "Первые 502 на оформлении"
+       }
+      },
+      {
+       "id": "ev2",
+       "source": "backend-us",
+       "raw": "09:05",
+       "tz": -5,
+       "text": {
+        "en": "Deploy v7 rolled out",
+        "ru": "Выкатили деплой v7"
+       }
+      },
+      {
+       "id": "ev3",
+       "source": "db-eu",
+       "raw": "14:08",
+       "tz": 0,
+       "text": {
+        "en": "DB connections maxed",
+        "ru": "Соединения БД на максимуме"
+       }
+      },
+      {
+       "id": "ev4",
+       "source": "oncall-ap",
+       "raw": "22:12",
+       "tz": 8,
+       "text": {
+        "en": "Rollback started",
+        "ru": "Начат откат"
+       }
+      }
+     ]
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Log timestamps are in different timezones.",
+     "ru": "Метки времени в разных часовых поясах."
+    },
+    "app": "incidents"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-tz",
+    "app": "logs",
+    "hint": {
+     "en": "Notice the servers log in different timezones",
+     "ru": "Заметить, что серверы логируют в разных поясах"
+    },
+    "text": {
+     "en": "A US server's 09:05 is actually after an EU server's 14:02 once converted to UTC.",
+     "ru": "09:05 сервера US на самом деле позже, чем 14:02 сервера EU после перевода в UTC."
+    },
+    "match": {
+     "kind": "log",
+     "keyPrefix": ""
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m056",
+  "slug": "postmortem",
+  "act": 8,
+  "order": 56,
+  "kind": "build",
+  "title": {
+   "en": "Write a blameless postmortem",
+   "ru": "Написать безобвинительный постмортем"
+  },
+  "summary": {
+   "en": "Turn the outage into lessons and action items.",
+   "ru": "Превратить аварию в уроки и действия."
+  },
+  "prerequisites": [
+   "m055"
+  ],
+  "learning": [
+   "obs.postmortem"
+  ],
+  "trigger": {
+   "id": "m056-t",
+   "from": "nika",
+   "subject": {
+    "en": "Let's learn from it",
+    "ru": "Давай извлечём урок"
+   },
+   "body": {
+    "en": "Good timeline. Now write it up — what happened, the root cause, and what we'll change so it can't recur. Blameless: we fix systems, not people. Fill in the postmortem and submit it.",
+    "ru": "Хороший таймлайн. Теперь оформи — что случилось, первопричина и что мы изменим, чтобы не повторилось. Без обвинений: чиним системы, а не людей. Заполни постмортем и отправь."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "The postmortem is submitted",
+     "ru": "Постмортем отправлен"
+    },
+    "check": {
+     "fact": "postmortem.inc-101.submitted",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "A blameless postmortem with real action items.",
+     "ru": "Безобвинительный постмортем с реальными действиями."
+    },
+    "effects": [
+     {
+      "users": 40
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A blameless postmortem records what happened, the root cause and concrete action items — so the same outage can't recur. It blames systems, not people.",
+    "ru": "Безобвинительный постмортем фиксирует, что случилось, первопричину и конкретные действия — чтобы та же авария не повторилась. Он винит системы, а не людей."
+   },
+   "whyNow": {
+    "en": "Learning is the only thing that makes an outage worth its pain.",
+    "ru": "Уроки — единственное, что делает аварию стоящей своей боли."
+   },
+   "limits": {
+    "en": "A postmortem nobody acts on is just paperwork; action items must be owned and done.",
+    "ru": "Постмортем, по которому ничего не делают, — просто бумага; у действий должен быть владелец и срок."
+   },
+   "article": "obs.postmortem"
+  },
+  "next": "m057",
+  "unlocks": {
+   "settings": []
+  },
+  "ops": [
+   {
+    "id": "cause",
+    "app": "incidents",
+    "label": {
+     "en": "Record the root cause",
+     "ru": "Записать первопричину"
+    },
+    "effects": [
+     {
+      "set": "observability.postmortems[incidentId=inc-101]",
+      "value": {
+       "incidentId": "inc-101",
+       "answers": {
+        "rootCause": "deploy",
+        "action": "canary"
+       },
+       "submitted": false
+      }
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "submit",
+    "app": "incidents",
+    "label": {
+     "en": "Submit the postmortem",
+     "ru": "Отправить постмортем"
+    },
+    "effects": [
+     {
+      "set": "observability.postmortems[incidentId=inc-101].submitted",
+      "value": true
+     }
+    ],
+    "once": true,
+    "when": {
+     "fact": "postmortem.inc-101.rootCause",
+     "truthy": true
+    }
+   }
+  ],
+  "achievements": [
+   {
+    "id": "paperwork",
+    "when": {
+     "fact": "completed.m056",
+     "truthy": true
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m057",
+  "slug": "runbook",
+  "act": 8,
+  "order": 57,
+  "kind": "build",
+  "title": {
+   "en": "Write a runbook",
+   "ru": "Написать runbook"
+  },
+  "summary": {
+   "en": "Capture the fix steps so next time is calm.",
+   "ru": "Зафиксировать шаги починки, чтобы в следующий раз было спокойно."
+  },
+  "prerequisites": [
+   "m056"
+  ],
+  "learning": [
+   "obs.postmortem"
+  ],
+  "trigger": {
+   "id": "m057-t",
+   "from": "lev",
+   "subject": {
+    "en": "Save future-us some panic",
+    "ru": "Сэкономь нам будущим немного паники"
+   },
+   "body": {
+    "en": "Next time checkout 502s at 2 AM, nobody should have to rediscover the fix. Write a runbook: the trigger, and the ordered steps to diagnose and recover. Short and practical.",
+    "ru": "В следующий раз, когда оформление даст 502 в 2 ночи, никто не должен заново открывать починку. Напиши runbook: триггер и пошаговые действия для диагностики и восстановления. Коротко и по делу."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A runbook exists for checkout incidents",
+     "ru": "Есть runbook для инцидентов оформления"
+    },
+    "check": {
+     "fact": "obs.runbook.checkout-5xx",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "A calm, repeatable response is written down.",
+     "ru": "Спокойный повторяемый ответ записан."
+    },
+    "effects": [
+     {
+      "users": 30
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A runbook is a checklist for a known kind of incident: the trigger and the ordered steps to diagnose and recover. It turns 2 AM panic into following a list.",
+    "ru": "Runbook — чеклист для известного типа инцидента: триггер и пошаговые действия для диагностики и восстановления. Он превращает панику в 2 ночи в следование списку."
+   },
+   "whyNow": {
+    "en": "You've now seen the same class of incident twice; write down how to handle it.",
+    "ru": "Вы уже видели этот класс инцидента дважды; запишите, как с ним справляться."
+   },
+   "limits": {
+    "en": "A runbook rots if the system changes and nobody updates it.",
+    "ru": "Runbook гниёт, если система меняется, а его никто не обновляет."
+   },
+   "article": "obs.postmortem"
+  },
+  "next": "m058",
+  "unlocks": {
+   "apps": [
+    "runbooks"
+   ]
+  },
+  "ops": [
+   {
+    "id": "write",
+    "app": "runbooks",
+    "label": {
+     "en": "Save a runbook for checkout 502s",
+     "ru": "Сохранить runbook для 502 на оформлении"
+    },
+    "effects": [
+     {
+      "set": "observability.runbooks[id=rb-checkout]",
+      "value": {
+       "id": "rb-checkout",
+       "title": "Checkout 502s",
+       "trigger": "checkout-5xx",
+       "steps": [
+        "Check latest release in CI/CD",
+        "Roll back if a recent deploy correlates",
+        "Check DB connections",
+        "Declare incident if not resolved in 10 min"
+       ]
+      }
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m058",
+  "slug": "slo",
+  "act": 8,
+  "order": 58,
+  "kind": "build",
+  "title": {
+   "en": "Define an SLO and error budget",
+   "ru": "Определить SLO и бюджет ошибок"
+  },
+  "summary": {
+   "en": "Set a reliability target and a budget for failure.",
+   "ru": "Задать цель надёжности и бюджет на отказ."
+  },
+  "prerequisites": [
+   "m057"
+  ],
+  "learning": [
+   "obs.slo"
+  ],
+  "trigger": {
+   "id": "m058-t",
+   "from": "nika",
+   "subject": {
+    "en": "How reliable should we even be?",
+    "ru": "А насколько надёжными мы вообще должны быть?"
+   },
+   "body": {
+    "en": "We argue every incident about whether it was 'bad enough' to stop shipping. Let's set a number: an SLO, like 99.9% success, with an error budget. When we burn the budget, we slow down and stabilise; when we don't, we ship features.",
+    "ru": "Мы спорим на каждом инциденте, был ли он «достаточно плохим», чтобы остановить релизы. Давай задать число: SLO, например 99,9% успеха, с бюджетом ошибок. Жжём бюджет — тормозим и стабилизируем; не жжём — выкатываем фичи."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "An SLO is defined",
+     "ru": "SLO определён"
+    },
+    "check": {
+     "fact": "obs.slo",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "You're within the error budget",
+     "ru": "Вы в рамках бюджета ошибок"
+    },
+    "check": {
+     "fact": "m.errorBudgetUsed",
+     "lt": 1
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "obs.slo",
+     "truthy": true
+    },
+    "text": {
+     "en": "A shared target turns 'how reliable?' into a number everyone agrees on.",
+     "ru": "Общая цель превращает «насколько надёжно?» в число, с которым все согласны."
+    },
+    "effects": [
+     {
+      "users": 100
+     },
+     {
+      "cash": 50
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "An SLO is a reliability target (99.9% success); the error budget is the allowed failure (0.1%). Burning it fast means slow down and stabilise; leaving it unused means you can take risks.",
+    "ru": "SLO — цель надёжности (99,9% успеха); бюджет ошибок — допустимый отказ (0,1%). Быстро жжёте — тормозите и стабилизируйте; не тратите — можно рисковать."
+   },
+   "whyNow": {
+    "en": "Without a target, every incident is an argument; a budget makes the decision objective.",
+    "ru": "Без цели каждый инцидент — спор; бюджет делает решение объективным."
+   },
+   "limits": {
+    "en": "100% is impossible and ruinously expensive; the budget is permission to not chase it.",
+    "ru": "100% невозможны и разорительно дороги; бюджет — разрешение за ними не гнаться."
+   },
+   "article": "obs.slo"
+  },
+  "next": "m059",
+  "ops": [
+   {
+    "id": "set",
+    "app": "incidents",
+    "label": {
+     "en": "Set an SLO of 99.9% availability",
+     "ru": "Задать SLO 99,9% доступности"
+    },
+    "effects": [
+     {
+      "set": "observability.slo",
+      "value": {
+       "availability": 0.999,
+       "latencyMs": 800,
+       "slaAvailability": 0.99,
+       "freezeOnBudgetExhausted": true
+      }
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ }
+]

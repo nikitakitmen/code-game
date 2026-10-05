@@ -1,0 +1,14 @@
+[
+  { "act": 1, "title": { "en": "First Byte", "ru": "Первый байт" }, "subtitle": { "en": "A page, a server, a request", "ru": "Страница, сервер, запрос" } },
+  { "act": 2, "title": { "en": "Backend", "ru": "Бэкенд" }, "subtitle": { "en": "Code, data, users", "ru": "Код, данные, пользователи" } },
+  { "act": 3, "title": { "en": "API World", "ru": "Мир API" }, "subtitle": { "en": "Contracts between programs", "ru": "Договоры между программами" } },
+  { "act": 4, "title": { "en": "Real Internet", "ru": "Настоящий интернет" }, "subtitle": { "en": "Domains, DNS, HTTPS, proxies", "ru": "Домены, DNS, HTTPS, прокси" } },
+  { "act": 5, "title": { "en": "Users Arrive", "ru": "Пришли пользователи" }, "subtitle": { "en": "Indexes, assets, caches", "ru": "Индексы, ассеты, кэши" } },
+  { "act": 6, "title": { "en": "Async", "ru": "Асинхронность" }, "subtitle": { "en": "Queues and workers", "ru": "Очереди и воркеры" } },
+  { "act": 7, "title": { "en": "Deployment", "ru": "Деплой" }, "subtitle": { "en": "Git, CI, canaries, rollbacks", "ru": "Git, CI, canary, откаты" } },
+  { "act": 8, "title": { "en": "Observability", "ru": "Наблюдаемость" }, "subtitle": { "en": "Logs, traces, incidents, SLOs", "ru": "Логи, трассы, инциденты, SLO" } },
+  { "act": 9, "title": { "en": "Security", "ru": "Безопасность" }, "subtitle": { "en": "Breaking in to keep others out", "ru": "Взломать самому, чтобы не взломали другие" } },
+  { "act": 10, "title": { "en": "Scale", "ru": "Масштаб" }, "subtitle": { "en": "More servers, new problems", "ru": "Больше серверов — новые проблемы" } },
+  { "act": 11, "title": { "en": "Distributed", "ru": "Распределённость" }, "subtitle": { "en": "When the network is part of your code", "ru": "Когда сеть — часть вашего кода" } },
+  { "act": 12, "title": { "en": "Global Prod", "ru": "Глобальный прод" }, "subtitle": { "en": "Regions, failover, a million users", "ru": "Регионы, failover, миллион пользователей" } }
+]

@@ -1,0 +1,953 @@
+[
+ {
+  "id": "m015",
+  "slug": "frontend-backend",
+  "act": 3,
+  "order": 15,
+  "kind": "build",
+  "title": {
+   "en": "A real frontend",
+   "ru": "Настоящий фронтенд"
+  },
+  "summary": {
+   "en": "The browser app now calls a JSON API instead of getting whole pages.",
+   "ru": "Браузерное приложение теперь зовёт JSON API вместо целых страниц."
+  },
+  "prerequisites": [
+   "m014"
+  ],
+  "learning": [
+   "api.methods",
+   "web.request"
+  ],
+  "trigger": {
+   "id": "m015-t",
+   "from": "lev",
+   "subject": {
+    "en": "Rebuilt the frontend as an app",
+    "ru": "Переписал фронтенд как приложение"
+   },
+   "body": {
+    "en": "The site is now a JavaScript app that fetches data from /api/v1/products and renders it in the browser. But my fetch calls are failing in the browser console with a CORS error. The API is on the same site though?",
+    "ru": "Сайт теперь JavaScript-приложение, которое тянет данные из /api/v1/products и рендерит в браузере. Но мои fetch падают в консоли браузера с ошибкой CORS. Хотя API на том же сайте?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "The product API is served",
+     "ru": "API товаров отдаётся"
+    },
+    "check": {
+     "fact": "ep.api_catalog.ok",
+     "truthy": true
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "CORS allows our own site (not wildcard with creds)",
+     "ru": "CORS разрешает наш сайт (не * с учётными данными)"
+    },
+    "check": {
+     "fact": "app.cors",
+     "eq": "origin"
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.cors",
+     "eq": "origin"
+    },
+    "text": {
+     "en": "The app talks to its API cleanly.",
+     "ru": "Приложение чисто общается со своим API."
+    },
+    "effects": [
+     {
+      "users": 60
+     }
+    ]
+   },
+   {
+    "id": "wild",
+    "kind": "quickfix",
+    "when": {
+     "fact": "app.cors",
+     "eq": "wildcard"
+    },
+    "text": {
+     "en": "Wildcard CORS works until you add cookies — then browsers refuse it.",
+     "ru": "CORS с * работает, пока нет cookie — потом браузер его отвергнет."
+    },
+    "effects": [
+     {
+      "users": 40
+     }
+    ],
+    "debt": 5
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A browser refuses cross-origin API calls unless the API returns Access-Control-Allow-Origin. Echo your own origin; '*' is rejected together with credentials.",
+    "ru": "Браузер отвергает межоригинные вызовы API, если API не вернул Access-Control-Allow-Origin. Возвращайте свой origin; '*' отклоняется вместе с учётными данными."
+   },
+   "whyNow": {
+    "en": "Splitting into a frontend app and a JSON API is the modern shape — and CORS is its first gotcha.",
+    "ru": "Разделение на фронтенд-приложение и JSON API — современная форма, и CORS — её первая ловушка."
+   },
+   "limits": {
+    "en": "CORS is a browser rule only; curl and server-to-server calls ignore it.",
+    "ru": "CORS — правило только браузера; curl и вызовы сервер-сервер его игнорируют."
+   },
+   "article": "api.cors"
+  },
+  "next": "m016",
+  "unlocks": {
+   "apps": [
+    "api"
+   ],
+   "settings": [
+    "cors"
+   ]
+  },
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "api_catalog",
+     "method": "GET",
+     "path": "/api/v1/products",
+     "target": "backend",
+     "weight": 8,
+     "cpuMs": 8,
+     "responseKb": 10,
+     "auth": "none",
+     "product": {
+      "en": "The app fetches products as JSON",
+      "ru": "Приложение получает товары в JSON"
+     },
+     "queries": [
+      {
+       "id": "api_cat",
+       "table": "products",
+       "op": "select",
+       "where": [
+        "category_id"
+       ],
+       "match": "many",
+       "selectivity": 0.05
+      }
+     ],
+     "handler": "Api\\ProductController@index",
+     "api": true,
+     "version": "v1",
+     "example": {
+      "data": [
+       {
+        "id": 1,
+        "name": "Blue Mug",
+        "price_cents": 1290,
+        "stock": 42
+       }
+      ],
+      "page": 1
+     },
+     "browserFetch": true
+    }
+   },
+   {
+    "set": "endpoints[id=api_catalog].example",
+    "value": {
+     "data": [
+      {
+       "id": 1,
+       "name": "Blue Mug",
+       "price_cents": 1290,
+       "stock": 42
+      }
+     ],
+     "page": 1
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Browser console: blocked by CORS policy.",
+     "ru": "Консоль браузера: заблокировано политикой CORS."
+    },
+    "app": "browser"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-cors",
+    "app": "api",
+    "hint": {
+     "en": "Call /api/v1/products from another origin",
+     "ru": "Вызвать /api/v1/products с другого origin"
+    },
+    "text": {
+     "en": "Without an Access-Control-Allow-Origin header, browsers block the JS call.",
+     "ru": "Без заголовка Access-Control-Allow-Origin браузер блокирует JS-вызов."
+    },
+    "match": {
+     "kind": "response",
+     "keyPrefix": "api_catalog"
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m016",
+  "slug": "api-inspector",
+  "act": 3,
+  "order": 16,
+  "kind": "tutorial",
+  "title": {
+   "en": "Meet the API Inspector",
+   "ru": "Знакомство с API Inspector"
+  },
+  "summary": {
+   "en": "Send requests by hand and read the responses.",
+   "ru": "Отправлять запросы руками и читать ответы."
+  },
+  "prerequisites": [
+   "m015"
+  ],
+  "learning": [
+   "api.methods",
+   "web.request"
+  ],
+  "trigger": {
+   "id": "m016-t",
+   "from": "lev",
+   "subject": {
+    "en": "Use the API Inspector",
+    "ru": "Пользуйся API Inspector"
+   },
+   "body": {
+    "en": "The API Inspector lets you send GET/POST/etc to our endpoints and see the real status, headers and body — like a simple Postman. Send a GET to /api/v1/products and pin the response.",
+    "ru": "API Inspector позволяет слать GET/POST и прочее к нашим endpoint'ам и видеть реальный статус, заголовки и тело — как простой Postman. Отправь GET на /api/v1/products и закрепи ответ."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Send a GET to the product API",
+     "ru": "Отправить GET к API товаров"
+    },
+    "check": {
+     "fact": "mission.evidence.e-get",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "s",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You can now poke any endpoint by hand.",
+     "ru": "Теперь можно потыкать любой endpoint руками."
+    },
+    "effects": [
+     {
+      "users": 10
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "The API Inspector composes an HTTP request (method, path, auth, body) and shows the raw response. It uses real HTTP terms without needing you to type syntax.",
+    "ru": "API Inspector собирает HTTP-запрос (метод, путь, авторизация, тело) и показывает сырой ответ. Он использует реальные термины HTTP, не требуя печатать синтаксис."
+   },
+   "whyNow": {
+    "en": "You'll use it to reproduce bugs and verify fixes throughout the game.",
+    "ru": "Вы будете им воспроизводить баги и проверять починки всю игру."
+   },
+   "limits": {
+    "en": "It talks to the simulated API, so responses always match the current world.",
+    "ru": "Он общается с симулируемым API, поэтому ответы всегда соответствуют текущему миру."
+   },
+   "article": "api.methods"
+  },
+  "next": "m017",
+  "evidence": [
+   {
+    "id": "e-get",
+    "app": "api",
+    "hint": {
+     "en": "Send GET /api/v1/products",
+     "ru": "Отправить GET /api/v1/products"
+    },
+    "text": {
+     "en": "200 OK with a JSON list of products.",
+     "ru": "200 OK со списком товаров в JSON."
+    },
+    "match": {
+     "kind": "response",
+     "keyPrefix": "api_catalog"
+    }
+   }
+  ]
+ },
+ {
+  "id": "m017",
+  "slug": "methods",
+  "act": 3,
+  "order": 17,
+  "kind": "security",
+  "title": {
+   "en": "A crawler is deleting products",
+   "ru": "Краулер удаляет товары"
+  },
+  "summary": {
+   "en": "Deletion over GET gets triggered by bots. Use the right method.",
+   "ru": "Удаление через GET срабатывает от ботов. Использовать правильный метод."
+  },
+  "prerequisites": [
+   "m016"
+  ],
+  "learning": [
+   "api.methods"
+  ],
+  "trigger": {
+   "id": "m017-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Products keep vanishing",
+    "ru": "Товары всё время исчезают"
+   },
+   "body": {
+    "en": "Products disappear overnight with nobody touching them. Lev added a 'delete' link that's just GET /products/5/delete. Could search engines be... clicking it?",
+    "ru": "Товары исчезают по ночам, хотя их никто не трогает. Лёва добавил ссылку «удалить», это просто GET /products/5/delete. Может, поисковики её... нажимают?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Deletion uses DELETE, not GET",
+     "ru": "Удаление через DELETE, а не GET"
+    },
+    "check": {
+     "fact": "app.deleteMethod",
+     "eq": "DELETE"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "No crawler deletions",
+     "ru": "Нет удалений краулером"
+    },
+    "check": {
+     "fact": "anomaly.crawlerDeletes",
+     "lt": 1
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.deleteMethod",
+     "eq": "DELETE"
+    },
+    "text": {
+     "en": "Deletes need a real DELETE request now.",
+     "ru": "Теперь удаление требует настоящего запроса DELETE."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "HTTP methods carry meaning. GET must be safe and side-effect-free because anything may follow it. Changes use POST/PUT/PATCH/DELETE.",
+    "ru": "HTTP-методы несут смысл. GET должен быть безопасным и без побочных эффектов, потому что по нему могут пройти кто угодно. Изменения — POST/PUT/PATCH/DELETE."
+   },
+   "whyNow": {
+    "en": "Now that bots crawl you, a GET that mutates data is actively dangerous.",
+    "ru": "Теперь, когда вас обходят боты, GET, меняющий данные, по-настоящему опасен."
+   },
+   "limits": {
+    "en": "Browsers, crawlers and caches all assume GET is read-only — honour that.",
+    "ru": "Браузеры, краулеры и кэши считают GET только для чтения — соблюдайте это."
+   },
+   "article": "api.methods"
+  },
+  "next": "m018",
+  "unlocks": {
+   "settings": [
+    "deleteMethod"
+   ]
+  },
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "deleteMethod": "GET"
+    }
+   },
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "api_delete",
+     "method": "GET",
+     "path": "/api/v1/products/:id/delete",
+     "target": "backend",
+     "weight": 1,
+     "cpuMs": 6,
+     "responseKb": 1,
+     "auth": "admin",
+     "product": {
+      "en": "A product is deleted",
+      "ru": "Товар удаляется"
+     },
+     "queries": [
+      {
+       "id": "del",
+       "table": "products",
+       "op": "delete",
+       "where": [
+        "id"
+       ],
+       "match": "one"
+      }
+     ],
+     "handler": "Api\\ProductController@destroy",
+     "writes": true,
+     "api": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Products deleted with no human action in the logs.",
+     "ru": "Товары удаляются без действий человека в логах."
+    },
+    "app": "logs"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-crawl",
+    "app": "logs",
+    "hint": {
+     "en": "Find the crawler hitting the delete URL",
+     "ru": "Найти краулер, ходящий по URL удаления"
+    },
+    "text": {
+     "en": "Googlebot follows the GET delete link.",
+     "ru": "Googlebot переходит по GET-ссылке удаления."
+    },
+    "match": {
+     "kind": "log",
+     "key": "ANOMALY_CRAWLERDELETES"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Delete over GET gets followed by crawlers",
+     "ru": "Удаление через GET проходят краулеры"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Yes — GET must be safe. Bots, prefetch and link previews all follow GET links.",
+     "ru": "Да — GET должен быть безопасным. Боты, префетч и превью ссылок ходят по GET."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Someone guessed the admin password",
+     "ru": "Кто-то подобрал пароль админа"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "No failed logins or admin sessions at those times. It's the method.",
+     "ru": "Нет неудачных входов и админ-сессий в это время. Дело в методе."
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m018",
+  "slug": "status-codes",
+  "act": 3,
+  "order": 18,
+  "kind": "incident",
+  "title": {
+   "en": "Every response says 200",
+   "ru": "Любой ответ отвечает 200"
+  },
+  "summary": {
+   "en": "Errors hidden inside 200 responses break clients and monitoring.",
+   "ru": "Ошибки, спрятанные в ответах 200, ломают клиентов и мониторинг."
+  },
+  "prerequisites": [
+   "m017"
+  ],
+  "learning": [
+   "api.statusCodes"
+  ],
+  "trigger": {
+   "id": "m018-t",
+   "from": "lev",
+   "subject": {
+    "en": "Partner says our API is 'lying'",
+    "ru": "Партнёр говорит, наш API «врёт»"
+   },
+   "body": {
+    "en": "A partner integrating with us complains that failed requests still return 200 OK with an error message in the body. Their code can't tell success from failure. I thought 200 was friendlier?",
+    "ru": "Партнёр, который к нам интегрируется, жалуется, что упавшие запросы всё равно возвращают 200 OK с текстом ошибки в теле. Их код не отличает успех от ошибки. Я думал, 200 дружелюбнее?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Return real status codes",
+     "ru": "Возвращать настоящие коды"
+    },
+    "check": {
+     "fact": "app.apiStatusCodes",
+     "eq": "proper"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Errors are not misreported",
+     "ru": "Ошибки не искажаются"
+    },
+    "check": {
+     "fact": "anomaly.misreportedErrors",
+     "lt": 0.5
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.apiStatusCodes",
+     "eq": "proper"
+    },
+    "text": {
+     "en": "The API tells the truth in its status line.",
+     "ru": "API говорит правду в строке статуса."
+    },
+    "effects": [
+     {
+      "cash": 40
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Status codes are a contract: 2xx worked, 4xx the caller erred, 5xx the server erred. Clients, caches and monitoring all branch on them.",
+    "ru": "Коды статуса — это контракт: 2xx сработало, 4xx ошибся вызывающий, 5xx ошибся сервер. Клиенты, кэши и мониторинг ветвятся по ним."
+   },
+   "whyNow": {
+    "en": "Partners now depend on your API; hiding errors in 200 breaks their automation.",
+    "ru": "Теперь от вашего API зависят партнёры; спрятанные в 200 ошибки ломают их автоматику."
+   },
+   "limits": {
+    "en": "'200 with error' also fools your own retries and alerts into thinking all is well.",
+    "ru": "«200 с ошибкой» ещё и обманывает ваши повторы и алерты, будто всё хорошо."
+   },
+   "article": "api.statusCodes"
+  },
+  "next": "m019",
+  "unlocks": {
+   "settings": [
+    "apiStatusCodes"
+   ]
+  },
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "apiStatusCodes": "always-200"
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "4xx/5xx situations are returned as 200.",
+     "ru": "Ситуации 4xx/5xx возвращаются как 200."
+    },
+    "app": "api"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-200",
+    "app": "api",
+    "hint": {
+     "en": "Trigger an invalid request and read the status",
+     "ru": "Вызвать невалидный запрос и прочитать статус"
+    },
+    "text": {
+     "en": "The body says error, the status says 200.",
+     "ru": "В теле ошибка, статус 200."
+    },
+    "match": {
+     "kind": "response"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Status codes are being faked as 200",
+     "ru": "Коды статуса подменяются на 200"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Clients branch on the status code, not on prose.",
+     "ru": "Верно. Клиенты ветвятся по коду статуса, а не по тексту."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The partner's code is wrong",
+     "ru": "Код партнёра неправильный"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "They're doing the normal thing; we're the ones lying about status.",
+     "ru": "Они делают нормально; это мы врём про статус."
+    }
+   }
+  ]
+ },
+ {
+  "id": "m019",
+  "slug": "breaking-change",
+  "act": 3,
+  "order": 19,
+  "kind": "incident",
+  "title": {
+   "en": "Lev renamed a field",
+   "ru": "Лёва переименовал поле"
+  },
+  "summary": {
+   "en": "A renamed JSON field breaks the mobile app overnight.",
+   "ru": "Переименованное поле JSON ночью ломает мобильное приложение."
+  },
+  "prerequisites": [
+   "m018"
+  ],
+  "learning": [
+   "api.versioning",
+   "api.contract"
+  ],
+  "trigger": {
+   "id": "m019-t",
+   "from": "sonya",
+   "subject": {
+    "en": "The mobile app shows blank prices",
+    "ru": "В мобильном приложении пустые цены"
+   },
+   "body": {
+    "en": "Since last night the mobile app shows no prices at all. Nothing changed on mobile. Lev mentioned he 'cleaned up the API' yesterday...",
+    "ru": "Со вчерашней ночи мобильное приложение вообще не показывает цены. На мобильной стороне ничего не меняли. Лёва вчера что-то говорил про «почистил API»..."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Old clients get prices again",
+     "ru": "Старые клиенты снова получают цены"
+    },
+    "check": {
+     "fact": "bug.price-renamed",
+     "falsy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "/api/v1/products works",
+     "ru": "/api/v1/products работает"
+    },
+    "check": {
+     "fact": "ep.api_catalog.ok",
+     "truthy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "bug.price-renamed",
+     "falsy": true
+    },
+    "text": {
+     "en": "v1 is back to its promised shape.",
+     "ru": "v1 вернулся к обещанному формату."
+    },
+    "effects": [
+     {
+      "users": 20
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A breaking change alters the agreed shape of a response. Clients you don't control (mobile apps, partners) can't all update at once, so they break.",
+    "ru": "Ломающее изменение меняет согласованный формат ответа. Клиенты, которыми вы не управляете (мобильные, партнёры), не обновятся разом — они ломаются."
+   },
+   "whyNow": {
+    "en": "You now have clients outside your repo; their expectations are a contract you must keep.",
+    "ru": "Теперь у вас есть клиенты вне репозитория; их ожидания — контракт, который нужно держать."
+   },
+   "limits": {
+    "en": "Adding fields is safe; renaming or removing them is the breaking kind.",
+    "ru": "Добавлять поля безопасно; переименовывать или удалять — ломающее."
+   },
+   "article": "api.versioning"
+  },
+  "next": "m020",
+  "setup": [
+   {
+    "addBug": {
+     "id": "price-renamed",
+     "title": {
+      "en": "price renamed to price_cents",
+      "ru": "price переименован в price_cents"
+     },
+     "endpoint": "api_catalog",
+     "logCode": "CONTRACT",
+     "logMessage": "Response field 'price' renamed to 'price_cents' without versioning",
+     "caughtBy": "contract"
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Old clients can't find the price field.",
+     "ru": "Старые клиенты не находят поле цены."
+    },
+    "app": "api"
+   },
+   {
+    "text": {
+     "en": "The web app (updated) works fine.",
+     "ru": "Веб-приложение (обновлённое) работает."
+    },
+    "app": "browser"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-break",
+    "app": "api",
+    "hint": {
+     "en": "Compare the response to what old clients expect",
+     "ru": "Сравнить ответ с ожиданиями старых клиентов"
+    },
+    "text": {
+     "en": "The field 'price' is now 'price_cents' — old clients break.",
+     "ru": "Поле 'price' теперь 'price_cents' — старые клиенты ломаются."
+    },
+    "match": {
+     "kind": "response",
+     "keyPrefix": "api_catalog"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "A breaking API change shipped without a version",
+     "ru": "Выехало ломающее изменение API без версии"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Exactly. Renaming a field breaks every client built on the old shape.",
+     "ru": "Именно. Переименование поля ломает всех клиентов на старом формате."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The mobile app crashed on its own",
+     "ru": "Мобильное приложение само упало"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "It didn't change; the response did.",
+     "ru": "Оно не менялось; изменился ответ."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "revert",
+    "app": "api",
+    "label": {
+     "en": "Restore the old field name for v1",
+     "ru": "Вернуть старое имя поля для v1"
+    },
+    "effects": [
+     {
+      "fixBug": "price-renamed"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m020",
+  "slug": "versioning",
+  "act": 3,
+  "order": 20,
+  "kind": "build",
+  "title": {
+   "en": "Version the API",
+   "ru": "Версионировать API"
+  },
+  "summary": {
+   "en": "Introduce v2 without breaking v1, and publish a contract.",
+   "ru": "Ввести v2, не ломая v1, и опубликовать контракт."
+  },
+  "prerequisites": [
+   "m019"
+  ],
+  "learning": [
+   "api.versioning",
+   "api.contract"
+  ],
+  "trigger": {
+   "id": "m020-t",
+   "from": "nika",
+   "subject": {
+    "en": "Never break clients again",
+    "ru": "Больше никогда не ломать клиентов"
+   },
+   "body": {
+    "en": "That outage scared me. I want a rule: we can evolve the API but old clients must keep working. Lev says we should version it and publish a contract so breaks get caught before release.",
+    "ru": "Та авария меня напугала. Хочу правило: API можно развивать, но старые клиенты обязаны работать. Лёва говорит, надо версионировать и опубликовать контракт, чтобы поломки ловились до релиза."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "API is versioned",
+     "ru": "API версионируется"
+    },
+    "check": {
+     "any": [
+      {
+       "fact": "app.apiVersioning",
+       "eq": "url"
+      },
+      {
+       "fact": "app.apiVersioning",
+       "eq": "header"
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "A contract is published",
+     "ru": "Контракт опубликован"
+    },
+    "check": {
+     "fact": "app.apiContract",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "app.apiContract",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "New versions can ship without breaking anyone.",
+     "ru": "Новые версии можно выпускать, никого не ломая."
+    },
+    "effects": [
+     {
+      "users": 30
+     },
+     {
+      "cash": 30
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Versioning (/api/v1, /api/v2) lets old and new coexist. A published contract (OpenAPI) is a machine-checkable promise, so CI can reject a breaking change before release.",
+    "ru": "Версионирование (/api/v1, /api/v2) даёт старому и новому сосуществовать. Опубликованный контракт (OpenAPI) — машиночитаемое обещание, поэтому CI может отклонить ломающее изменение до релиза."
+   },
+   "whyNow": {
+    "en": "After a breakage, a contract turns 'be careful' into an automatic guardrail.",
+    "ru": "После поломки контракт превращает «будь осторожен» в автоматический ограничитель."
+   },
+   "limits": {
+    "en": "Each version you keep alive is extra code to maintain.",
+    "ru": "Каждая поддерживаемая версия — лишний код в сопровождении."
+   },
+   "article": "api.contract"
+  },
+  "next": "m021",
+  "unlocks": {
+   "settings": [
+    "apiVersioning",
+    "apiContract"
+   ]
+  },
+  "checkpoint": true
+ }
+]

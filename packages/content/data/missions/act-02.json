@@ -1,0 +1,1420 @@
+[
+ {
+  "id": "m007",
+  "slug": "dynamic-catalog",
+  "act": 2,
+  "order": 7,
+  "kind": "build",
+  "title": {
+   "en": "A catalog that changes",
+   "ru": "Каталог, который меняется"
+  },
+  "summary": {
+   "en": "Static files can't show a changing product list. Add a backend.",
+   "ru": "Статика не покажет меняющийся список товаров. Добавить бэкенд."
+  },
+  "prerequisites": [
+   "m006"
+  ],
+  "learning": [
+   "backend.role",
+   "web.static"
+  ],
+  "trigger": {
+   "id": "m007-t",
+   "from": "nika",
+   "subject": {
+    "en": "We need a real catalog",
+    "ru": "Нужен настоящий каталог"
+   },
+   "body": {
+    "en": "I want to add and remove products without you editing HTML every time. That means a program on the server that builds the catalog page on demand — a backend. Drop a Backend node in the Architecture app and wire it behind Nginx.",
+    "ru": "Хочу добавлять и убирать товары, не редактируя HTML каждый раз. Значит, нужна программа на сервере, которая собирает страницу каталога на лету — бэкенд. Поставь узел Backend в приложении Architecture и подключи его за Nginx."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A backend exists",
+     "ru": "Бэкенд существует"
+    },
+    "check": {
+     "fact": "role.backend",
+     "gte": 1
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Nginx forwards to the backend",
+     "ru": "Nginx пересылает на бэкенд"
+    },
+    "check": {
+     "fact": "edgeRole.proxy>backend",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "/catalog is served",
+     "ru": "/catalog отдаётся"
+    },
+    "check": {
+     "fact": "ep.catalog.ok",
+     "truthy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Dynamic catalog is live.",
+     "ru": "Динамический каталог в эфире."
+    },
+    "effects": [
+     {
+      "users": 30
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A backend runs your code per request. Nginx stays in front and proxy_passes dynamic paths like /catalog to it.",
+    "ru": "Бэкенд выполняет ваш код на каждый запрос. Nginx остаётся впереди и проксирует динамические пути вроде /catalog на него."
+   },
+   "whyNow": {
+    "en": "A changing catalog can't be a static file; it must be built by code.",
+    "ru": "Меняющийся каталог не может быть статикой; его должен собирать код."
+   },
+   "limits": {
+    "en": "The backend has no data store yet — the catalog is still hardcoded.",
+    "ru": "У бэкенда пока нет хранилища — каталог ещё захардкожен."
+   },
+   "article": "backend.role",
+   "diagram": {
+    "nodes": [
+     {
+      "id": "b",
+      "label": "Browser",
+      "icon": "users"
+     },
+     {
+      "id": "n",
+      "label": "Nginx",
+      "icon": "server"
+     },
+     {
+      "id": "a",
+      "label": "Backend",
+      "icon": "app"
+     }
+    ],
+    "edges": [
+     [
+      "b",
+      "n",
+      "GET /catalog"
+     ],
+     [
+      "n",
+      "a",
+      "proxy_pass"
+     ],
+     [
+      "a",
+      "n",
+      "HTML"
+     ],
+     [
+      "n",
+      "b",
+      "200"
+     ]
+    ]
+   }
+  },
+  "next": "m008",
+  "unlocks": {
+   "apps": [
+    "architecture"
+   ],
+   "components": [
+    "backend"
+   ],
+   "features": [
+    "perf"
+   ]
+  },
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "catalog",
+     "method": "GET",
+     "path": "/catalog",
+     "target": "backend",
+     "weight": 8,
+     "cpuMs": 10,
+     "responseKb": 12,
+     "auth": "none",
+     "product": {
+      "en": "A visitor browses the product catalog",
+      "ru": "Посетитель смотрит каталог товаров"
+     },
+     "queries": [],
+     "handler": "CatalogController@index"
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "/catalog returns 502 — nothing handles dynamic requests.",
+     "ru": "/catalog отвечает 502 — некому обрабатывать динамику."
+    },
+    "app": "inspector"
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m008",
+  "slug": "backend-concept",
+  "act": 2,
+  "order": 8,
+  "kind": "tutorial",
+  "title": {
+   "en": "What the backend actually does",
+   "ru": "Что на самом деле делает бэкенд"
+  },
+  "summary": {
+   "en": "Trace a dynamic request through the backend in Layer Mode.",
+   "ru": "Проследить динамический запрос через бэкенд в Layer Mode."
+  },
+  "prerequisites": [
+   "m007"
+  ],
+  "learning": [
+   "backend.role"
+  ],
+  "trigger": {
+   "id": "m008-t",
+   "from": "lev",
+   "subject": {
+    "en": "I joined — here's how it works",
+    "ru": "Я подключился — вот как это работает"
+   },
+   "body": {
+    "en": "Hey, Lev here, I'll be writing backend code. Look at the /catalog request in the Inspector: the backend runs a handler, builds HTML, returns it. Flip Layer Mode to see product vs application vs infrastructure views of the same thing.",
+    "ru": "Привет, это Лёва, буду писать бэкенд. Посмотри запрос /catalog в Inspector: бэкенд выполняет обработчик, собирает HTML, возвращает. Переключи Layer Mode, чтобы увидеть один и тот же запрос на уровнях продукта, приложения и инфраструктуры."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Inspect the /catalog request",
+     "ru": "Изучить запрос /catalog"
+    },
+    "check": {
+     "fact": "mission.evidence.e-cat",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "s",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You can read the application layer now.",
+     "ru": "Теперь вы читаете уровень приложения."
+    },
+    "effects": [
+     {
+      "users": 10
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Layer Mode shows one request four ways: what the user does (product), the handler and queries (application), the protocol (network), and the servers (infrastructure).",
+    "ru": "Layer Mode показывает один запрос четырьмя способами: что делает пользователь (продукт), обработчик и запросы (приложение), протокол (сеть) и серверы (инфраструктура)."
+   },
+   "whyNow": {
+    "en": "Switching layers is how you reason about a system at the right altitude.",
+    "ru": "Переключение слоёв — способ думать о системе на нужной высоте."
+   },
+   "limits": {
+    "en": "The same facts, four lenses — pick the one that answers your question.",
+    "ru": "Одни факты, четыре линзы — берите ту, что отвечает на ваш вопрос."
+   },
+   "article": "backend.role"
+  },
+  "next": "m009",
+  "evidence": [
+   {
+    "id": "e-cat",
+    "app": "inspector",
+    "hint": {
+     "en": "Inspect /catalog and read the backend stage",
+     "ru": "Изучить /catalog и стадию бэкенда"
+    },
+    "text": {
+     "en": "The backend stage runs a handler and renders the response.",
+     "ru": "Стадия бэкенда выполняет обработчик и рендерит ответ."
+    },
+    "match": {
+     "kind": "request",
+     "key": "catalog"
+    }
+   }
+  ]
+ },
+ {
+  "id": "m009",
+  "slug": "first-database",
+  "act": 2,
+  "order": 9,
+  "kind": "build",
+  "title": {
+   "en": "The catalog needs a database",
+   "ru": "Каталогу нужна база данных"
+  },
+  "summary": {
+   "en": "Move products out of code into MySQL.",
+   "ru": "Вынести товары из кода в MySQL."
+  },
+  "prerequisites": [
+   "m008"
+  ],
+  "learning": [
+   "db.basics"
+  ],
+  "trigger": {
+   "id": "m009-t",
+   "from": "nika",
+   "subject": {
+    "en": "Let me edit products myself",
+    "ru": "Хочу сама править товары"
+   },
+   "body": {
+    "en": "Right now products live in a file Lev edits. I want to change prices from an admin screen without bothering him. Add a MySQL database, switch the data source to it, and connect the backend to the database.",
+    "ru": "Сейчас товары лежат в файле, который правит Лёва. Хочу менять цены из админки, не дёргая его. Добавь базу MySQL, переключи источник данных на неё и соедини бэкенд с базой."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A MySQL database exists",
+     "ru": "База MySQL существует"
+    },
+    "check": {
+     "fact": "role.database",
+     "gte": 1
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The backend is connected to the database",
+     "ru": "Бэкенд соединён с базой"
+    },
+    "check": {
+     "fact": "edgeRole.backend>database",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "Data source is MySQL",
+     "ru": "Источник данных — MySQL"
+    },
+    "check": {
+     "fact": "app.dataSource",
+     "eq": "mysql"
+    }
+   },
+   {
+    "id": "o4",
+    "text": {
+     "en": "/catalog still works",
+     "ru": "/catalog по-прежнему работает"
+    },
+    "check": {
+     "fact": "ep.catalog.ok",
+     "truthy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Products live in a real database now.",
+     "ru": "Товары теперь в настоящей базе."
+    },
+    "effects": [
+     {
+      "users": 20
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A relational database stores products as rows in a table. The backend queries it instead of reading a file, so many people can read and write safely at once.",
+    "ru": "Реляционная база хранит товары строками таблицы. Бэкенд делает к ней запросы вместо чтения файла, поэтому много людей могут безопасно читать и писать одновременно."
+   },
+   "whyNow": {
+    "en": "A file can't handle concurrent edits or fast lookups; a database is built for both.",
+    "ru": "Файл не выдержит одновременных правок и быстрых выборок; база создана для обоих."
+   },
+   "limits": {
+    "en": "The query has no index yet — fine at 500 rows, a problem later.",
+    "ru": "У запроса пока нет индекса — нормально на 500 строках, проблема позже."
+   },
+   "article": "db.basics"
+  },
+  "next": "m010",
+  "unlocks": {
+   "apps": [
+    "database",
+    "timemachine"
+   ],
+   "components": [
+    "mysql"
+   ],
+   "settings": [
+    "dataSource"
+   ]
+  },
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "dataSource": "json-file"
+    }
+   },
+   {
+    "push": "tables",
+    "value": {
+     "name": "products",
+     "rows": 500,
+     "rowKb": 1,
+     "columns": [
+      {
+       "name": "id",
+       "type": "bigint",
+       "pk": true
+      },
+      {
+       "name": "category_id",
+       "type": "bigint"
+      },
+      {
+       "name": "name",
+       "type": "varchar"
+      },
+      {
+       "name": "price_cents",
+       "type": "int"
+      },
+      {
+       "name": "stock",
+       "type": "int"
+      }
+     ],
+     "indexes": []
+    }
+   },
+   {
+    "set": "endpoints[id=catalog].queries",
+    "value": [
+     {
+      "id": "cat_list",
+      "table": "products",
+      "op": "select",
+      "where": [
+       "category_id"
+      ],
+      "match": "many",
+      "selectivity": 0.05,
+      "perRequest": 1
+     }
+    ]
+   },
+   {
+    "set": "endpoints[id=catalog].cpuMs",
+    "value": 6
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Editing products means editing a file by hand.",
+     "ru": "Правка товаров — это ручная правка файла."
+    },
+    "app": "project"
+   }
+  ],
+  "ops": [],
+  "checkpoint": true
+ },
+ {
+  "id": "m010",
+  "slug": "users-table",
+  "act": 2,
+  "order": 10,
+  "kind": "build",
+  "title": {
+   "en": "A place for accounts",
+   "ru": "Место для аккаунтов"
+  },
+  "summary": {
+   "en": "Create a users table so people can have accounts.",
+   "ru": "Создать таблицу users, чтобы у людей были аккаунты."
+  },
+  "prerequisites": [
+   "m009"
+  ],
+  "learning": [
+   "db.basics"
+  ],
+  "trigger": {
+   "id": "m010-t",
+   "from": "nika",
+   "subject": {
+    "en": "People want accounts",
+    "ru": "Люди хотят аккаунты"
+   },
+   "body": {
+    "en": "Customers keep asking to 'log in and save their cart'. First things first: we need somewhere to store users. Create a users table with an email and a password field. We'll wire up registration next.",
+    "ru": "Клиенты просят «войти и сохранить корзину». Сначала главное: нужно где-то хранить пользователей. Создай таблицу users с email и полем пароля. Регистрацию подключим следующим шагом."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A users table exists",
+     "ru": "Таблица users существует"
+    },
+    "check": {
+     "fact": "table.users",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "email is unique",
+     "ru": "email уникален"
+    },
+    "check": {
+     "fact": "unique.users.email",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "The users table is ready.",
+     "ru": "Таблица users готова."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A table is a shape for data: columns with types, one row per user. A UNIQUE constraint on email stops two accounts sharing an address.",
+    "ru": "Таблица — форма для данных: столбцы с типами, одна строка на пользователя. Ограничение UNIQUE на email не даёт двум аккаунтам делить адрес."
+   },
+   "whyNow": {
+    "en": "You can't register users until there's a table to put them in.",
+    "ru": "Нельзя регистрировать пользователей, пока нет таблицы, куда их класть."
+   },
+   "limits": {
+    "en": "An empty table is cheap; the columns you choose now shape every feature later.",
+    "ru": "Пустая таблица дешёвая; выбранные сейчас столбцы формируют все будущие фичи."
+   },
+   "article": "db.basics"
+  },
+  "next": "m011",
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "register",
+     "method": "POST",
+     "path": "/register",
+     "target": "backend",
+     "weight": 2,
+     "cpuMs": 12,
+     "responseKb": 2,
+     "auth": "none",
+     "product": {
+      "en": "A visitor creates an account",
+      "ru": "Посетитель создаёт аккаунт"
+     },
+     "queries": [
+      {
+       "id": "reg_ins",
+       "table": "users",
+       "op": "insert"
+      }
+     ],
+     "handler": "RegisterController@store",
+     "writes": true,
+     "disabled": true
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "create",
+    "app": "database",
+    "label": {
+     "en": "Create the users table",
+     "ru": "Создать таблицу users"
+    },
+    "effects": [
+     {
+      "set": "tables[name=users]",
+      "value": {
+       "name": "users",
+       "rows": 0,
+       "rowKb": 1,
+       "columns": [
+        {
+         "name": "id",
+         "type": "bigint",
+         "pk": true
+        },
+        {
+         "name": "email",
+         "type": "varchar",
+         "unique": true
+        },
+        {
+         "name": "password_hash",
+         "type": "varchar"
+        },
+        {
+         "name": "role",
+         "type": "varchar"
+        },
+        {
+         "name": "created_at",
+         "type": "datetime"
+        }
+       ],
+       "indexes": []
+      }
+     }
+    ],
+    "once": true
+   }
+  ]
+ },
+ {
+  "id": "m011",
+  "slug": "registration",
+  "act": 2,
+  "order": 11,
+  "kind": "build",
+  "title": {
+   "en": "Registration",
+   "ru": "Регистрация"
+  },
+  "summary": {
+   "en": "Turn on sign-up — and notice how passwords are stored.",
+   "ru": "Включить регистрацию — и заметить, как хранятся пароли."
+  },
+  "prerequisites": [
+   "m010"
+  ],
+  "learning": [
+   "db.basics",
+   "sec.hashing"
+  ],
+  "trigger": {
+   "id": "m011-t",
+   "from": "lev",
+   "subject": {
+    "en": "Sign-up is live",
+    "ru": "Регистрация включена"
+   },
+   "body": {
+    "en": "Shipped the registration form. People can create accounts now. I stored the password straight in the users table so login will be easy to check. Ship it?",
+    "ru": "Выкатил форму регистрации. Теперь можно создавать аккаунты. Пароль я положил прямо в таблицу users, чтобы вход было легко проверять. Выкатываем?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Registration works",
+     "ru": "Регистрация работает"
+    },
+    "check": {
+     "fact": "ep.register.ok",
+     "truthy": true
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Passwords are hashed (not plaintext/md5)",
+     "ru": "Пароли хешируются (не plaintext/md5)"
+    },
+    "check": {
+     "any": [
+      {
+       "fact": "app.passwordStorage",
+       "eq": "bcrypt"
+      },
+      {
+       "fact": "app.passwordStorage",
+       "eq": "argon2id"
+      }
+     ]
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "any": [
+        {
+         "fact": "app.passwordStorage",
+         "eq": "bcrypt"
+        },
+        {
+         "fact": "app.passwordStorage",
+         "eq": "argon2id"
+        }
+       ]
+      }
+     ]
+    },
+    "text": {
+     "en": "Registration works and passwords are hashed.",
+     "ru": "Регистрация работает, пароли хешируются."
+    },
+    "effects": [
+     {
+      "users": 40
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A password hash is one-way: you store it, verify against it, but can't read the password back. bcrypt adds a salt and is deliberately slow.",
+    "ru": "Хеш пароля односторонний: его хранят, по нему проверяют, но сам пароль прочитать нельзя. bcrypt добавляет соль и намеренно медленный."
+   },
+   "whyNow": {
+    "en": "Registration without hashing is a breach waiting to happen; fix it before you have real users.",
+    "ru": "Регистрация без хеширования — утечка, которая вот-вот случится; почините до появления настоящих пользователей."
+   },
+   "limits": {
+    "en": "Hashing costs ~60 ms of CPU per login — budget for it when traffic grows.",
+    "ru": "Хеширование стоит ~60 мс CPU на вход — учитывайте это с ростом трафика."
+   },
+   "article": "sec.hashing"
+  },
+  "next": "m012",
+  "unlocks": {
+   "settings": [
+    "passwordStorage",
+    "inputValidation"
+   ]
+  },
+  "setup": [
+   {
+    "set": "endpoints[id=register].disabled",
+    "value": false
+   }
+  ],
+  "dialogue": [
+   {
+    "id": "d",
+    "npc": "lev",
+    "text": {
+     "en": "Plain password in a column — simple, right?",
+     "ru": "Пароль открытым текстом в столбце — просто же?"
+    },
+    "choices": [
+     {
+      "id": "c1",
+      "text": {
+       "en": "No. Hash it. If the DB leaks, every password leaks.",
+       "ru": "Нет. Хешируй. Если база утечёт — утекут все пароли."
+      },
+      "reply": {
+       "en": "Fair. I'll switch to bcrypt.",
+       "ru": "Справедливо. Переключаю на bcrypt."
+      }
+     },
+     {
+      "id": "c2",
+      "text": {
+       "en": "Fine for now, we'll fix it later.",
+       "ru": "Пока сойдёт, починим потом."
+      },
+      "reply": {
+       "en": "Famous last words, but okay.",
+       "ru": "Знаменитые последние слова, но ладно."
+      }
+     }
+    ]
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Passwords are stored exactly as typed.",
+     "ru": "Пароли хранятся ровно как введены."
+    },
+    "app": "database"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-plain",
+    "app": "database",
+    "hint": {
+     "en": "Look at the password column in users",
+     "ru": "Посмотреть столбец пароля в users"
+    },
+    "text": {
+     "en": "Passwords are stored in plain text.",
+     "ru": "Пароли хранятся открытым текстом."
+    },
+    "match": {
+     "kind": "schema",
+     "key": "users.password"
+    }
+   }
+  ],
+  "achievements": [],
+  "checkpoint": true
+ },
+ {
+  "id": "m012",
+  "slug": "login",
+  "act": 2,
+  "order": 12,
+  "kind": "build",
+  "title": {
+   "en": "Login",
+   "ru": "Вход"
+  },
+  "summary": {
+   "en": "Let registered users log in.",
+   "ru": "Дать зарегистрированным пользователям входить."
+  },
+  "prerequisites": [
+   "m011"
+  ],
+  "learning": [
+   "auth.authentication"
+  ],
+  "trigger": {
+   "id": "m012-t",
+   "from": "nika",
+   "subject": {
+    "en": "Let people log in",
+    "ru": "Дай людям входить"
+   },
+   "body": {
+    "en": "Sign-up works, but there's no way back in. Add login. And Lev set it to say 'no such email' vs 'wrong password' — isn't that handy?",
+    "ru": "Регистрация работает, но войти обратно нельзя. Добавь вход. И Лёва сделал, чтобы писало «нет такого email» или «неверный пароль» — удобно же?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Login works",
+     "ru": "Вход работает"
+    },
+    "check": {
+     "fact": "ep.login.ok",
+     "truthy": true
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Error messages don't reveal which emails exist",
+     "ru": "Сообщения не выдают существующие email"
+    },
+    "check": {
+     "fact": "app.authErrors",
+     "eq": "generic"
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.authErrors",
+     "eq": "generic"
+    },
+    "text": {
+     "en": "Login works and doesn't leak account existence.",
+     "ru": "Вход работает и не выдаёт существование аккаунтов."
+    },
+    "effects": [
+     {
+      "users": 30
+     }
+    ]
+   },
+   {
+    "id": "ok",
+    "kind": "acceptable",
+    "when": true,
+    "text": {
+     "en": "Login works.",
+     "ru": "Вход работает."
+    },
+    "effects": [
+     {
+      "users": 20
+     }
+    ],
+    "debt": 2
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Authentication checks you are who you claim: find the user by email, compare the password hash. Generic errors avoid telling attackers which emails are registered.",
+    "ru": "Аутентификация проверяет, что вы тот, за кого себя выдаёте: найти пользователя по email, сравнить хеш пароля. Обобщённые ошибки не говорят атакующим, какие email зарегистрированы."
+   },
+   "whyNow": {
+    "en": "Login is the gate; everything personal depends on it being correct.",
+    "ru": "Вход — это ворота; всё личное зависит от его корректности."
+   },
+   "limits": {
+    "en": "Authentication only proves identity — it doesn't yet decide what you may do.",
+    "ru": "Аутентификация лишь подтверждает личность — она ещё не решает, что вам можно."
+   },
+   "article": "auth.authentication"
+  },
+  "next": "m013",
+  "unlocks": {
+   "settings": [
+    "authErrors"
+   ]
+  },
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "login",
+     "method": "POST",
+     "path": "/login",
+     "target": "backend",
+     "weight": 3,
+     "cpuMs": 10,
+     "responseKb": 2,
+     "auth": "none",
+     "product": {
+      "en": "A user logs in",
+      "ru": "Пользователь входит"
+     },
+     "queries": [
+      {
+       "id": "login_find",
+       "table": "users",
+       "op": "select",
+       "where": [
+        "email"
+       ],
+       "match": "one"
+      }
+     ],
+     "handler": "LoginController@store",
+     "writes": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Login reveals whether an email is registered.",
+     "ru": "Вход выдаёт, зарегистрирован ли email."
+    },
+    "app": "api"
+   }
+  ]
+ },
+ {
+  "id": "m013",
+  "slug": "session",
+  "act": 2,
+  "order": 13,
+  "kind": "incident",
+  "title": {
+   "en": "Logged in, then logged out",
+   "ru": "Вошёл и сразу вышел"
+  },
+  "summary": {
+   "en": "Users get logged out instantly. Give the server a way to remember them.",
+   "ru": "Пользователей сразу разлогинивает. Дать серверу способ их помнить."
+  },
+  "prerequisites": [
+   "m012"
+  ],
+  "learning": [
+   "auth.session",
+   "auth.cookie"
+  ],
+  "trigger": {
+   "id": "m013-t",
+   "from": "sonya",
+   "subject": {
+    "en": "I log in and it forgets me",
+    "ru": "Вхожу — и меня забывает"
+   },
+   "body": {
+    "en": "Every click after login throws me back to the login page. It's like the site has amnesia. People are giving up before they even see their cart.",
+    "ru": "Каждый клик после входа выбрасывает обратно на страницу входа. Будто у сайта амнезия. Люди сдаются, ещё не увидев корзину."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Sessions keep users logged in",
+     "ru": "Сессии держат пользователей вошедшими"
+    },
+    "check": {
+     "any": [
+      {
+       "fact": "app.authMode",
+       "eq": "session"
+      },
+      {
+       "fact": "app.authMode",
+       "eq": "jwt"
+      }
+     ]
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Session cookie is HttpOnly + Secure (if using sessions)",
+     "ru": "Cookie сессии HttpOnly + Secure (для сессий)"
+    },
+    "check": {
+     "any": [
+      {
+       "fact": "app.authMode",
+       "eq": "jwt"
+      },
+      {
+       "fact": "app.cookieHttpOnly",
+       "truthy": true
+      }
+     ]
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "app.authMode",
+       "eq": "session"
+      },
+      {
+       "fact": "app.cookieHttpOnly",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "Sessions with a safe cookie. Users stay logged in.",
+     "ru": "Сессии с безопасной cookie. Пользователи остаются в системе."
+    },
+    "effects": [
+     {
+      "users": 50
+     }
+    ]
+   },
+   {
+    "id": "jwt",
+    "kind": "acceptable",
+    "when": {
+     "fact": "app.authMode",
+     "eq": "jwt"
+    },
+    "text": {
+     "en": "JWT keeps users logged in, stateless.",
+     "ru": "JWT держит пользователей вошедшими, без состояния."
+    },
+    "effects": [
+     {
+      "users": 40
+     }
+    ]
+   },
+   {
+    "id": "weak",
+    "kind": "bad",
+    "when": {
+     "any": [
+      {
+       "fact": "app.authMode",
+       "eq": "plain-cookie"
+      },
+      {
+       "fact": "app.authMode",
+       "eq": "url-param"
+      }
+     ]
+    },
+    "text": {
+     "en": "Users stay logged in — but anyone can impersonate anyone.",
+     "ru": "Пользователи остаются в системе — но любой может выдать себя за любого."
+    },
+    "effects": [
+     {
+      "users": 50
+     }
+    ],
+    "debt": 12,
+    "consequences": [
+     {
+      "id": "c-tamper",
+      "delay": 4,
+      "when": {
+       "any": [
+        {
+         "fact": "app.authMode",
+         "eq": "plain-cookie"
+        },
+        {
+         "fact": "app.authMode",
+         "eq": "url-param"
+        }
+       ]
+      },
+      "effects": [],
+      "mail": {
+       "id": "c-tamper-m",
+       "from": "mark",
+       "subject": {
+        "en": "Anyone can become anyone",
+        "ru": "Любой может стать любым"
+       },
+       "body": {
+        "en": "I changed the user id in my own cookie and became another account. Your 'session' is just an editable number. Fix the auth model.",
+        "ru": "Я поменял id пользователя в своей cookie и стал другим аккаунтом. Ваша «сессия» — это просто редактируемое число. Почините модель авторизации."
+       }
+      }
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "HTTP is stateless. A session stores server-side state and hands the browser a random id in a cookie; the browser returns it on every request, so the server knows you.",
+    "ru": "HTTP не хранит состояние. Сессия хранит состояние на сервере и выдаёт браузеру случайный id в cookie; браузер возвращает его на каждом запросе, и сервер вас узнаёт."
+   },
+   "whyNow": {
+    "en": "Without sessions, login is pointless — the next click forgets you.",
+    "ru": "Без сессий вход бессмыслен — следующий клик вас забывает."
+   },
+   "limits": {
+    "en": "The id must be random; a guessable or editable one is an account-takeover bug.",
+    "ru": "id должен быть случайным; угадываемый или редактируемый — это дыра для угона аккаунта."
+   },
+   "article": "auth.session"
+  },
+  "next": "m014",
+  "unlocks": {
+   "settings": [
+    "authMode",
+    "sessionStore",
+    "cookieHttpOnly"
+   ]
+  },
+  "symptoms": [
+   {
+    "text": {
+     "en": "Each request after login is treated as a stranger.",
+     "ru": "Каждый запрос после входа считается незнакомцем."
+    },
+    "app": "inspector"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-noauth",
+    "app": "inspector",
+    "hint": {
+     "en": "Inspect a request after login",
+     "ru": "Изучить запрос после входа"
+    },
+    "text": {
+     "en": "No cookie or token carries identity between requests.",
+     "ru": "Ни cookie, ни токен не несут личность между запросами."
+    },
+    "match": {
+     "kind": "request",
+     "keyPrefix": "account"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "HTTP forgets between requests; we store no session",
+     "ru": "HTTP забывает между запросами; мы не храним сессию"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right — HTTP is stateless. Without a session cookie, every request is anonymous.",
+     "ru": "Верно — HTTP без состояния. Без cookie сессии каждый запрос анонимен."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The password is wrong",
+     "ru": "Пароль неверный"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Login succeeds; the problem is the next request.",
+     "ru": "Вход проходит; проблема в следующем запросе."
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m014",
+  "slug": "authorization",
+  "act": 2,
+  "order": 14,
+  "kind": "security",
+  "title": {
+   "en": "Any user can reach the admin",
+   "ru": "Любой пользователь попадает в админку"
+  },
+  "summary": {
+   "en": "Authentication isn't authorization. Lock down admin actions.",
+   "ru": "Аутентификация — не авторизация. Закрыть админ-действия."
+  },
+  "prerequisites": [
+   "m013"
+  ],
+  "learning": [
+   "auth.authorization"
+  ],
+  "trigger": {
+   "id": "m014-t",
+   "from": "mark",
+   "subject": {
+    "en": "Your admin panel isn't protected",
+    "ru": "Ваша админка не защищена"
+   },
+   "body": {
+    "en": "Security contractor here. I logged in as a normal customer, then opened /admin/products/5 and edited a price. The page just checks you're logged in, not that you're an admin. That's broken access control.",
+    "ru": "Это подрядчик по безопасности. Я вошёл как обычный покупатель, открыл /admin/products/5 и поменял цену. Страница проверяет только что ты вошёл, а не что ты админ. Это сломанный контроль доступа."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Admin actions require the admin role",
+     "ru": "Админ-действия требуют роль admin"
+    },
+    "check": {
+     "fact": "app.adminRoleCheck",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "No broken-access-control vulnerability",
+     "ru": "Нет уязвимости сломанного доступа"
+    },
+    "check": {
+     "fact": "vuln.missingAuthorization",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.adminRoleCheck",
+     "truthy": true
+    },
+    "text": {
+     "en": "Admin actions are now authorized, not just authenticated.",
+     "ru": "Админ-действия теперь авторизованы, не просто аутентифицированы."
+    },
+    "effects": [
+     {
+      "users": 20
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Authorization decides what an authenticated user may do. Role-based checks (only role=admin) must run on the server for every sensitive action.",
+    "ru": "Авторизация решает, что может делать аутентифицированный пользователь. Проверки по роли (только role=admin) должны выполняться на сервере для каждого важного действия."
+   },
+   "whyNow": {
+    "en": "A real admin panel exists now; leaving it open to any login is a serious hole.",
+    "ru": "Теперь есть настоящая админка; оставить её открытой любому входу — серьёзная дыра."
+   },
+   "limits": {
+    "en": "Hiding the admin link on the client stops nothing; the check must be server-side.",
+    "ru": "Спрятать ссылку на админку на клиенте ничего не даёт; проверка должна быть на сервере."
+   },
+   "article": "auth.authorization"
+  },
+  "next": "m015",
+  "unlocks": {
+   "settings": [
+    "adminRoleCheck"
+   ]
+  },
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "admin_products",
+     "method": "PUT",
+     "path": "/admin/products/:id",
+     "target": "backend",
+     "weight": 1,
+     "cpuMs": 10,
+     "responseKb": 1,
+     "auth": "admin",
+     "product": {
+      "en": "An admin edits a product",
+      "ru": "Админ редактирует товар"
+     },
+     "queries": [
+      {
+       "id": "adm_upd",
+       "table": "products",
+       "op": "update",
+       "where": [
+        "id"
+       ],
+       "match": "one"
+      }
+     ],
+     "handler": "Admin\\ProductController@update",
+     "writes": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "A customer account can perform admin actions.",
+     "ru": "Аккаунт покупателя выполняет админ-действия."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-authz",
+    "app": "api",
+    "hint": {
+     "en": "Call PUT /admin/products as a normal user",
+     "ru": "Вызвать PUT /admin/products обычным пользователем"
+    },
+    "text": {
+     "en": "The server accepts the admin action from a non-admin.",
+     "ru": "Сервер принимает админ-действие от не-админа."
+    },
+    "match": {
+     "kind": "response",
+     "keyPrefix": "admin_products"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "We check authentication but not the role",
+     "ru": "Проверяем аутентификацию, но не роль"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Exactly. Logged in ≠ allowed. Admin actions need a role check.",
+     "ru": "Именно. Вошёл ≠ можно. Админ-действиям нужна проверка роли."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The session cookie is broken",
+     "ru": "Cookie сессии сломана"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Sessions are fine; the gap is the missing permission check.",
+     "ru": "Сессии в порядке; пробел в отсутствующей проверке прав."
+    }
+   }
+  ],
+  "rewards": {
+   "users": 30
+  },
+  "checkpoint": true
+ }
+]

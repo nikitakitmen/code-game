@@ -1,0 +1,2682 @@
+[
+ {
+  "id": "m059",
+  "slug": "plaintext-leak",
+  "act": 9,
+  "order": 59,
+  "kind": "security",
+  "title": {
+   "en": "A leaked table full of weak hashes",
+   "ru": "Утёкшая таблица слабых хешей"
+  },
+  "summary": {
+   "en": "A legacy import weakened password storage to MD5. Restore strong hashing.",
+   "ru": "Легаси-импорт ослабил хранение паролей до MD5. Вернуть сильное хеширование."
+  },
+  "prerequisites": [
+   "m058"
+  ],
+  "learning": [
+   "sec.hashing"
+  ],
+  "trigger": {
+   "id": "m059-t",
+   "from": "mark",
+   "subject": {
+    "en": "Your password hashes are weak",
+    "ru": "Ваши хеши паролей слабые"
+   },
+   "body": {
+    "en": "Auditing your users table: passwords are stored as unsalted MD5. Someone imported an old system and it downgraded the hashing. MD5 is crackable at billions per second. Move to bcrypt or Argon2 and add brute-force protection.",
+    "ru": "Проверяю вашу таблицу users: пароли хранятся как MD5 без соли. Кто-то импортировал старую систему, и это откатило хеширование. MD5 ломается миллиардами в секунду. Переходите на bcrypt или Argon2 и добавьте защиту от перебора."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Passwords use bcrypt or Argon2",
+     "ru": "Пароли используют bcrypt или Argon2"
+    },
+    "check": {
+     "any": [
+      {
+       "fact": "app.passwordStorage",
+       "eq": "bcrypt"
+      },
+      {
+       "fact": "app.passwordStorage",
+       "eq": "argon2id"
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Brute force is throttled",
+     "ru": "Перебор ограничен"
+    },
+    "check": {
+     "fact": "app.loginRateLimit",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No weak-hashing vulnerability",
+     "ru": "Нет уязвимости слабого хеширования"
+    },
+    "check": {
+     "fact": "vuln.weakHashing",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "any": [
+        {
+         "fact": "app.passwordStorage",
+         "eq": "bcrypt"
+        },
+        {
+         "fact": "app.passwordStorage",
+         "eq": "argon2id"
+        }
+       ]
+      },
+      {
+       "fact": "app.loginRateLimit",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "Strong salted hashing plus throttling — a leak is survivable.",
+     "ru": "Сильное хеширование с солью плюс троттлинг — утечку можно пережить."
+    },
+    "effects": [
+     {
+      "users": 50
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A password hash should be slow and salted (bcrypt, Argon2) so a leaked table can't be cracked quickly. Rate limiting blunts online guessing.",
+    "ru": "Хеш пароля должен быть медленным и с солью (bcrypt, Argon2), чтобы утёкшую таблицу нельзя было быстро вскрыть. Rate limiting притупляет онлайн-перебор."
+   },
+   "whyNow": {
+    "en": "The Security chapter opens: you now attack your own system to find what's weak.",
+    "ru": "Открывается глава Безопасности: теперь вы атакуете свою систему, чтобы найти слабое."
+   },
+   "limits": {
+    "en": "MD5/SHA without salt fall to rainbow tables; fast hashes fall to brute force.",
+    "ru": "MD5/SHA без соли падают от радужных таблиц; быстрые хеши — от перебора."
+   },
+   "article": "sec.hashing"
+  },
+  "next": "m060",
+  "unlocks": {
+   "apps": [
+    "security",
+    "attacklab"
+   ],
+   "attacks": [
+    "bruteforce"
+   ],
+   "settings": [
+    "lockout"
+   ]
+  },
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "passwordStorage": "md5"
+    }
+   },
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "search",
+     "method": "GET",
+     "path": "/api/v1/search",
+     "target": "backend",
+     "weight": 3,
+     "cpuMs": 8,
+     "responseKb": 6,
+     "auth": "none",
+     "product": {
+      "en": "A user searches products",
+      "ru": "Пользователь ищет товары"
+     },
+     "queries": [
+      {
+       "id": "srch",
+       "table": "products",
+       "op": "select",
+       "where": [
+        "name"
+       ],
+       "like": true,
+       "match": "many",
+       "selectivity": 0.02
+      }
+     ],
+     "handler": "Api\\SearchController@index",
+     "api": true,
+     "browserFetch": true
+    }
+   },
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "reviews",
+     "method": "POST",
+     "path": "/api/v1/reviews",
+     "target": "backend",
+     "weight": 2,
+     "cpuMs": 8,
+     "responseKb": 2,
+     "auth": "user",
+     "product": {
+      "en": "A user posts a review",
+      "ru": "Пользователь оставляет отзыв"
+     },
+     "queries": [
+      {
+       "id": "rev_ins",
+       "table": "reviews",
+       "op": "insert"
+      }
+     ],
+     "handler": "Api\\ReviewController@store",
+     "writes": true,
+     "api": true
+    }
+   },
+   {
+    "push": "tables",
+    "value": {
+     "name": "reviews",
+     "rows": 80000,
+     "rowKb": 1,
+     "columns": [
+      {
+       "name": "id",
+       "type": "bigint",
+       "pk": true
+      },
+      {
+       "name": "product_id",
+       "type": "bigint",
+       "fk": "products.id"
+      },
+      {
+       "name": "user_id",
+       "type": "bigint",
+       "fk": "users.id"
+      },
+      {
+       "name": "text",
+       "type": "text"
+      }
+     ],
+     "indexes": []
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Password column holds fast, unsalted hashes.",
+     "ru": "В столбце пароля быстрые хеши без соли."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-md5",
+    "app": "security",
+    "hint": {
+     "en": "Inspect the password storage setting",
+     "ru": "Проверить настройку хранения паролей"
+    },
+    "text": {
+     "en": "passwordStorage is md5 — fast and unsalted.",
+     "ru": "passwordStorage — md5 — быстрый и без соли."
+    },
+    "match": {
+     "kind": "schema",
+     "key": "users.password"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Weak, fast hashing makes a leak catastrophic",
+     "ru": "Слабое быстрое хеширование делает утечку катастрофой"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Use a slow, salted hash so a leaked table isn't instantly cracked.",
+     "ru": "Верно. Используйте медленный хеш с солью, чтобы утёкшую таблицу не вскрыли мгновенно."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Just force everyone to reset passwords",
+     "ru": "Просто заставить всех сбросить пароли"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "That helps, but the stored hashes must still be strong going forward.",
+     "ru": "Это поможет, но хранимые хеши всё равно должны быть сильными впредь."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "brute",
+    "app": "attacklab",
+    "label": {
+     "en": "Run the brute-force attack in the Attack Lab",
+     "ru": "Запустить атаку перебором в Attack Lab"
+    },
+    "effects": [],
+    "once": false
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m060",
+  "slug": "hashing",
+  "act": 9,
+  "order": 60,
+  "kind": "tutorial",
+  "title": {
+   "en": "Why slow hashing wins",
+   "ru": "Почему медленный хеш побеждает"
+  },
+  "summary": {
+   "en": "See how hash cost changes the brute-force math.",
+   "ru": "Увидеть, как стоимость хеша меняет математику перебора."
+  },
+  "prerequisites": [
+   "m059"
+  ],
+  "learning": [
+   "sec.hashing"
+  ],
+  "trigger": {
+   "id": "m060-t",
+   "from": "mark",
+   "subject": {
+    "en": "Run the numbers",
+    "ru": "Прикинь математику"
+   },
+   "body": {
+    "en": "Re-run the brute-force attack now that you've switched to bcrypt. Notice it gets blocked — and even without rate limiting, a 60 ms hash makes mass guessing hopeless. Confirm the attack is stopped.",
+    "ru": "Перезапусти атаку перебором теперь, когда перешёл на bcrypt. Заметь, что она блокируется — и даже без rate limit хеш в 60 мс делает массовый перебор безнадёжным. Подтверди, что атака остановлена."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "The brute-force attack is blocked",
+     "ru": "Атака перебором заблокирована"
+    },
+    "check": {
+     "fact": "attack.bruteforce.blocked",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Strong hashing plus throttling defeats guessing.",
+     "ru": "Сильное хеширование плюс троттлинг побеждает перебор."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "bcrypt deliberately costs ~60 ms of CPU per check — fine for one login, ruinous for an attacker trying billions. A salt makes each hash unique, defeating rainbow tables.",
+    "ru": "bcrypt намеренно стоит ~60 мс CPU на проверку — норм для одного входа, разорительно для атакующего с миллиардами. Соль делает каждый хеш уникальным, побеждая радужные таблицы."
+   },
+   "whyNow": {
+    "en": "The Attack Lab lets you prove a fix works by trying the attack again.",
+    "ru": "Attack Lab позволяет доказать, что починка работает, повторив атаку."
+   },
+   "limits": {
+    "en": "Slow hashing protects stored passwords; it doesn't stop phishing or reuse.",
+    "ru": "Медленное хеширование защищает хранимые пароли; оно не спасает от фишинга и повторного использования."
+   },
+   "article": "sec.hashing"
+  },
+  "next": "m061",
+  "ops": [
+   {
+    "id": "brute2",
+    "app": "attacklab",
+    "label": {
+     "en": "Re-run the brute-force attack",
+     "ru": "Перезапустить атаку перебором"
+    },
+    "effects": [],
+    "once": false
+   }
+  ]
+ },
+ {
+  "id": "m061",
+  "slug": "sqli",
+  "act": 9,
+  "order": 61,
+  "kind": "security",
+  "title": {
+   "en": "SQL injection in search",
+   "ru": "SQL-инъекция в поиске"
+  },
+  "summary": {
+   "en": "The search box builds SQL from raw input. Use parameterized queries.",
+   "ru": "Поиск строит SQL из сырого ввода. Использовать параметризованные запросы."
+  },
+  "prerequisites": [
+   "m060"
+  ],
+  "learning": [
+   "sec.sqli",
+   "sec.waf"
+  ],
+  "trigger": {
+   "id": "m061-t",
+   "from": "mark",
+   "subject": {
+    "en": "I read your whole users table",
+    "ru": "Я прочитал всю вашу таблицу users"
+   },
+   "body": {
+    "en": "Through the search box, I made your query return every user, not just products. Your SQL is built by gluing my input into a string. Switch to parameterized queries. A WAF helps but is not the fix.",
+    "ru": "Через строку поиска я заставил ваш запрос вернуть всех пользователей, а не только товары. Ваш SQL собирается склейкой моего ввода в строку. Перейдите на параметризованные запросы. WAF помогает, но это не починка."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Queries are parameterized",
+     "ru": "Запросы параметризованы"
+    },
+    "check": {
+     "fact": "app.queryMode",
+     "eq": "parameterized"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The SQLi attack is blocked",
+     "ru": "Атака SQLi заблокирована"
+    },
+    "check": {
+     "fact": "attack.sqli.blocked",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No SQL-injection vulnerability",
+     "ru": "Нет уязвимости SQL-инъекции"
+    },
+    "check": {
+     "fact": "vuln.sqli",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.queryMode",
+     "eq": "parameterized"
+    },
+    "text": {
+     "en": "Input can never become SQL again.",
+     "ru": "Ввод больше никогда не станет SQL."
+    },
+    "effects": [
+     {
+      "users": 60
+     }
+    ]
+   },
+   {
+    "id": "wafonly",
+    "kind": "bad",
+    "when": {
+     "all": [
+      {
+       "fact": "vuln.sqli",
+       "truthy": true
+      },
+      {
+       "fact": "count.waf",
+       "gte": 1
+      }
+     ]
+    },
+    "text": {
+     "en": "You added a WAF but left the query vulnerable — a determined attacker bypasses the filter.",
+     "ru": "Вы добавили WAF, но оставили запрос уязвимым — настойчивый атакующий обойдёт фильтр."
+    },
+    "debt": 10
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "If user input is concatenated into SQL, the input can close the query and add its own. Parameterized queries send SQL and data separately, so data can never become code.",
+    "ru": "Если пользовательский ввод склеивается в SQL, ввод может закрыть запрос и добавить свой. Параметризованные запросы шлют SQL и данные отдельно, поэтому данные не станут кодом."
+   },
+   "whyNow": {
+    "en": "A public search box reaching your whole database is as bad as it gets.",
+    "ru": "Публичный поиск, достающий всю базу, — хуже некуда."
+   },
+   "limits": {
+    "en": "A WAF is defense in depth, buying time; it never replaces fixing the code.",
+    "ru": "WAF — эшелонированная защита, выигрыш времени; он не заменяет починку кода."
+   },
+   "article": "sec.sqli"
+  },
+  "next": "m062",
+  "unlocks": {
+   "attacks": [
+    "sqli"
+   ],
+   "settings": [
+    "queryMode"
+   ],
+   "components": [
+    "waf"
+   ]
+  },
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "queryMode": "concat"
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Search input can alter the SQL query.",
+     "ru": "Ввод поиска может менять SQL-запрос."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-sqli",
+    "app": "security",
+    "hint": {
+     "en": "Review the SQL build mode",
+     "ru": "Проверить режим сборки SQL"
+    },
+    "text": {
+     "en": "Queries concatenate user input directly into SQL.",
+     "ru": "Запросы склеивают пользовательский ввод прямо в SQL."
+    },
+    "match": {
+     "kind": "vuln",
+     "key": "sqli"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "User input is concatenated into SQL",
+     "ru": "Пользовательский ввод склеивается в SQL"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Parameterized queries send SQL and data separately.",
+     "ru": "Верно. Параметризованные запросы шлют SQL и данные отдельно."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "A WAF alone will fix it",
+     "ru": "WAF сам всё починит"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "A WAF catches obvious payloads but is bypassable; fix the query.",
+     "ru": "WAF ловит очевидные нагрузки, но обходится; чините запрос."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "attack",
+    "app": "attacklab",
+    "label": {
+     "en": "Run the SQL injection attack",
+     "ru": "Запустить атаку SQL-инъекцией"
+    },
+    "effects": [],
+    "once": false
+   },
+   {
+    "id": "fix",
+    "app": "security",
+    "label": {
+     "en": "Switch to parameterized queries",
+     "ru": "Перейти на параметризованные запросы"
+    },
+    "effects": [
+     {
+      "set": "app.queryMode",
+      "value": "parameterized"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m062",
+  "slug": "xss",
+  "act": 9,
+  "order": 62,
+  "kind": "security",
+  "title": {
+   "en": "Stored XSS in reviews",
+   "ru": "Хранимый XSS в отзывах"
+  },
+  "summary": {
+   "en": "A review can inject script into every viewer's page. Escape output.",
+   "ru": "Отзыв может внедрить скрипт в страницу каждого. Экранировать вывод."
+  },
+  "prerequisites": [
+   "m061"
+  ],
+  "learning": [
+   "sec.xss"
+  ],
+  "trigger": {
+   "id": "m062-t",
+   "from": "mark",
+   "subject": {
+    "en": "My review runs in your users' browsers",
+    "ru": "Мой отзыв выполняется в браузерах ваших пользователей"
+   },
+   "body": {
+    "en": "I posted a review containing a script. You render review text as raw HTML, so my script runs for everyone who opens that product. Escape user content on output, and add a Content-Security-Policy for depth.",
+    "ru": "Я оставил отзыв со скриптом. Вы рендерите текст отзыва как сырой HTML, поэтому мой скрипт выполняется у всех, кто открывает этот товар. Экранируйте пользовательский контент при выводе и добавьте Content-Security-Policy для глубины."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Output is escaped",
+     "ru": "Вывод экранируется"
+    },
+    "check": {
+     "fact": "app.outputEscaping",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The XSS attack is blocked",
+     "ru": "Атака XSS заблокирована"
+    },
+    "check": {
+     "fact": "attack.xss.blocked",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No XSS vulnerability",
+     "ru": "Нет уязвимости XSS"
+    },
+    "check": {
+     "fact": "vuln.xss",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.outputEscaping",
+     "truthy": true
+    },
+    "text": {
+     "en": "Scripts in reviews are now shown as harmless text.",
+     "ru": "Скрипты в отзывах теперь показываются безобидным текстом."
+    },
+    "effects": [
+     {
+      "users": 50
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Stored XSS saves attacker HTML and serves it to other users, where it runs as script — stealing sessions or acting as the victim. Escaping output turns it into visible text.",
+    "ru": "Хранимый XSS сохраняет HTML атакующего и отдаёт другим пользователям, где он выполняется скриптом — крадёт сессии или действует от имени жертвы. Экранирование превращает его в видимый текст."
+   },
+   "whyNow": {
+    "en": "User-generated content (reviews) is now a real attack surface.",
+    "ru": "Пользовательский контент (отзывы) теперь реальная поверхность атаки."
+   },
+   "limits": {
+    "en": "Escaping is the fix; CSP and HttpOnly cookies are defense in depth.",
+    "ru": "Экранирование — починка; CSP и HttpOnly cookie — эшелонированная защита."
+   },
+   "article": "sec.xss"
+  },
+  "next": "m063",
+  "unlocks": {
+   "attacks": [
+    "xss"
+   ],
+   "settings": [
+    "outputEscaping",
+    "csp"
+   ]
+  },
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "outputEscaping": false
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Review text is rendered as raw HTML.",
+     "ru": "Текст отзыва рендерится как сырой HTML."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-xss",
+    "app": "security",
+    "hint": {
+     "en": "Check output escaping",
+     "ru": "Проверить экранирование вывода"
+    },
+    "text": {
+     "en": "User content is output without escaping.",
+     "ru": "Пользовательский контент выводится без экранирования."
+    },
+    "match": {
+     "kind": "vuln",
+     "key": "xss"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "User HTML is rendered without escaping",
+     "ru": "Пользовательский HTML рендерится без экранирования"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Escaping makes a script show as text, not run.",
+     "ru": "Верно. Экранирование делает скрипт текстом, а не кодом."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Block the word 'script'",
+     "ru": "Блокировать слово «script»"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Blacklisting is bypassable; escape on output instead.",
+     "ru": "Чёрные списки обходятся; экранируйте при выводе."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "attack",
+    "app": "attacklab",
+    "label": {
+     "en": "Run the stored XSS attack",
+     "ru": "Запустить атаку хранимого XSS"
+    },
+    "effects": [],
+    "once": false
+   },
+   {
+    "id": "fix",
+    "app": "security",
+    "label": {
+     "en": "Escape output and add a CSP",
+     "ru": "Экранировать вывод и добавить CSP"
+    },
+    "effects": [
+     {
+      "set": "app.outputEscaping",
+      "value": true
+     },
+     {
+      "set": "app.csp",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m063",
+  "slug": "csrf",
+  "act": 9,
+  "order": 63,
+  "kind": "security",
+  "title": {
+   "en": "CSRF changes your email",
+   "ru": "CSRF меняет ваш email"
+  },
+  "summary": {
+   "en": "Another site can make a logged-in user change their account. Add CSRF protection.",
+   "ru": "Чужой сайт может заставить вошедшего сменить аккаунт. Добавить защиту от CSRF."
+  },
+  "prerequisites": [
+   "m062"
+  ],
+  "learning": [
+   "sec.csrf"
+  ],
+  "trigger": {
+   "id": "m063-t",
+   "from": "mark",
+   "subject": {
+    "en": "A link on my site changed your email",
+    "ru": "Ссылка на моём сайте сменила ваш email"
+   },
+   "body": {
+    "en": "Your account-email endpoint only checks the session cookie, which the browser attaches automatically — even to requests from my site. I made a page that silently changes a logged-in user's email. Add CSRF protection.",
+    "ru": "Ваш endpoint смены email проверяет только cookie сессии, которую браузер прикрепляет автоматически — даже к запросам с моего сайта. Я сделал страницу, тихо меняющую email вошедшего. Добавьте защиту от CSRF."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "CSRF protection is on",
+     "ru": "Защита от CSRF включена"
+    },
+    "check": {
+     "fact": "app.csrfProtection",
+     "ne": "none"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The CSRF attack is blocked",
+     "ru": "Атака CSRF заблокирована"
+    },
+    "check": {
+     "fact": "attack.csrf.blocked",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No CSRF vulnerability",
+     "ru": "Нет уязвимости CSRF"
+    },
+    "check": {
+     "fact": "vuln.csrf",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.csrfProtection",
+     "ne": "none"
+    },
+    "text": {
+     "en": "Cross-site forged requests are rejected.",
+     "ru": "Межсайтовые подделанные запросы отклоняются."
+    },
+    "effects": [
+     {
+      "users": 40
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "CSRF abuses that browsers attach your cookies to requests even from other sites. A CSRF token the attacker can't read, or SameSite cookies, make forged requests fail.",
+    "ru": "CSRF использует то, что браузеры прикрепляют ваши cookie к запросам даже с чужих сайтов. CSRF-токен, недоступный атакующему, или SameSite cookie заставляют подделанные запросы падать."
+   },
+   "whyNow": {
+    "en": "You use cookie sessions and have state-changing POSTs — exactly what CSRF targets.",
+    "ru": "У вас cookie-сессии и меняющие состояние POST — ровно то, на что нацелен CSRF."
+   },
+   "limits": {
+    "en": "Token-based auth (Authorization header) isn't auto-sent, so it's immune.",
+    "ru": "Токен в заголовке Authorization не отправляется автоматически, поэтому к нему иммунитет."
+   },
+   "article": "sec.csrf"
+  },
+  "next": "m064",
+  "unlocks": {
+   "attacks": [
+    "csrf"
+   ],
+   "settings": [
+    "csrfProtection"
+   ]
+  },
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "account_email",
+     "method": "POST",
+     "path": "/account/email",
+     "target": "backend",
+     "weight": 1,
+     "cpuMs": 8,
+     "responseKb": 1,
+     "auth": "user",
+     "product": {
+      "en": "A user changes their email",
+      "ru": "Пользователь меняет свой email"
+     },
+     "queries": [
+      {
+       "id": "em_upd",
+       "table": "users",
+       "op": "update",
+       "where": [
+        "id"
+       ],
+       "match": "one"
+      }
+     ],
+     "handler": "AccountController@updateEmail",
+     "writes": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "State-changing POST accepts cross-site requests.",
+     "ru": "Меняющий состояние POST принимает межсайтовые запросы."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-csrf",
+    "app": "security",
+    "hint": {
+     "en": "Check CSRF protection",
+     "ru": "Проверить защиту от CSRF"
+    },
+    "text": {
+     "en": "No CSRF token or SameSite cookie protects the endpoint.",
+     "ru": "Ни CSRF-токен, ни SameSite cookie не защищают endpoint."
+    },
+    "match": {
+     "kind": "vuln",
+     "key": "csrf"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Cookies are sent cross-site with no CSRF defense",
+     "ru": "Cookie шлются межсайтово без защиты CSRF"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. A token the other site can't read, or SameSite cookies, stops it.",
+     "ru": "Верно. Токен, недоступный чужому сайту, или SameSite cookie останавливают это."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "It's an XSS problem",
+     "ru": "Это проблема XSS"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "No script runs on your site; the request comes from elsewhere with your cookie.",
+     "ru": "На вашем сайте скрипт не выполняется; запрос приходит извне с вашей cookie."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "attack",
+    "app": "attacklab",
+    "label": {
+     "en": "Run the CSRF attack",
+     "ru": "Запустить атаку CSRF"
+    },
+    "effects": [],
+    "once": false
+   },
+   {
+    "id": "fix",
+    "app": "security",
+    "label": {
+     "en": "Add CSRF tokens (and SameSite)",
+     "ru": "Добавить CSRF-токены (и SameSite)"
+    },
+    "effects": [
+     {
+      "set": "app.csrfProtection",
+      "value": "token"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m064",
+  "slug": "idor",
+  "act": 9,
+  "order": 64,
+  "kind": "security",
+  "title": {
+   "en": "Reading other people's orders",
+   "ru": "Чтение чужих заказов"
+  },
+  "summary": {
+   "en": "Changing an id in the URL exposes any order. Check ownership.",
+   "ru": "Смена id в URL открывает любой заказ. Проверять владельца."
+  },
+  "prerequisites": [
+   "m063"
+  ],
+  "learning": [
+   "sec.idor"
+  ],
+  "trigger": {
+   "id": "m064-t",
+   "from": "mark",
+   "subject": {
+    "en": "Order #1002 isn't mine, but I can read it",
+    "ru": "Заказ #1002 не мой, но я его читаю"
+   },
+   "body": {
+    "en": "Logged in as a normal customer, I changed the order id in the URL from mine to 1002 and saw someone else's name, address and phone. You check I'm logged in, but not that the order is mine. Add ownership checks.",
+    "ru": "Войдя как обычный покупатель, я поменял id заказа в URL со своего на 1002 и увидел чужие имя, адрес и телефон. Вы проверяете, что я вошёл, но не что заказ мой. Добавьте проверку владельца."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Ownership is checked",
+     "ru": "Владелец проверяется"
+    },
+    "check": {
+     "fact": "app.ownershipChecks",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The IDOR attack is blocked",
+     "ru": "Атака IDOR заблокирована"
+    },
+    "check": {
+     "fact": "attack.idor.blocked",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No IDOR vulnerability",
+     "ru": "Нет уязвимости IDOR"
+    },
+    "check": {
+     "fact": "vuln.idor",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.ownershipChecks",
+     "truthy": true
+    },
+    "text": {
+     "en": "Users can only read their own orders now.",
+     "ru": "Пользователи теперь читают только свои заказы."
+    },
+    "effects": [
+     {
+      "users": 50
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "IDOR (broken access control) returns object #1002 just because you asked, without checking it's yours. Every object access needs an ownership/permission check on the server.",
+    "ru": "IDOR (сломанный контроль доступа) отдаёт объект #1002 просто потому что вы попросили, не проверив, что он ваш. Каждому доступу к объекту нужна проверка владельца/прав на сервере."
+   },
+   "whyNow": {
+    "en": "You hold real personal data now; exposing it by URL-tweaking is a breach.",
+    "ru": "У вас теперь реальные личные данные; раскрыть их подкруткой URL — это утечка."
+   },
+   "limits": {
+    "en": "Authentication isn't authorization — the happy path working hides this bug.",
+    "ru": "Аутентификация — не авторизация — работающий обычный путь прячет этот баг."
+   },
+   "article": "sec.idor"
+  },
+  "next": "m065",
+  "unlocks": {
+   "attacks": [
+    "idor"
+   ],
+   "settings": [
+    "ownershipChecks"
+   ]
+  },
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "order_view",
+     "method": "GET",
+     "path": "/api/v1/orders/:id",
+     "target": "backend",
+     "weight": 3,
+     "cpuMs": 8,
+     "responseKb": 3,
+     "auth": "user",
+     "product": {
+      "en": "A user views an order",
+      "ru": "Пользователь смотрит заказ"
+     },
+     "queries": [
+      {
+       "id": "ord",
+       "table": "orders",
+       "op": "select",
+       "where": [
+        "id"
+       ],
+       "match": "one"
+      }
+     ],
+     "handler": "Api\\OrderController@show",
+     "api": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Any order id returns data to any logged-in user.",
+     "ru": "Любой id заказа отдаёт данные любому вошедшему."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-idor",
+    "app": "api",
+    "hint": {
+     "en": "Request another user's order by id",
+     "ru": "Запросить чужой заказ по id"
+    },
+    "text": {
+     "en": "The server returns an order that doesn't belong to the caller.",
+     "ru": "Сервер возвращает заказ, не принадлежащий вызывающему."
+    },
+    "match": {
+     "kind": "response",
+     "keyPrefix": "order_view"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "We authenticate but don't check ownership",
+     "ru": "Мы аутентифицируем, но не проверяем владельца"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Logged in ≠ allowed to see this specific object.",
+     "ru": "Верно. Вошёл ≠ можно видеть именно этот объект."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Use random, unguessable ids",
+     "ru": "Использовать случайные id"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "That hides the hole but doesn't close it — check ownership.",
+     "ru": "Это прячет дыру, но не закрывает — проверяйте владельца."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "attack",
+    "app": "attacklab",
+    "label": {
+     "en": "Run the IDOR attack",
+     "ru": "Запустить атаку IDOR"
+    },
+    "effects": [],
+    "once": false
+   },
+   {
+    "id": "fix",
+    "app": "security",
+    "label": {
+     "en": "Check that the order belongs to the user",
+     "ru": "Проверять, что заказ принадлежит пользователю"
+    },
+    "effects": [
+     {
+      "set": "app.ownershipChecks",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m065",
+  "slug": "rate-limit",
+  "act": 9,
+  "order": 65,
+  "kind": "security",
+  "title": {
+   "en": "A botnet hammers login",
+   "ru": "Ботнет долбит вход"
+  },
+  "summary": {
+   "en": "Credential-stuffing floods the login. Rate-limit and block it.",
+   "ru": "Подстановка учёток заливает вход. Ограничить и заблокировать."
+  },
+  "prerequisites": [
+   "m064"
+  ],
+  "learning": [
+   "sec.rateLimit",
+   "sec.waf"
+  ],
+  "trigger": {
+   "id": "m065-t",
+   "from": "mark",
+   "subject": {
+    "en": "80 logins/sec from a thousand IPs",
+    "ru": "80 входов/с с тысячи IP"
+   },
+   "body": {
+    "en": "A botnet is trying leaked passwords against your login — 80 requests a second from many IPs. Even with bcrypt it's burning your CPU and locking real users out of your attention. Rate-limit login, per account and per IP.",
+    "ru": "Ботнет пробует утёкшие пароли на вашем входе — 80 запросов в секунду с множества IP. Даже с bcrypt это жжёт ваш CPU и отвлекает от реальных пользователей. Ограничьте вход — на аккаунт и на IP."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Login is rate-limited",
+     "ru": "Вход ограничен по частоте"
+    },
+    "check": {
+     "fact": "app.loginRateLimit",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Few accounts are compromised",
+     "ru": "Мало скомпрометированных аккаунтов"
+    },
+    "check": {
+     "fact": "anomaly.accountsCompromised",
+     "lt": 1
+    },
+    "sim": true
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "Real users aren't locked out",
+     "ru": "Реальные пользователи не заблокированы"
+    },
+    "check": {
+     "fact": "anomaly.lockedOutUsers",
+     "lt": 1
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "app.loginRateLimit",
+       "truthy": true
+      },
+      {
+       "not": {
+        "fact": "app.lockout",
+        "eq": "permanent"
+       }
+      }
+     ]
+    },
+    "text": {
+     "en": "Throttling stops the flood without punishing real users.",
+     "ru": "Троттлинг останавливает поток, не наказывая реальных пользователей."
+    },
+    "effects": [
+     {
+      "users": 60
+     }
+    ]
+   },
+   {
+    "id": "lockout",
+    "kind": "bad",
+    "when": {
+     "fact": "app.lockout",
+     "eq": "permanent"
+    },
+    "text": {
+     "en": "Permanent lockout stops bots but lets them lock out real users too.",
+     "ru": "Постоянная блокировка останавливает ботов, но позволяет им заблокировать и реальных пользователей."
+    },
+    "debt": 6
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Rate limiting rejects requests above a threshold per IP and per account, blunting credential-stuffing. Prefer delays/backoff over permanent lockouts, which attackers weaponize against real users.",
+    "ru": "Rate limiting отклоняет запросы выше порога на IP и на аккаунт, притупляя подстановку учёток. Предпочитайте задержки/backoff постоянной блокировке, которую атакующие обращают против реальных пользователей."
+   },
+   "whyNow": {
+    "en": "Attackers automate against you now; unprotected login is an open door.",
+    "ru": "Атакующие теперь автоматизируют против вас; незащищённый вход — открытая дверь."
+   },
+   "limits": {
+    "en": "A WAF bot rule adds a layer, but behavioral throttling is the core defense.",
+    "ru": "Правило WAF против ботов добавляет слой, но основная защита — ограничение по поведению."
+   },
+   "article": "sec.rateLimit"
+  },
+  "next": "m066",
+  "unlocks": {
+   "settings": []
+  },
+  "setup": [
+   {
+    "incident": {
+     "id": "botnet",
+     "kind": "botnet",
+     "title": {
+      "en": "Credential-stuffing botnet",
+      "ru": "Ботнет подстановки учёток"
+     },
+     "params": {
+      "rps": 80
+     },
+     "startTick": 4,
+     "endTick": 55,
+     "source": "mission",
+     "active": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Login endpoint flooded with failed attempts.",
+     "ru": "Endpoint входа залит неудачными попытками."
+    },
+    "app": "logs"
+   },
+   {
+    "text": {
+     "en": "Backend CPU high from password hashing.",
+     "ru": "CPU бэкенда высокий из-за хеширования паролей."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-bot",
+    "app": "logs",
+    "hint": {
+     "en": "Find the flood of login attempts",
+     "ru": "Найти поток попыток входа"
+    },
+    "text": {
+     "en": "Thousands of failed logins per minute from many IPs.",
+     "ru": "Тысячи неудачных входов в минуту с множества IP."
+    },
+    "match": {
+     "kind": "log",
+     "key": "ACCESS"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "No rate limit on login lets the botnet in",
+     "ru": "Нет лимита на вход — ботнет проходит"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Throttle per account and per IP; a WAF bot rule helps too.",
+     "ru": "Верно. Ограничивайте на аккаунт и IP; правило WAF против ботов тоже помогает."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Ban the whole country",
+     "ru": "Забанить целую страну"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "The IPs are everywhere; rate-limit the behavior, not geography.",
+     "ru": "IP повсюду; ограничивайте поведение, а не географию."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "limit",
+    "app": "security",
+    "label": {
+     "en": "Enable login rate limiting",
+     "ru": "Включить лимит частоты входа"
+    },
+    "effects": [
+     {
+      "set": "app.loginRateLimit",
+      "value": true
+     },
+     {
+      "set": "app.lockout",
+      "value": "backoff"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m066",
+  "slug": "exposed-db",
+  "act": 9,
+  "order": 66,
+  "kind": "security",
+  "title": {
+   "en": "The database is on the public internet",
+   "ru": "База данных в публичном интернете"
+  },
+  "summary": {
+   "en": "MySQL's port is open to the world. Close it to the private network.",
+   "ru": "Порт MySQL открыт наружу. Закрыть его в приватную сеть."
+  },
+  "prerequisites": [
+   "m065"
+  ],
+  "learning": [
+   "sec.exposedPorts"
+  ],
+  "trigger": {
+   "id": "m066-t",
+   "from": "mark",
+   "subject": {
+    "en": "Your MySQL answered me from my laptop",
+    "ru": "Ваш MySQL ответил мне с ноутбука"
+   },
+   "body": {
+    "en": "I scanned your server and port 3306 is open to the internet. I connected to MySQL directly from home — no app, no login page, just the database. Close the DB port to everything except your app's private network.",
+    "ru": "Я просканировал ваш сервер — порт 3306 открыт в интернет. Я подключился к MySQL прямо из дома — без приложения, без страницы входа, просто база. Закройте порт БД для всех, кроме приватной сети приложения."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "The database port is not public",
+     "ru": "Порт БД не публичен"
+    },
+    "check": {
+     "fact": "vuln.exposedDatabase",
+     "falsy": true
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The exposed-DB attack is blocked",
+     "ru": "Атака на открытую БД заблокирована"
+    },
+    "check": {
+     "fact": "attack.exposed-db.blocked",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "vuln.exposedDatabase",
+     "falsy": true
+    },
+    "text": {
+     "en": "The database is private again.",
+     "ru": "База снова приватная."
+    },
+    "effects": [
+     {
+      "users": 40
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Databases, caches and admin panels must only be reachable from the private network. An exposed DB port bypasses every security control in your app.",
+    "ru": "Базы, кэши и админки должны быть доступны только из приватной сети. Открытый порт БД минует всю защиту приложения."
+   },
+   "whyNow": {
+    "en": "Scanners find open ports in minutes; an exposed database is an instant full breach.",
+    "ru": "Сканеры находят открытые порты за минуты; открытая база — мгновенная полная утечка."
+   },
+   "limits": {
+    "en": "A firewall rule is simple but easy to forget on a freshly spun-up server.",
+    "ru": "Правило firewall простое, но его легко забыть на свежеподнятом сервере."
+   },
+   "article": "sec.exposedPorts"
+  },
+  "next": "m067",
+  "unlocks": {
+   "attacks": [
+    "exposed-db"
+   ]
+  },
+  "setup": [
+   {
+    "resolveIncident": "botnet"
+   },
+   {
+    "flag": "noop",
+    "value": 1
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Port 3306 is reachable from outside.",
+     "ru": "Порт 3306 доступен снаружи."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-port",
+    "app": "terminal",
+    "hint": {
+     "en": "Scan the database host's ports (ss)",
+     "ru": "Просканировать порты хоста БД (ss)"
+    },
+    "text": {
+     "en": "Port 3306 is in the public firewall allow-list.",
+     "ru": "Порт 3306 в публичном allow-list firewall."
+    },
+    "match": {
+     "kind": "ports"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "The DB port is exposed to the internet",
+     "ru": "Порт БД открыт в интернет"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. The database should only accept the app's private network.",
+     "ru": "Верно. База должна принимать только приватную сеть приложения."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "A strong DB password is enough",
+     "ru": "Сильного пароля БД достаточно"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Defense in depth — don't expose the port at all.",
+     "ru": "Эшелонированная защита — вообще не открывайте порт."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "attack",
+    "app": "attacklab",
+    "label": {
+     "en": "Run the exposed-database attack",
+     "ru": "Запустить атаку на открытую БД"
+    },
+    "effects": [],
+    "once": false
+   },
+   {
+    "id": "close",
+    "app": "servers",
+    "label": {
+     "en": "Close the public database port",
+     "ru": "Закрыть публичный порт БД"
+    },
+    "effects": [
+     {
+      "set": "flags.dbClosed",
+      "value": true
+     }
+    ],
+    "once": true,
+    "when": {
+     "fact": "vuln.exposedDatabase",
+     "truthy": true
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m067",
+  "slug": "secret-in-git",
+  "act": 9,
+  "order": 67,
+  "kind": "security",
+  "title": {
+   "en": "The .env is in Git history",
+   "ru": "Файл .env в истории Git"
+  },
+  "summary": {
+   "en": "Production keys were committed. Rotate them and purge history.",
+   "ru": "Продовые ключи закоммичены. Ротировать их и вычистить историю."
+  },
+  "prerequisites": [
+   "m066"
+  ],
+  "learning": [
+   "sec.secrets"
+  ],
+  "trigger": {
+   "id": "m067-t",
+   "from": "mark",
+   "subject": {
+    "en": "Your production keys are in the repo",
+    "ru": "Ваши продовые ключи в репозитории"
+   },
+   "body": {
+    "en": "git log -p shows an old commit that added .env with your database password and payment API key. Deleting the file didn't help — it's still in history. Rotate those secrets now, add .env to .gitignore, and purge the history.",
+    "ru": "git log -p показывает старый коммит, добавивший .env с паролем БД и ключом платёжного API. Удаление файла не помогло — он всё ещё в истории. Ротируйте секреты сейчас, добавьте .env в .gitignore и вычистите историю."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Leaked secrets are rotated",
+     "ru": "Утёкшие секреты ротированы"
+    },
+    "check": {
+     "fact": "sec.secret.app-env.rotated",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": ".env is gitignored",
+     "ru": "В .gitignore добавлен .env"
+    },
+    "check": {
+     "fact": "git.gitignoreEnv",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "The secret-in-history attack is blocked",
+     "ru": "Атака на секрет в истории заблокирована"
+    },
+    "check": {
+     "fact": "attack.secret-in-git.blocked",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o4",
+    "text": {
+     "en": "No secret-leak vulnerability",
+     "ru": "Нет уязвимости утечки секрета"
+    },
+    "check": {
+     "fact": "vuln.secretLeak",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "sec.secret.app-env.rotated",
+     "truthy": true
+    },
+    "text": {
+     "en": "Keys rotated, history cleaned, future commits protected.",
+     "ru": "Ключи ротированы, история вычищена, будущие коммиты защищены."
+    },
+    "effects": [
+     {
+      "users": 40
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Secrets belong in environment variables, never in code. Committed once, they stay in Git history forever — so rotating the leaked key is the real fix; rewriting history and .gitignore prevent a repeat.",
+    "ru": "Секретам место в переменных окружения, не в коде. Закоммиченные раз, они остаются в истории Git навсегда — поэтому настоящая починка это ротация ключа; переписывание истории и .gitignore предотвращают повтор."
+   },
+   "whyNow": {
+    "en": "Your repo now holds payment keys; a leak is money leaving your account.",
+    "ru": "Ваш репозиторий теперь хранит платёжные ключи; утечка — это деньги, уходящие со счёта."
+   },
+   "limits": {
+    "en": "Anyone who ever cloned the repo may still have the old secret — rotation is non-negotiable.",
+    "ru": "У любого, кто когда-либо клонировал репозиторий, может остаться старый секрет — ротация обязательна."
+   },
+   "article": "sec.secrets"
+  },
+  "next": "m068",
+  "unlocks": {
+   "attacks": [
+    "secret-in-git"
+   ]
+  },
+  "setup": [
+   {
+    "set": "security.secrets",
+    "value": [
+     {
+      "id": "app-env",
+      "name": ".env (DB + payment keys)",
+      "scope": "all",
+      "leaked": false,
+      "inGitHistory": true,
+      "rotatedAt": null
+     }
+    ]
+   },
+   {
+    "set": "git.gitignore",
+    "value": []
+   },
+   {
+    "push": "git.commits",
+    "value": {
+     "id": "c00000aa",
+     "message": "oops add .env",
+     "branch": "main",
+     "parents": [],
+     "author": "lev",
+     "at": 0,
+     "files": [
+      ".env"
+     ],
+     "secret": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Secrets are present in commit history.",
+     "ru": "Секреты присутствуют в истории коммитов."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-secret",
+    "app": "terminal",
+    "hint": {
+     "en": "Find the secret in git log",
+     "ru": "Найти секрет в git log"
+    },
+    "text": {
+     "en": "An old commit still contains the .env file.",
+     "ru": "Старый коммит всё ещё содержит файл .env."
+    },
+    "match": {
+     "kind": "git",
+     "key": "log"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Committed secrets live in history forever",
+     "ru": "Закоммиченные секреты живут в истории вечно"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Rotate the leaked keys and rewrite history; prevent it with .gitignore.",
+     "ru": "Верно. Ротируйте утёкшие ключи и перепишите историю; предотвратите через .gitignore."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Just delete the .env file",
+     "ru": "Просто удалить файл .env"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Deletion leaves it in every past commit. Rotate and purge.",
+     "ru": "Удаление оставляет его в каждом прошлом коммите. Ротируйте и вычищайте."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "attack",
+    "app": "attacklab",
+    "label": {
+     "en": "Run the secret-in-history attack",
+     "ru": "Запустить атаку на секрет в истории"
+    },
+    "effects": [],
+    "once": false
+   },
+   {
+    "id": "rotate",
+    "app": "security",
+    "label": {
+     "en": "Rotate the leaked secrets",
+     "ru": "Ротировать утёкшие секреты"
+    },
+    "effects": [
+     {
+      "set": "security.secrets[id=app-env].rotatedAt",
+      "value": 1
+     },
+     {
+      "set": "security.secrets[id=app-env].leaked",
+      "value": false
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "ignore",
+    "app": "git",
+    "label": {
+     "en": "Add .env to .gitignore",
+     "ru": "Добавить .env в .gitignore"
+    },
+    "effects": [
+     {
+      "push": "git.gitignore",
+      "value": ".env"
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "purge",
+    "app": "git",
+    "label": {
+     "en": "Rewrite history to remove the secret",
+     "ru": "Переписать историю, убрав секрет"
+    },
+    "effects": [
+     {
+      "set": "git.historyRewritten",
+      "value": true
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m068",
+  "slug": "upload-vuln",
+  "act": 9,
+  "order": 68,
+  "kind": "security",
+  "title": {
+   "en": "A script uploaded as an avatar",
+   "ru": "Скрипт, загруженный как аватар"
+  },
+  "summary": {
+   "en": "Unvalidated uploads let an attacker run code. Validate and isolate.",
+   "ru": "Непроверенные загрузки дают выполнить код. Проверять и изолировать."
+  },
+  "prerequisites": [
+   "m067"
+  ],
+  "learning": [
+   "sec.upload"
+  ],
+  "trigger": {
+   "id": "m068-t",
+   "from": "mark",
+   "subject": {
+    "en": "I uploaded a 'photo' that runs code",
+    "ru": "Я загрузил «фото», которое выполняет код"
+   },
+   "body": {
+    "en": "Your avatar upload saves any file, under its original name, into a web-served folder. I uploaded a script disguised as an image and then opened its URL — the server executed it. Validate the real type, rename, and store in object storage.",
+    "ru": "Ваша загрузка аватара сохраняет любой файл под оригинальным именем в папку, отдаваемую вебом. Я загрузил скрипт под видом картинки и открыл его URL — сервер его выполнил. Проверяйте реальный тип, переименовывайте и храните в object storage."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Uploads are validated",
+     "ru": "Загрузки проверяются"
+    },
+    "check": {
+     "fact": "app.uploadValidation",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The upload attack is blocked",
+     "ru": "Атака загрузки заблокирована"
+    },
+    "check": {
+     "fact": "attack.upload-rce.blocked",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No unsafe-upload vulnerability",
+     "ru": "Нет уязвимости небезопасной загрузки"
+    },
+    "check": {
+     "fact": "vuln.unsafeUpload",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.uploadValidation",
+     "truthy": true
+    },
+    "text": {
+     "en": "Uploads are validated and served as inert data.",
+     "ru": "Загрузки проверяются и отдаются как инертные данные."
+    },
+    "effects": [
+     {
+      "users": 40
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Validate the real content type (magic bytes), cap size, use random names, and store outside the web root (object storage) so uploads are served as data, never executed.",
+    "ru": "Проверяйте реальный тип (magic bytes), ограничьте размер, используйте случайные имена и храните вне web root (object storage), чтобы загрузки отдавались как данные, а не выполнялись."
+   },
+   "whyNow": {
+    "en": "You accept user files; an executable upload path is a full server takeover.",
+    "ru": "Вы принимаете файлы пользователей; путь к исполняемой загрузке — это полный захват сервера."
+   },
+   "limits": {
+    "en": "Extension and declared MIME both lie; trust only the real bytes and an isolated store.",
+    "ru": "Расширение и заявленный MIME врут; доверяйте только реальным байтам и изолированному хранилищу."
+   },
+   "article": "sec.upload"
+  },
+  "next": "m069",
+  "unlocks": {
+   "attacks": [
+    "upload-rce"
+   ],
+   "settings": [
+    "uploadValidation"
+   ]
+  },
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "uploadValidation": false,
+     "uploadsTarget": "local-disk"
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Uploaded files are served and executable.",
+     "ru": "Загруженные файлы отдаются и исполняемы."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-up",
+    "app": "security",
+    "hint": {
+     "en": "Review upload validation",
+     "ru": "Проверить валидацию загрузок"
+    },
+    "text": {
+     "en": "Uploads aren't validated and land under the web root.",
+     "ru": "Загрузки не проверяются и попадают под web root."
+    },
+    "match": {
+     "kind": "vuln",
+     "key": "unsafeUpload"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Unvalidated uploads under the web root allow code execution",
+     "ru": "Непроверенные загрузки под web root дают выполнение кода"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Validate real type, rename, and store off the executable path.",
+     "ru": "Верно. Проверяйте реальный тип, переименовывайте и храните вне исполняемого пути."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Block the .php extension",
+     "ru": "Блокировать расширение .php"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Extension checks are bypassable; validate the real content and isolate storage.",
+     "ru": "Проверки расширения обходятся; проверяйте реальное содержимое и изолируйте хранилище."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "attack",
+    "app": "attacklab",
+    "label": {
+     "en": "Run the malicious-upload attack",
+     "ru": "Запустить атаку вредоносной загрузки"
+    },
+    "effects": [],
+    "once": false
+   },
+   {
+    "id": "fix",
+    "app": "security",
+    "label": {
+     "en": "Validate uploads and store in object storage",
+     "ru": "Проверять загрузки и хранить в object storage"
+    },
+    "effects": [
+     {
+      "set": "app.uploadValidation",
+      "value": true
+     },
+     {
+      "set": "app.uploadsTarget",
+      "value": "object-storage"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m069",
+  "slug": "dependency-cve",
+  "act": 9,
+  "order": 69,
+  "kind": "security",
+  "title": {
+   "en": "A library has a known CVE",
+   "ru": "В библиотеке известная CVE"
+  },
+  "summary": {
+   "en": "A dependency scanner flags a critical vulnerability. Upgrade it.",
+   "ru": "Сканер зависимостей находит критическую уязвимость. Обновить её."
+  },
+  "prerequisites": [
+   "m068"
+  ],
+  "learning": [
+   "sec.dependencies"
+  ],
+  "trigger": {
+   "id": "m069-t",
+   "from": "mark",
+   "subject": {
+    "en": "Critical CVE in a library you use",
+    "ru": "Критическая CVE в используемой библиотеке"
+   },
+   "body": {
+    "en": "Your dependency scanner flagged image-resize 1.2.0 with a critical remote-code-execution CVE, fixed in 1.4.0. Most of your app's code is libraries you didn't write — upgrade this one and keep the scanner in CI.",
+    "ru": "Ваш сканер зависимостей пометил image-resize 1.2.0 с критической CVE на удалённое выполнение кода, исправленной в 1.4.0. Большая часть вашего кода — библиотеки, которые вы не писали — обновите эту и держите сканер в CI."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "The vulnerable dependency is upgraded",
+     "ru": "Уязвимая зависимость обновлена"
+    },
+    "check": {
+     "fact": "sec.dep.image-resize.vulnerable",
+     "falsy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Dependency scanning runs in CI",
+     "ru": "Сканирование зависимостей в CI"
+    },
+    "check": {
+     "fact": "ci.depScan",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No vulnerable-dependency finding",
+     "ru": "Нет находки уязвимой зависимости"
+    },
+    "check": {
+     "fact": "vuln.vulnerableDependency",
+     "falsy": true
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "vuln.vulnerableDependency",
+     "falsy": true
+    },
+    "text": {
+     "en": "Patched, and CI will catch the next one.",
+     "ru": "Пропатчено, и CI поймает следующую."
+    },
+    "effects": [
+     {
+      "users": 30
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Most code in a modern app is dependencies. A known CVE in one is your vulnerability; a scanner in CI flags vulnerable versions so you upgrade before attackers exploit them.",
+    "ru": "Большая часть кода современного приложения — зависимости. Известная CVE в одной — ваша уязвимость; сканер в CI помечает уязвимые версии, чтобы вы обновились до того, как их используют."
+   },
+   "whyNow": {
+    "en": "You now ship enough code that you can't audit every library by hand.",
+    "ru": "Вы выкатываете столько кода, что проверить каждую библиотеку вручную невозможно."
+   },
+   "limits": {
+    "en": "Upgrades can break things, so teams delay — automation and tests make upgrading routine.",
+    "ru": "Обновления могут что-то сломать, поэтому команды тянут — автоматизация и тесты делают обновление рутиной."
+   },
+   "article": "sec.dependencies"
+  },
+  "next": "m070",
+  "unlocks": {
+   "settings": []
+  },
+  "setup": [
+   {
+    "set": "security.deps",
+    "value": [
+     {
+      "name": "image-resize",
+      "version": "1.2.0",
+      "latest": "1.4.1",
+      "cve": {
+       "id": "CVE-2026-1234",
+       "severity": "critical",
+       "fixedIn": "1.4.0",
+       "summary": {
+        "en": "Remote code execution in image-resize",
+        "ru": "Удалённое выполнение кода в image-resize"
+       }
+      }
+     },
+     {
+      "name": "web-framework",
+      "version": "10.1.0",
+      "latest": "10.1.0"
+     }
+    ]
+   },
+   {
+    "set": "ci.stages.depScan",
+    "value": true
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "A used library has a critical CVE.",
+     "ru": "Используемая библиотека имеет критическую CVE."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-cve",
+    "app": "security",
+    "hint": {
+     "en": "Review the vulnerable dependency",
+     "ru": "Проверить уязвимую зависимость"
+    },
+    "text": {
+     "en": "image-resize 1.2.0 is below the fixed version 1.4.0.",
+     "ru": "image-resize 1.2.0 ниже исправленной версии 1.4.0."
+    },
+    "match": {
+     "kind": "vuln",
+     "key": "vulnerableDependency"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "A dependency is on a known-vulnerable version",
+     "ru": "Зависимость на известной уязвимой версии"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Upgrade past the fixed version and keep scanning in CI.",
+     "ru": "Верно. Обновите выше исправленной версии и держите сканирование в CI."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Our own code is the problem",
+     "ru": "Проблема в нашем коде"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "The vulnerability is in a third-party library; upgrade it.",
+     "ru": "Уязвимость в сторонней библиотеке; обновите её."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "upgrade",
+    "app": "security",
+    "label": {
+     "en": "Upgrade image-resize to the latest",
+     "ru": "Обновить image-resize до последней"
+    },
+    "effects": [
+     {
+      "set": "security.deps[name=image-resize].version",
+      "value": "1.4.1"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m070",
+  "slug": "attack-replay",
+  "act": 9,
+  "order": 70,
+  "kind": "security",
+  "title": {
+   "en": "Final security audit (Attack Replay)",
+   "ru": "Финальный аудит безопасности (Attack Replay)"
+  },
+  "summary": {
+   "en": "The hacker runs every attack at once. Hold the line.",
+   "ru": "Хакер запускает все атаки разом. Удержать оборону."
+  },
+  "prerequisites": [
+   "m069"
+  ],
+  "learning": [
+   "sec.waf",
+   "sec.leastPrivilege"
+  ],
+  "trigger": {
+   "id": "m070-t",
+   "from": "drop_table",
+   "subject": {
+    "en": "Let's see what you've learned",
+    "ru": "Посмотрим, чему ты научился"
+   },
+   "body": {
+    "en": "You've patched a lot. I'm going to replay every attack — SQLi, XSS, CSRF, IDOR, brute force, the exposed DB, the Git secret, the upload — in one pass. Oh, and your new URL-import feature looks fun. And why does everyone have admin? Good luck.",
+    "ru": "Ты много пропатчил. Я повторю все атаки разом — SQLi, XSS, CSRF, IDOR, перебор, открытую БД, секрет в Git, загрузку — за один проход. И да, твой новый импорт по URL выглядит забавно. И почему у всех админка? Удачи."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "SSRF is blocked",
+     "ru": "SSRF заблокирован"
+    },
+    "check": {
+     "fact": "vuln.ssrf",
+     "falsy": true
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Least privilege: at most two admins",
+     "ru": "Минимальные права: не больше двух админов"
+    },
+    "check": {
+     "fact": "sec.admins",
+     "lte": 2
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "No open vulnerabilities remain",
+     "ru": "Открытых уязвимостей не осталось"
+    },
+    "check": {
+     "fact": "vulns",
+     "eq": 0
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "vulns",
+     "eq": 0
+    },
+    "text": {
+     "en": "Every attack bounces off. The hacker gives up — for now.",
+     "ru": "Каждая атака отскакивает. Хакер сдаётся — пока что."
+    },
+    "effects": [
+     {
+      "users": 200
+     },
+     {
+      "cash": 100
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Attack Replay runs every attack against the current system so you can prove your fixes hold together. SSRF and least privilege close the last gaps; a WAF is the outer layer, not the fix.",
+    "ru": "Attack Replay прогоняет все атаки по текущей системе, чтобы доказать, что починки держатся вместе. SSRF и минимальные права закрывают последние щели; WAF — внешний слой, не починка."
+   },
+   "whyNow": {
+    "en": "Security isn't one screen — it's a property you re-verify as the system grows.",
+    "ru": "Безопасность — не один экран, а свойство, которое перепроверяют по мере роста системы."
+   },
+   "limits": {
+    "en": "New features (URL import) add new attack surface; audit each one.",
+    "ru": "Новые фичи (импорт по URL) добавляют новую поверхность атаки; проверяйте каждую."
+   },
+   "article": "sec.waf"
+  },
+  "next": "m071",
+  "unlocks": {
+   "settings": [
+    "ssrfProtection",
+    "leastPrivilegeKeys"
+   ]
+  },
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "import_url",
+     "method": "POST",
+     "path": "/account/import",
+     "target": "backend",
+     "weight": 1,
+     "cpuMs": 8,
+     "responseKb": 1,
+     "auth": "user",
+     "product": {
+      "en": "A user imports a photo by URL",
+      "ru": "Пользователь импортирует фото по URL"
+     },
+     "queries": [],
+     "handler": "ImportController@fetch",
+     "writes": true,
+     "external": [
+      {
+       "provider": "fetch",
+       "latencyMs": 200
+      }
+     ]
+    }
+   },
+   {
+    "set": "security.employees",
+    "value": [
+     {
+      "id": "you",
+      "name": "You",
+      "role": "admin"
+     },
+     {
+      "id": "nika",
+      "name": "Nika",
+      "role": "admin"
+     },
+     {
+      "id": "lev",
+      "name": "Lev",
+      "role": "admin"
+     },
+     {
+      "id": "sonya",
+      "name": "Sonya",
+      "role": "admin"
+     },
+     {
+      "id": "intern",
+      "name": "Intern",
+      "role": "admin"
+     }
+    ]
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "A new URL-import endpoint can be pointed at internal addresses.",
+     "ru": "Новый импорт по URL можно направить на внутренние адреса."
+    },
+    "app": "security"
+   },
+   {
+    "text": {
+     "en": "Every employee has the admin role.",
+     "ru": "У каждого сотрудника роль admin."
+    },
+    "app": "security"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-ssrf",
+    "app": "security",
+    "hint": {
+     "en": "Check the URL-import for SSRF",
+     "ru": "Проверить импорт по URL на SSRF"
+    },
+    "text": {
+     "en": "The server will fetch any URL, including internal ones.",
+     "ru": "Сервер скачает любой URL, включая внутренние."
+    },
+    "match": {
+     "kind": "vuln",
+     "key": "ssrf"
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "ssrf",
+    "app": "security",
+    "label": {
+     "en": "Block internal addresses in URL import",
+     "ru": "Блокировать внутренние адреса при импорте по URL"
+    },
+    "effects": [
+     {
+      "set": "app.ssrfProtection",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   },
+   {
+    "id": "leastpriv",
+    "app": "security",
+    "label": {
+     "en": "Give employees least-privilege roles",
+     "ru": "Выдать сотрудникам минимальные роли"
+    },
+    "effects": [
+     {
+      "set": "security.employees",
+      "value": [
+       {
+        "id": "you",
+        "name": "You",
+        "role": "admin"
+       },
+       {
+        "id": "nika",
+        "name": "Nika",
+        "role": "admin"
+       },
+       {
+        "id": "lev",
+        "name": "Lev",
+        "role": "developer"
+       },
+       {
+        "id": "sonya",
+        "name": "Sonya",
+        "role": "support"
+       },
+       {
+        "id": "intern",
+        "name": "Intern",
+        "role": "marketing"
+       }
+      ]
+     }
+    ],
+    "once": true
+   }
+  ],
+  "achievements": [
+   {
+    "id": "pen-tester",
+    "when": {
+     "fact": "stats.attacksBlocked",
+     "gte": 8
+    }
+   },
+   {
+    "id": "security-first",
+    "when": {
+     "all": [
+      {
+       "fact": "completed.m070",
+       "truthy": true
+      },
+      {
+       "fact": "vulns",
+       "eq": 0
+      }
+     ]
+    }
+   }
+  ],
+  "rewards": {
+   "users": 500,
+   "cash": 200
+  },
+  "checkpoint": true
+ }
+]

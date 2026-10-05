@@ -1,0 +1,86 @@
+{
+  "cash": 500,
+  "unlocks": {
+    "apps": ["mail", "browser", "files", "terminal", "project", "help"],
+    "components": ["client", "nginx"],
+    "settings": [],
+    "attacks": [],
+    "commands": ["help", "ls", "cat", "ping", "curl"],
+    "features": []
+  },
+  "world": {
+    "nodes": [
+      {
+        "id": "users", "type": "client", "name": "Users", "region": "eu", "pos": { "x": 1, "y": 4 }, "size": "s",
+        "config": {}, "ip": "client", "ports": [], "publicPorts": [], "locked": true, "createdAt": 0
+      },
+      {
+        "id": "web1", "type": "nginx", "name": "VPS (Nginx)", "region": "eu", "pos": { "x": 5, "y": 4 }, "size": "s",
+        "config": { "listenPort": 80, "gzip": false, "http2": false, "cacheHeaders": false, "rateLimit": 0, "tz": 0 },
+        "ip": "203.0.113.10", "ports": [80, 22], "publicPorts": [80, 22], "createdAt": 0
+      }
+    ],
+    "edges": [{ "id": "users>web1", "from": "users", "to": "web1" }],
+    "regions": ["eu"],
+    "primaryRegion": "eu",
+    "traffic": { "users": 3, "baseRps": 0.02, "pattern": "flat", "regionMix": { "eu": 1 }, "mobileShare": 0.3, "bandwidthMbps": 25 },
+    "timeScale": 1,
+    "endpoints": [
+      {
+        "id": "home", "method": "GET", "path": "/", "target": "static", "weight": 10, "cpuMs": 0.3, "responseKb": 6, "auth": "none",
+        "product": { "en": "A visitor opens the home page", "ru": "Посетитель открывает главную страницу" },
+        "handler": "nginx: try_files $uri /index.html",
+        "queries": [], "assets": ["style.css", "logo.png"]
+      }
+    ],
+    "tables": [],
+    "app": {
+      "dataSource": "json-file", "inputValidation": false, "authErrors": "specific", "authMode": "none", "sessionStore": "memory",
+      "adminRoleCheck": false, "passwordStorage": "plaintext", "cookieHttpOnly": false, "loginRateLimit": false, "lockout": "none",
+      "queryMode": "concat", "outputEscaping": false, "csp": false, "csrfProtection": "none", "ownershipChecks": false,
+      "uploadValidation": false, "ssrfProtection": false, "cors": "none", "apiStatusCodes": "proper", "deleteMethod": "DELETE",
+      "apiVersioning": "none", "apiContract": false, "timezone": "server-local", "uploadsTarget": "local-disk", "readRouting": "primary",
+      "inventoryUpdate": "read-then-write", "lockOrdering": "inconsistent", "deadlockRetry": false, "outbox": false,
+      "cacheInvalidation": "ttl", "cacheFailOpen": false, "cacheWarming": false, "asyncEmail": false, "asyncInvoice": false,
+      "queueSeparation": false, "retryPolicy": "none", "maxRetries": 3, "deadLetterQueue": false, "jobIdempotency": false,
+      "paymentIdempotency": false, "webhookIdempotency": false, "webhookAsync": false, "providerTimeoutMs": 30000, "retries": 0,
+      "retryJitter": false, "circuitBreaker": false, "fallbacks": false, "autoRestart": false, "requestIds": false, "tracing": false
+    },
+    "cacheRules": [],
+    "bugs": [],
+    "files": [
+      { "path": "/var/www/html/index.nginx-debian.html", "sizeKb": 0.6, "kind": "html", "content": "<h1>Welcome to nginx!</h1>\n<p>If you see this page, the nginx web server is successfully installed and working.</p>" },
+      { "path": "/etc/nginx/sites-enabled/default", "sizeKb": 0.4, "kind": "config", "content": "server {\n    listen 80 default_server;\n    root /var/www/html;\n    index index.html index.nginx-debian.html;\n    location / {\n        try_files $uri $uri/ =404;\n    }\n}" },
+      { "path": "/home/dev/README.txt", "sizeKb": 0.2, "kind": "text", "content": "VPS rented today. Ubuntu 24.04, 1 vCPU, 1 GB RAM.\nNginx installed. Web root: /var/www/html\nPublic IP: 203.0.113.10" }
+    ],
+    "site": { "port": 80, "ip": "203.0.113.10" },
+    "dns": { "domain": null, "records": [], "changes": [], "geoRouting": false, "failover": false },
+    "tls": { "enabled": false, "issuer": "none", "expiresAt": null, "autoRenew": false, "redirectHttp": false, "hsts": false, "version": "1.2", "sessionResumption": false },
+    "security": {
+      "roles": [
+        { "id": "admin", "permissions": ["*"] },
+        { "id": "developer", "permissions": ["deploy", "logs.read", "db.read"] },
+        { "id": "support", "permissions": ["orders.read", "orders.refund"] },
+        { "id": "marketing", "permissions": ["catalog.edit"] }
+      ],
+      "employees": [
+        { "id": "you", "name": "You", "role": "admin" },
+        { "id": "nika", "name": "Nika", "role": "admin" },
+        { "id": "lev", "name": "Lev", "role": "developer" },
+        { "id": "sonya", "name": "Sonya", "role": "support" }
+      ],
+      "secrets": [],
+      "deps": []
+    },
+    "git": { "initialized": false, "commits": [], "branches": {}, "current": "main", "prs": [], "protection": { "requirePr": false, "requireChecks": false, "requireReview": false }, "conflict": null, "gitignore": [], "historyRewritten": false },
+    "ci": { "enabled": false, "stages": { "lint": false, "unit": false, "integration": false, "contract": false, "secretScan": false, "depScan": false, "build": false }, "tests": [], "runs": [] },
+    "deploy": {
+      "version": 1,
+      "releases": [{ "version": 1, "at": 0, "app": {}, "fixes": [], "bugs": [], "status": "live", "migration": "none" }],
+      "pending": {}, "pendingFixes": [], "pendingBugs": [], "canary": null, "flags": [], "requireDeploy": false, "deployCount": 0
+    },
+    "observability": { "alertRules": [], "runbooks": [], "slo": null, "incidents": [], "postmortems": [], "ackedAlerts": [] },
+    "incidents": [],
+    "flags": {}
+  }
+}

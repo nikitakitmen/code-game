@@ -1,0 +1,49 @@
+[
+  {
+    "id": "nika",
+    "name": { "en": "Nika", "ru": "Ника" },
+    "role": { "en": "Co-founder, CEO / Product", "ru": "Сооснователь, CEO / продукт" },
+    "avatar": "nika",
+    "signature": { "en": "— Nika. Sent from my phone, between two investor calls", "ru": "— Ника. Отправлено с телефона между двумя звонками инвесторам" }
+  },
+  {
+    "id": "lev",
+    "name": { "en": "Lev", "ru": "Лёва" },
+    "role": { "en": "Backend developer, fast and fearless", "ru": "Бэкенд-разработчик, быстрый и бесстрашный" },
+    "avatar": "lev",
+    "signature": { "en": "— Lev. Works on my machine™", "ru": "— Лёва. У меня всё работает™" }
+  },
+  {
+    "id": "sonya",
+    "name": { "en": "Sonya", "ru": "Соня" },
+    "role": { "en": "Support & QA, voice of the users", "ru": "Поддержка и QA, голос пользователей" },
+    "avatar": "sonya",
+    "signature": { "en": "— Sonya, Support. Ticket count today: too many", "ru": "— Соня, поддержка. Тикетов сегодня: слишком много" }
+  },
+  {
+    "id": "mark",
+    "name": { "en": "Mark", "ru": "Марк" },
+    "role": { "en": "Security specialist (contractor)", "ru": "Специалист по безопасности (подрядчик)" },
+    "avatar": "mark",
+    "signature": { "en": "— Mark. Trust, but verify. Actually, just verify.", "ru": "— Марк. Доверяй, но проверяй. А лучше просто проверяй." }
+  },
+  {
+    "id": "drop_table",
+    "name": { "en": "drop_table", "ru": "drop_table" },
+    "role": { "en": "Anonymous hacker who keeps poking your system", "ru": "Анонимный хакер, который всё время тыкает в вашу систему" },
+    "avatar": "hacker",
+    "signature": { "en": "— Robert'); DROP TABLE students;--", "ru": "— Robert'); DROP TABLE students;--" }
+  },
+  {
+    "id": "alerts",
+    "name": { "en": "PROD Alerts", "ru": "PROD Alerts" },
+    "role": { "en": "Automated monitoring", "ru": "Автоматический мониторинг" },
+    "avatar": "bell"
+  },
+  {
+    "id": "system",
+    "name": { "en": "PROD OS", "ru": "PROD OS" },
+    "role": { "en": "Operating system", "ru": "Операционная система" },
+    "avatar": "os"
+  }
+]

@@ -1,0 +1,862 @@
+[
+ {
+  "id": "m001",
+  "slug": "boot",
+  "act": 1,
+  "order": 1,
+  "kind": "tutorial",
+  "title": {
+   "en": "Boot PROD OS",
+   "ru": "Загрузка PROD OS"
+  },
+  "summary": {
+   "en": "Start the machine and meet your co-founder.",
+   "ru": "Запустить машину и познакомиться с сооснователем."
+  },
+  "prerequisites": [],
+  "learning": [
+   "web.clientServer"
+  ],
+  "trigger": {
+   "id": "m001-t",
+   "from": "nika",
+   "subject": {
+    "en": "Welcome aboard",
+    "ru": "Добро пожаловать на борт"
+   },
+   "body": {
+    "en": "You made it! Our whole company is you, me, and this one rented server. I handle customers, you make the thing work. Open the Project app when you're ready — first task is deciding what we even build.",
+    "ru": "Ты с нами! Вся наша компания — это ты, я и один арендованный сервер. Я занимаюсь клиентами, ты делаешь так, чтобы всё работало. Открой приложение Project, когда будешь готов — первая задача решить, что мы вообще строим."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Open the Project app",
+     "ru": "Открыть приложение Project"
+    },
+    "check": {
+     "fact": "app.opened.project",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Read Nika's welcome",
+     "ru": "Прочитать приветствие Ники"
+    },
+    "check": {
+     "fact": "mail.read.m001-t",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "s",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You booted PROD OS.",
+     "ru": "Вы загрузили PROD OS."
+    },
+    "effects": [
+     {
+      "cash": 0
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "PROD OS is your workstation — every tool you'll use is an app here.",
+    "ru": "PROD OS — ваше рабочее место: каждый инструмент здесь это приложение."
+   },
+   "whyNow": {
+    "en": "Before any code, you need a place to work and someone to build for.",
+    "ru": "До любого кода нужно место для работы и тот, для кого строить."
+   },
+   "limits": {
+    "en": "This is a simulation — real infrastructure is never this forgiving.",
+    "ru": "Это симуляция — настоящая инфраструктура никогда не бывает такой снисходительной."
+   },
+   "article": "web.clientServer"
+  },
+  "next": "m002",
+  "unlocks": {
+   "apps": []
+  },
+  "dialogue": [
+   {
+    "id": "d",
+    "npc": "nika",
+    "text": {
+     "en": "A client is just a program asking a server for things. Our server is a computer in a data center that answers. That's the whole internet, really. Ready?",
+     "ru": "Клиент — это программа, которая просит что-то у сервера. Наш сервер — компьютер в дата-центре, который отвечает. По сути это и есть весь интернет. Готов?"
+    },
+    "choices": [
+     {
+      "id": "c1",
+      "text": {
+       "en": "Let's build something.",
+       "ru": "Давай что-нибудь построим."
+      },
+      "reply": {
+       "en": "That's the spirit.",
+       "ru": "Вот это настрой."
+      }
+     },
+     {
+      "id": "c2",
+      "text": {
+       "en": "What's a server, exactly?",
+       "ru": "А что такое сервер, если точно?"
+      },
+      "reply": {
+       "en": "A computer that runs all the time and answers requests. You'll see.",
+       "ru": "Компьютер, который работает всегда и отвечает на запросы. Сам увидишь."
+      }
+     }
+    ]
+   }
+  ],
+  "rewards": {
+   "days": 1
+  },
+  "checkpoint": true
+ },
+ {
+  "id": "m002",
+  "slug": "name",
+  "act": 1,
+  "order": 2,
+  "kind": "tutorial",
+  "title": {
+   "en": "Name the project",
+   "ru": "Назвать проект"
+  },
+  "summary": {
+   "en": "Every company needs a name.",
+   "ru": "Каждой компании нужно имя."
+  },
+  "prerequisites": [
+   "m001"
+  ],
+  "learning": [
+   "web.clientServer"
+  ],
+  "trigger": {
+   "id": "m002-t",
+   "from": "nika",
+   "subject": {
+    "en": "What are we called?",
+    "ru": "Как мы называемся?"
+   },
+   "body": {
+    "en": "Investors keep asking for our company name and I keep making one up. Pick a real one in the Project app. It'll show up on everything we build.",
+    "ru": "Инвесторы спрашивают название компании, а я каждый раз выдумываю на ходу. Выбери настоящее в приложении Project. Оно будет на всём, что мы построим."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Set the company name",
+     "ru": "Задать название компании"
+    },
+    "check": {
+     "fact": "company.named",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "s",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Named. Now it's real.",
+     "ru": "Название есть. Теперь всё по-настоящему."
+    },
+    "effects": [
+     {
+      "users": 1
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Your company name is stored in your save and shown across PROD OS.",
+    "ru": "Название компании хранится в сохранении и показывается по всей PROD OS."
+   },
+   "whyNow": {
+    "en": "A product needs an identity before it needs servers.",
+    "ru": "У продукта должна быть личность раньше, чем серверы."
+   },
+   "limits": {
+    "en": "You can't rename mid-campaign in this version.",
+    "ru": "В этой версии нельзя переименовать посреди кампании."
+   },
+   "article": "web.clientServer"
+  },
+  "next": "m003"
+ },
+ {
+  "id": "m003",
+  "slug": "static-page",
+  "act": 1,
+  "order": 3,
+  "kind": "build",
+  "title": {
+   "en": "Your first page",
+   "ru": "Первая страница"
+  },
+  "summary": {
+   "en": "Replace the default Nginx page with a real home page.",
+   "ru": "Заменить дефолтную страницу Nginx настоящей главной."
+  },
+  "prerequisites": [
+   "m002"
+  ],
+  "learning": [
+   "web.static",
+   "net.reverseProxy"
+  ],
+  "trigger": {
+   "id": "m003-t",
+   "from": "nika",
+   "subject": {
+    "en": "Can people see anything yet?",
+    "ru": "Люди уже что-то видят?"
+   },
+   "body": {
+    "en": "Right now visitors get the ugly default 'Welcome to nginx!' page. I wrote a simple home page — it's in Files under /home/dev. Publish it to the web root so our server actually serves it.",
+    "ru": "Сейчас посетители видят уродливую дефолтную страницу «Welcome to nginx!». Я набросала простую главную — она в Files, в /home/dev. Опубликуй её в web root, чтобы сервер её отдавал."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Home page loads with its assets",
+     "ru": "Главная грузится со своими ассетами"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "ep.home.served",
+       "truthy": true
+      },
+      {
+       "fact": "ep.home.missingAssets",
+       "eq": 0
+      }
+     ]
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "s",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Your page is live.",
+     "ru": "Ваша страница в эфире."
+    },
+    "effects": [
+     {
+      "users": 2
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Nginx serves files from its web root (/var/www/html). A browser asks for /, gets index.html, then fetches each asset it references.",
+    "ru": "Nginx отдаёт файлы из web root (/var/www/html). Браузер просит /, получает index.html, затем подтягивает каждый упомянутый ассет."
+   },
+   "whyNow": {
+    "en": "Before dynamic anything, you need one static page the world can load.",
+    "ru": "До всякой динамики нужна одна статическая страница, которую может загрузить мир."
+   },
+   "limits": {
+    "en": "Static pages are the same for everyone — no users, no data, no logic yet.",
+    "ru": "Статические страницы одинаковы для всех — ни пользователей, ни данных, ни логики пока."
+   },
+   "article": "web.static",
+   "diagram": {
+    "nodes": [
+     {
+      "id": "b",
+      "label": "Browser",
+      "icon": "users"
+     },
+     {
+      "id": "n",
+      "label": "Nginx",
+      "icon": "server"
+     },
+     {
+      "id": "f",
+      "label": "index.html",
+      "icon": "doc"
+     }
+    ],
+    "edges": [
+     [
+      "b",
+      "n",
+      "GET /"
+     ],
+     [
+      "n",
+      "f",
+      "read"
+     ],
+     [
+      "n",
+      "b",
+      "200 HTML"
+     ]
+    ]
+   }
+  },
+  "next": "m004",
+  "unlocks": {
+   "apps": [
+    "encyclopedia"
+   ],
+   "components": []
+  },
+  "setup": [
+   {
+    "push": "files",
+    "value": {
+     "path": "/home/dev/index.html",
+     "sizeKb": 6,
+     "kind": "html",
+     "content": "<!doctype html>\n<html><head><title>Home</title><link rel=\"stylesheet\" href=\"style.css\"></head>\n<body><h1>Welcome</h1><img src=\"logo.png\"><p>Opening soon.</p></body></html>"
+    }
+   },
+   {
+    "push": "files",
+    "value": {
+     "path": "/home/dev/style.css",
+     "sizeKb": 2,
+     "kind": "css",
+     "content": "body{font-family:sans-serif;margin:2rem}"
+    }
+   },
+   {
+    "push": "files",
+    "value": {
+     "path": "/home/dev/logo.png",
+     "sizeKb": 40,
+     "kind": "image"
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Visitors see the default Nginx welcome page.",
+     "ru": "Посетители видят дефолтную страницу Nginx."
+    },
+    "app": "browser"
+   }
+  ],
+  "ops": [
+   {
+    "id": "publish",
+    "app": "files",
+    "label": {
+     "en": "Publish index.html to /var/www/html",
+     "ru": "Опубликовать index.html в /var/www/html"
+    },
+    "effects": [
+     {
+      "set": "files[path=/var/www/html/index.html]",
+      "value": {
+       "path": "/var/www/html/index.html",
+       "sizeKb": 6,
+       "kind": "html",
+       "content": "<!doctype html><html>…</html>"
+      }
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "css",
+    "app": "files",
+    "label": {
+     "en": "Publish style.css",
+     "ru": "Опубликовать style.css"
+    },
+    "effects": [
+     {
+      "set": "files[path=/var/www/html/style.css]",
+      "value": {
+       "path": "/var/www/html/style.css",
+       "sizeKb": 2,
+       "kind": "css"
+      }
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "logo",
+    "app": "files",
+    "label": {
+     "en": "Publish logo.png",
+     "ru": "Опубликовать logo.png"
+    },
+    "effects": [
+     {
+      "set": "files[path=/var/www/html/logo.png]",
+      "value": {
+       "path": "/var/www/html/logo.png",
+       "sizeKb": 40,
+       "kind": "image"
+      }
+     }
+    ],
+    "once": true
+   }
+  ],
+  "achievements": [
+   {
+    "id": "first-request",
+    "when": {
+     "fact": "ep.home.served",
+     "truthy": true
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m004",
+  "slug": "first-user",
+  "act": 1,
+  "order": 4,
+  "kind": "build",
+  "title": {
+   "en": "The first real visitor",
+   "ru": "Первый настоящий посетитель"
+  },
+  "summary": {
+   "en": "Confirm the path from a browser to your server.",
+   "ru": "Подтвердить путь от браузера до сервера."
+  },
+  "prerequisites": [
+   "m003"
+  ],
+  "learning": [
+   "web.clientServer",
+   "net.latency"
+  ],
+  "trigger": {
+   "id": "m004-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Someone visited!",
+    "ru": "Кто-то зашёл!"
+   },
+   "body": {
+    "en": "A friend opened the site from their phone and it loaded. Can you check it's actually reachable from the outside, not just from our own machine? Use the Browser or Terminal.",
+    "ru": "Подруга открыла сайт с телефона, и он загрузился. Проверь, что он действительно доступен снаружи, а не только с нашей машины. Используй Browser или Terminal."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "The home page is reachable and healthy",
+     "ru": "Главная доступна и работает"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "ep.home.served",
+       "truthy": true
+      },
+      {
+       "fact": "m.errorRate",
+       "lt": 0.01
+      }
+     ]
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "s",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Reachable from the open internet.",
+     "ru": "Доступно из открытого интернета."
+    },
+    "effects": [
+     {
+      "users": 5
+     },
+     {
+      "cash": 10
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A request leaves the browser, crosses the network to your server's IP, and comes back. Distance alone adds milliseconds.",
+    "ru": "Запрос уходит из браузера, пересекает сеть до IP вашего сервера и возвращается. Одно только расстояние добавляет миллисекунды."
+   },
+   "whyNow": {
+    "en": "You're confirming the client→server→client loop really works end to end.",
+    "ru": "Вы подтверждаете, что цикл клиент→сервер→клиент реально работает от начала до конца."
+   },
+   "limits": {
+    "en": "Right now there's a single server — if it's down, the site is down.",
+    "ru": "Сейчас сервер один — если он упал, сайт лежит."
+   },
+   "article": "web.request"
+  },
+  "next": "m005",
+  "unlocks": {
+   "commands": []
+  }
+ },
+ {
+  "id": "m005",
+  "slug": "request-response",
+  "act": 1,
+  "order": 5,
+  "kind": "tutorial",
+  "title": {
+   "en": "Anatomy of a request",
+   "ru": "Анатомия запроса"
+  },
+  "summary": {
+   "en": "Open the Request Inspector and read a real HTTP exchange.",
+   "ru": "Открыть Request Inspector и прочитать реальный HTTP-обмен."
+  },
+  "prerequisites": [
+   "m004"
+  ],
+  "learning": [
+   "web.request"
+  ],
+  "trigger": {
+   "id": "m005-t",
+   "from": "nika",
+   "subject": {
+    "en": "How does this actually work?",
+    "ru": "А как это вообще работает?"
+   },
+   "body": {
+    "en": "Investors asked me to explain what happens when someone opens our site and I froze. Open the Request Inspector, click our home request, and learn the stages. Pin the request as evidence when you've looked at it.",
+    "ru": "Инвесторы попросили объяснить, что происходит, когда кто-то открывает сайт, и я зависла. Открой Request Inspector, кликни по запросу главной и разберись в стадиях. Закрепи запрос как улику, когда посмотришь."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Inspect the home request",
+     "ru": "Изучить запрос главной"
+    },
+    "check": {
+     "fact": "mission.evidence.e-req",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "s",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Now you can explain a request to anyone.",
+     "ru": "Теперь вы объясните запрос кому угодно."
+    },
+    "effects": [
+     {
+      "users": 10
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "An HTTP request has a method and path; the response has a status code, headers and a body. Each stage in the Inspector takes measurable time.",
+    "ru": "У HTTP-запроса есть метод и путь; у ответа — код статуса, заголовки и тело. Каждая стадия в Inspector занимает измеримое время."
+   },
+   "whyNow": {
+    "en": "Everything you'll debug later is read in this same Inspector.",
+    "ru": "Всё, что вы будете чинить позже, читается в этом же Inspector."
+   },
+   "limits": {
+    "en": "Headers and timings are simplified but never faked.",
+    "ru": "Заголовки и тайминги упрощены, но никогда не выдуманы."
+   },
+   "article": "web.request"
+  },
+  "next": "m006",
+  "unlocks": {
+   "apps": [
+    "inspector",
+    "knowledge"
+   ]
+  },
+  "evidence": [
+   {
+    "id": "e-req",
+    "app": "inspector",
+    "hint": {
+     "en": "Open the home request in the Inspector",
+     "ru": "Открыть запрос главной в Inspector"
+    },
+    "text": {
+     "en": "The request flows Browser → Nginx → file → response.",
+     "ru": "Запрос идёт Browser → Nginx → файл → ответ."
+    },
+    "match": {
+     "kind": "request",
+     "key": "home"
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m006",
+  "slug": "server-port",
+  "act": 1,
+  "order": 6,
+  "kind": "incident",
+  "title": {
+   "en": "Nobody can reach the site",
+   "ru": "Сайт недоступен"
+  },
+  "summary": {
+   "en": "A port/firewall mistake takes the site offline. Find and fix it.",
+   "ru": "Ошибка порта/firewall роняет сайт. Найти и починить."
+  },
+  "prerequisites": [
+   "m005"
+  ],
+  "learning": [
+   "net.reverseProxy",
+   "web.request"
+  ],
+  "trigger": {
+   "id": "m006-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Site is down for everyone",
+    "ru": "Сайт недоступен у всех"
+   },
+   "body": {
+    "en": "Three people just messaged me — the site won't open, it just spins and times out. It was fine an hour ago. Nika swears she didn't touch anything. Help!",
+    "ru": "Три человека написали — сайт не открывается, крутится и отваливается по таймауту. Час назад всё было нормально. Ника клянётся, что ничего не трогала. Спасай!"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "The site responds again",
+     "ru": "Сайт снова отвечает"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "ep.home.served",
+       "truthy": true
+      },
+      {
+       "fact": "ep.home.err.CONNECTION_TIMEOUT",
+       "lt": 0.01
+      }
+     ]
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "quick",
+    "kind": "quickfix",
+    "when": {
+     "fact": "public.nginx.80",
+     "truthy": true
+    },
+    "text": {
+     "en": "You opened port 80 — but you opened it by hand, with no record of why.",
+     "ru": "Вы открыли порт 80 — но вручную, без записи зачем."
+    },
+    "debt": 3
+   },
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "public.nginx.80",
+     "truthy": true
+    },
+    "text": {
+     "en": "Port 80 is open; the site is back.",
+     "ru": "Порт 80 открыт; сайт вернулся."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A server process listens on a port; a firewall decides which ports the internet may reach. Nginx was listening on 80, but the firewall only allowed 22 (SSH).",
+    "ru": "Процесс сервера слушает порт; firewall решает, какие порты доступны из интернета. Nginx слушал 80, но firewall пускал только 22 (SSH)."
+   },
+   "whyNow": {
+    "en": "A healthy process is useless if nothing can connect to it.",
+    "ru": "Здоровый процесс бесполезен, если к нему никто не может подключиться."
+   },
+   "limits": {
+    "en": "Opening 80 is right here; later you'll put HTTPS on 443 and keep backends private.",
+    "ru": "Открыть 80 здесь правильно; позже вы поставите HTTPS на 443 и спрячете бэкенды."
+   },
+   "article": "net.reverseProxy"
+  },
+  "next": "m007",
+  "unlocks": {
+   "apps": [
+    "servers"
+   ],
+   "commands": [
+    "ss"
+   ]
+  },
+  "setup": [
+   {
+    "set": "nodes[id=web1].publicPorts",
+    "value": [
+     22
+    ]
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Connections time out — the page never loads.",
+     "ru": "Соединения отваливаются по таймауту — страница не грузится."
+    },
+    "app": "browser"
+   },
+   {
+    "text": {
+     "en": "The server process is running fine.",
+     "ru": "Процесс сервера работает нормально."
+    },
+    "app": "servers"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-port",
+    "app": "terminal",
+    "hint": {
+     "en": "Check listening ports and the firewall (ss)",
+     "ru": "Проверить слушающие порты и firewall (ss)"
+    },
+    "text": {
+     "en": "Nginx listens on 80, but the firewall no longer allows port 80 from the internet.",
+     "ru": "Nginx слушает 80, но firewall больше не пускает порт 80 из интернета."
+    },
+    "match": {
+     "kind": "ports"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "The server crashed",
+     "ru": "Сервер упал"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Servers shows the process is up. It's not that.",
+     "ru": "Servers показывает, что процесс работает. Не в этом дело."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Port 80 is closed in the firewall",
+     "ru": "Порт 80 закрыт в firewall"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Exactly — Nginx answers locally but the port isn't open to the world.",
+     "ru": "Именно — Nginx отвечает локально, но порт не открыт наружу."
+    }
+   },
+   {
+    "id": "h3",
+    "text": {
+     "en": "DNS is broken",
+     "ru": "DNS сломан"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "We don't even have a domain yet. Can't be DNS.",
+     "ru": "У нас пока нет даже домена. Не может быть DNS."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "open80",
+    "app": "servers",
+    "label": {
+     "en": "Open port 80 to the internet (firewall)",
+     "ru": "Открыть порт 80 наружу (firewall)"
+    },
+    "effects": [
+     {
+      "set": "nodes[id=web1].publicPorts",
+      "value": [
+       80,
+       22
+      ]
+     }
+    ],
+    "once": true
+   }
+  ],
+  "achievements": [
+   {
+    "id": "it-depends",
+    "when": {
+     "fact": "public.nginx.80",
+     "truthy": true
+    }
+   }
+  ],
+  "rewards": {
+   "users": 20,
+   "cash": 20
+  },
+  "checkpoint": true
+ }
+]

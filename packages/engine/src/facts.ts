@@ -7,6 +7,7 @@ import { maybeComponent, SIZE_FACTOR } from './catalog';
 import type { Facts } from './conditions';
 import { compareVersions, computeVulns } from './security';
 import { tableIndexes } from './sim/db';
+import { ERROR_STATUS } from './sim/types';
 import type { SimResult } from './sim/types';
 import type { ContentBundle, FactValue, GameState, KnowledgeLevel } from './types';
 import { KNOWLEDGE_LEVELS } from './types';
@@ -277,6 +278,9 @@ export function computeFacts(state: GameState, content: ContentBundle, sim: SimR
     set(`solutionKind.${id}`, s.solutionKind);
   }
   set('completed', state.campaign.completedOrder.length);
+  set('campaignFinished', state.campaign.finished);
+  set('stats.firstTryHypotheses', firstTryHypotheses(state));
+  set('stats.compares', state.stats.restores);
   const a = state.campaign.active;
   if (a) {
     set('mission.id', a.id);
@@ -329,6 +333,7 @@ export function computeFacts(state: GameState, content: ContentBundle, sim: SimR
       set(`ep.${id}.pageLoad`, e.pageLoadMs);
       set(`ep.${id}.pageWeight`, e.pageWeightKb);
       set(`ep.${id}.missingAssets`, e.missingAssets.length);
+      for (const code of Object.keys(ERROR_STATUS)) set(`ep.${id}.err.${code}`, 0);
       for (const [code, rate] of Object.entries(e.errors)) set(`ep.${id}.err.${code}`, rate ?? 0);
       const entry = w.nodes.find((n) => n.id === e.entry);
       set(`ep.${id}.entryRole`, entry ? role(entry.type) ?? null : null);
@@ -382,4 +387,13 @@ export function computeFacts(state: GameState, content: ContentBundle, sim: SimR
 export function utcMinutes(raw: string, tz: number): number {
   const [hh, mm] = raw.split(':').map((x) => parseInt(x, 10));
   return (hh || 0) * 60 + (mm || 0) - tz * 60;
+}
+
+/** Completed incident/security missions solved with the correct hypothesis on the first try. */
+function firstTryHypotheses(state: GameState): number {
+  let n = 0;
+  for (const s of Object.values(state.campaign.completed)) {
+    if (s.hypothesisCorrect === true && s.wrongHypotheses === 0) n++;
+  }
+  return n;
 }

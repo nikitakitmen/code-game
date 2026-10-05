@@ -1,0 +1,16 @@
+[
+  { "id": "ping", "usage": "ping <host>", "description": { "en": "Is the machine reachable over the network?", "ru": "Доступна ли машина по сети?" }, "examples": ["ping 203.0.113.10"] },
+  { "id": "curl", "usage": "curl -I <url>", "description": { "en": "Make an HTTP request and show the response status and headers.", "ru": "Сделать HTTP-запрос и показать статус и заголовки ответа." }, "examples": ["curl -I http://203.0.113.10/", "curl http://203.0.113.10/logo.png"] },
+  { "id": "ss", "usage": "ss -tlnp [host]", "description": { "en": "Which ports are processes listening on? Plus firewall rules.", "ru": "Какие порты слушают процессы? Плюс правила firewall." }, "examples": ["ss -tlnp"] },
+  { "id": "top", "usage": "top [host]", "description": { "en": "CPU and memory usage of a server.", "ru": "Загрузка CPU и памяти сервера." }, "examples": ["top backend"] },
+  { "id": "free", "usage": "free -m [host]", "description": { "en": "Memory usage in megabytes.", "ru": "Использование памяти в мегабайтах." }, "examples": ["free -m backend"] },
+  { "id": "df", "usage": "df -h", "description": { "en": "Disk usage.", "ru": "Использование диска." }, "examples": ["df -h"] },
+  { "id": "tail", "usage": "tail <logfile>", "description": { "en": "Last lines of a log file on this server.", "ru": "Последние строки лог-файла на этом сервере." }, "examples": ["tail /var/log/nginx/error.log", "tail /var/log/app/laravel.log", "tail /var/log/mysql/slow.log"] },
+  { "id": "systemctl", "usage": "systemctl status <service>", "description": { "en": "Is a service running? Did it crash?", "ru": "Работает ли сервис? Не упал ли?" }, "examples": ["systemctl status app", "systemctl status nginx"] },
+  { "id": "dig", "usage": "dig <name> [type]", "description": { "en": "Ask DNS what a name resolves to.", "ru": "Спросить у DNS, во что резолвится имя." }, "examples": ["dig example.shop A"] },
+  { "id": "openssl", "usage": "openssl s_client <host>", "description": { "en": "Inspect the TLS certificate.", "ru": "Посмотреть TLS-сертификат." }, "examples": ["openssl s_client example.shop:443"] },
+  { "id": "traceroute", "usage": "traceroute <host>", "description": { "en": "Network hops to the server.", "ru": "Сетевые узлы по пути к серверу." }, "examples": ["traceroute 203.0.113.10"] },
+  { "id": "mysql", "usage": "mysql -e \"EXPLAIN …\"", "description": { "en": "Show how MySQL executes the app's main query; or SHOW PROCESSLIST.", "ru": "Показать, как MySQL выполняет основной запрос; или SHOW PROCESSLIST." }, "examples": ["mysql -e \"EXPLAIN catalog\"", "mysql -e \"SHOW PROCESSLIST\""] },
+  { "id": "redis-cli", "usage": "redis-cli info", "description": { "en": "Redis memory and hit statistics.", "ru": "Память и статистика попаданий Redis." }, "examples": ["redis-cli info"] },
+  { "id": "git", "usage": "git log", "description": { "en": "Commit history.", "ru": "История коммитов." }, "examples": ["git log", "git status"] }
+]

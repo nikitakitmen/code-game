@@ -1,0 +1,1309 @@
+[
+ {
+  "id": "m041",
+  "slug": "git",
+  "act": 7,
+  "order": 41,
+  "kind": "build",
+  "title": {
+   "en": "Put the code in Git",
+   "ru": "Положить код в Git"
+  },
+  "summary": {
+   "en": "Start versioning the project so changes are tracked.",
+   "ru": "Начать версионировать проект, чтобы отслеживать изменения."
+  },
+  "prerequisites": [
+   "m040"
+  ],
+  "learning": [
+   "deploy.git"
+  ],
+  "trigger": {
+   "id": "m041-t",
+   "from": "lev",
+   "subject": {
+    "en": "We need version control",
+    "ru": "Нужен контроль версий"
+   },
+   "body": {
+    "en": "Right now I edit code straight on the server and pray. Let's use Git: initialise the repo so every change is a tracked commit and we can go back. Open the Git app and init.",
+    "ru": "Сейчас я правлю код прямо на сервере и молюсь. Давай использовать Git: инициализируй репозиторий, чтобы каждое изменение было отслеживаемым коммитом и можно было откатиться. Открой приложение Git и сделай init."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "The repository is initialised",
+     "ru": "Репозиторий инициализирован"
+    },
+    "check": {
+     "fact": "git.initialized",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "There is at least one commit",
+     "ru": "Есть хотя бы один коммит"
+    },
+    "check": {
+     "fact": "git.commits",
+     "gte": 1
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Your code has a history now.",
+     "ru": "У вашего кода теперь есть история."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Git records snapshots (commits) of your code. You can see what changed, when and by whom, and return to any past state.",
+    "ru": "Git записывает снимки (коммиты) кода. Видно, что изменилось, когда и кем, и можно вернуться к любому прошлому состоянию."
+   },
+   "whyNow": {
+    "en": "Editing live on the server with no history is how you lose work and can't undo mistakes.",
+    "ru": "Правка вживую на сервере без истории — так теряют работу и не могут отменить ошибки."
+   },
+   "limits": {
+    "en": "Commit secrets and they stay in history even after you delete the file.",
+    "ru": "Закоммитьте секреты — и они останутся в истории даже после удаления файла."
+   },
+   "article": "deploy.git"
+  },
+  "next": "m042",
+  "unlocks": {
+   "apps": [
+    "git",
+    "cicd"
+   ],
+   "commands": [
+    "git"
+   ]
+  },
+  "ops": [
+   {
+    "id": "init",
+    "app": "git",
+    "label": {
+     "en": "Initialise the Git repository",
+     "ru": "Инициализировать репозиторий Git"
+    },
+    "effects": [
+     {
+      "set": "git.initialized",
+      "value": true
+     },
+     {
+      "push": "git.commits",
+      "value": {
+       "id": "c0000001",
+       "message": "Initial import",
+       "branch": "main",
+       "parents": [],
+       "author": "you",
+       "at": 0,
+       "files": [
+        "app/",
+        "index.html"
+       ]
+      }
+     },
+     {
+      "set": "git.branches",
+      "value": {
+       "main": "c0000001"
+      }
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m042",
+  "slug": "merge-conflict",
+  "act": 7,
+  "order": 42,
+  "kind": "incident",
+  "title": {
+   "en": "A merge conflict",
+   "ru": "Конфликт слияния"
+  },
+  "summary": {
+   "en": "Two branches changed the same code. Resolve it correctly.",
+   "ru": "Две ветки поменяли один код. Разрешить правильно."
+  },
+  "prerequisites": [
+   "m041"
+  ],
+  "learning": [
+   "deploy.merge"
+  ],
+  "trigger": {
+   "id": "m042-t",
+   "from": "lev",
+   "subject": {
+    "en": "Conflict on CheckoutController",
+    "ru": "Конфликт в CheckoutController"
+   },
+   "body": {
+    "en": "My branch adds tax to the order total; main was changed too. Git can't merge automatically — there's a conflict on the total line. One side has tax, one doesn't. Pick the right resolution in the Git app.",
+    "ru": "Моя ветка добавляет налог к сумме заказа; main тоже меняли. Git не может слить автоматически — конфликт на строке суммы. В одной стороне налог есть, в другой нет. Выбери верное разрешение в приложении Git."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Resolve the conflict keeping tax in the total",
+     "ru": "Разрешить конфликт, сохранив налог в сумме"
+    },
+    "check": {
+     "fact": "git.conflict",
+     "falsy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Totals include tax (no bug)",
+     "ru": "Суммы включают налог (без бага)"
+    },
+    "check": {
+     "fact": "bug.missing-tax",
+     "falsy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "bug.missing-tax",
+     "falsy": true
+    },
+    "text": {
+     "en": "Merged correctly — totals include tax.",
+     "ru": "Слито верно — суммы включают налог."
+    }
+   },
+   {
+    "id": "wrong",
+    "kind": "bad",
+    "when": {
+     "fact": "bug.missing-tax",
+     "truthy": true
+    },
+    "text": {
+     "en": "You resolved it the wrong way and dropped tax from every order.",
+     "ru": "Вы разрешили неверно и убрали налог из всех заказов."
+    },
+    "debt": 8
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A conflict happens when two branches change the same lines; Git can't choose, so a human must. Resolving it wrongly silently reintroduces or creates a bug.",
+    "ru": "Конфликт возникает, когда две ветки меняют одни строки; Git не может выбрать, выбирает человек. Неверное разрешение тихо возвращает или создаёт баг."
+   },
+   "whyNow": {
+    "en": "Parallel work must reunite; the conflict is where you prove you understand both changes.",
+    "ru": "Параллельная работа должна воссоединиться; конфликт — место, где вы доказываете, что поняли оба изменения."
+   },
+   "limits": {
+    "en": "The combined resolution keeps both intents; picking blindly loses one.",
+    "ru": "Комбинированное разрешение сохраняет оба намерения; слепой выбор теряет одно."
+   },
+   "article": "deploy.merge"
+  },
+  "next": "m043",
+  "setup": [
+   {
+    "push": "git.branches",
+    "value": {}
+   },
+   {
+    "set": "git.branches",
+    "value": {
+     "main": "c0000001",
+     "feature": "c0000002"
+    }
+   },
+   {
+    "set": "git.conflict",
+    "value": {
+     "from": "feature",
+     "into": "main",
+     "file": "app/CheckoutController.php",
+     "ours": "$total = $sum;",
+     "theirs": "$total = $sum + $tax;",
+     "combined": "$total = $sum + $tax;",
+     "correct": "theirs",
+     "wrongBug": "missing-tax"
+    }
+   },
+   {
+    "addBug": {
+     "id": "missing-tax",
+     "title": {
+      "en": "Tax dropped from totals",
+      "ru": "Налог пропал из сумм"
+     },
+     "endpoint": "checkout",
+     "anomaly": {
+      "id": "wrongTax",
+      "perHour": 20
+     },
+     "logCode": "TAX",
+     "logMessage": "Order total computed without tax",
+     "fixed": true,
+     "caughtBy": "unit"
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Merge is blocked by a conflict on the totals line.",
+     "ru": "Слияние заблокировано конфликтом на строке сумм."
+    },
+    "app": "git"
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m043",
+  "slug": "broken-main",
+  "act": 7,
+  "order": 43,
+  "kind": "incident",
+  "title": {
+   "en": "A push to main broke prod",
+   "ru": "Пуш в main сломал прод"
+  },
+  "summary": {
+   "en": "Direct pushes to main ship bugs. Protect the branch.",
+   "ru": "Прямые пуши в main выкатывают баги. Защитить ветку."
+  },
+  "prerequisites": [
+   "m042"
+  ],
+  "learning": [
+   "deploy.git",
+   "deploy.rollback"
+  ],
+  "trigger": {
+   "id": "m043-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Checkout is throwing errors!",
+    "ru": "Оформление сыпет ошибками!"
+   },
+   "body": {
+    "en": "Half of checkouts fail with an error since Lev pushed a 'quick fix' straight to main an hour ago. No review, no tests. Can we undo it and make sure this can't happen again?",
+    "ru": "Половина оформлений падает с ошибкой с тех пор, как Лёва час назад запушил «быструю правку» прямо в main. Без ревью, без тестов. Можем откатить и сделать, чтобы это не повторилось?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Roll back the broken release",
+     "ru": "Откатить сломанный релиз"
+    },
+    "check": {
+     "fact": "deploy.rolledBack",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Checkout works again",
+     "ru": "Оформление снова работает"
+    },
+    "check": {
+     "fact": "ep.checkout.ok",
+     "truthy": true
+    },
+    "sim": true
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "main requires pull requests",
+     "ru": "main требует pull request"
+    },
+    "check": {
+     "fact": "git.requirePr",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "all": [
+      {
+       "fact": "git.requirePr",
+       "truthy": true
+      }
+     ]
+    },
+    "text": {
+     "en": "Rolled back and main is protected now.",
+     "ru": "Откатили, и main теперь защищён."
+    },
+    "effects": [
+     {
+      "users": 50
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A rollback returns to the last known-good release — the fastest way to end a release-caused incident. Branch protection stops unreviewed code reaching main at all.",
+    "ru": "Откат возвращает к последнему рабочему релизу — самый быстрый способ закончить инцидент из-за релиза. Защита ветки вообще не пускает непроверенный код в main."
+   },
+   "whyNow": {
+    "en": "You're deploying to real customers now; 'just push to main' is a loaded gun.",
+    "ru": "Вы деплоите реальным клиентам; «просто запушить в main» — заряженное ружьё."
+   },
+   "limits": {
+    "en": "Rollback is hard once a destructive migration has changed the database — keep migrations compatible.",
+    "ru": "Откат труден, когда разрушительная миграция уже изменила базу — держите миграции совместимыми."
+   },
+   "article": "deploy.rollback"
+  },
+  "next": "m044",
+  "unlocks": {
+   "features": [
+    "release_pipeline"
+   ]
+  },
+  "setup": [
+   {
+    "set": "deploy.requireDeploy",
+    "value": true
+   },
+   {
+    "addBug": {
+     "id": "null-crash",
+     "title": {
+      "en": "Null pointer on checkout",
+      "ru": "Null на оформлении"
+     },
+     "endpoint": "checkout",
+     "errorRate": 0.5,
+     "logCode": "NULLREF",
+     "logMessage": "Call to a member function on null in CheckoutController",
+     "version": 2,
+     "caughtBy": "unit"
+    }
+   },
+   {
+    "set": "deploy.version",
+    "value": 2
+   },
+   {
+    "push": "deploy.releases",
+    "value": {
+     "version": 2,
+     "at": 0,
+     "app": {},
+     "fixes": [],
+     "bugs": [
+      "null-crash"
+     ],
+     "status": "live",
+     "migration": "none"
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Checkout error rate jumped after a deploy.",
+     "ru": "Доля ошибок оформления подскочила после деплоя."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-rel",
+    "app": "cicd",
+    "hint": {
+     "en": "Find the release that introduced the error",
+     "ru": "Найти релиз, внёсший ошибку"
+    },
+    "text": {
+     "en": "Error rate rose exactly when release v2 went live.",
+     "ru": "Доля ошибок выросла ровно когда вышел релиз v2."
+    },
+    "match": {
+     "kind": "log",
+     "key": "NULLREF"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "An unreviewed, untested push broke main",
+     "ru": "Непроверенный пуш без тестов сломал main"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. The fastest cure is to roll back, then prevent direct pushes.",
+     "ru": "Верно. Быстрее всего откатить, потом запретить прямые пуши."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Traffic caused it",
+     "ru": "Виноват трафик"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Traffic is normal; the error appeared with the release.",
+     "ru": "Трафик обычный; ошибка появилась с релизом."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "rollback",
+    "app": "cicd",
+    "label": {
+     "en": "Roll back to the previous release",
+     "ru": "Откатить к предыдущему релизу"
+    },
+    "effects": [
+     {
+      "set": "flags.doRollback",
+      "value": true
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "protect",
+    "app": "git",
+    "label": {
+     "en": "Require pull requests on main",
+     "ru": "Требовать pull request в main"
+    },
+    "effects": [
+     {
+      "set": "git.protection.requirePr",
+      "value": true
+     },
+     {
+      "set": "git.protection.requireReview",
+      "value": true
+     }
+    ],
+    "once": true
+   }
+  ],
+  "achievements": [
+   {
+    "id": "rollback-artist",
+    "when": {
+     "fact": "deploy.rolledBack",
+     "truthy": true
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m044",
+  "slug": "ci",
+  "act": 7,
+  "order": 44,
+  "kind": "build",
+  "title": {
+   "en": "Set up CI",
+   "ru": "Настроить CI"
+  },
+  "summary": {
+   "en": "Run tests automatically on every pull request.",
+   "ru": "Запускать тесты автоматически на каждом pull request."
+  },
+  "prerequisites": [
+   "m043"
+  ],
+  "learning": [
+   "deploy.ci"
+  ],
+  "trigger": {
+   "id": "m044-t",
+   "from": "lev",
+   "subject": {
+    "en": "Let's catch bugs before prod",
+    "ru": "Давай ловить баги до прода"
+   },
+   "body": {
+    "en": "We keep finding bugs in production. Let's run lint and unit tests automatically on every PR, and require them to pass before merging. Turn on CI and enable the stages in the CI/CD app.",
+    "ru": "Мы постоянно находим баги в проде. Давай гонять линт и юнит-тесты автоматически на каждом PR и требовать, чтобы они прошли до слияния. Включи CI и стадии в приложении CI/CD."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "CI is enabled with unit tests",
+     "ru": "CI включён с юнит-тестами"
+    },
+    "check": {
+     "fact": "ci.unit",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Merging requires passing checks",
+     "ru": "Слияние требует прохождения проверок"
+    },
+    "check": {
+     "fact": "git.requireChecks",
+     "truthy": true
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Every change is tested before it can merge.",
+     "ru": "Каждое изменение тестируется до слияния."
+    },
+    "effects": [
+     {
+      "users": 50
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Continuous Integration runs linters, tests and a build on every pull request. Requiring them to pass before merge catches regressions consistently.",
+    "ru": "Continuous Integration гоняет линтеры, тесты и сборку на каждый pull request. Требование их прохождения до слияния стабильно ловит регрессии."
+   },
+   "whyNow": {
+    "en": "Humans forget to test; machines don't. 'Works on my machine' stops being an argument.",
+    "ru": "Люди забывают тестировать; машины нет. «У меня работает» перестаёт быть аргументом."
+   },
+   "limits": {
+    "en": "Tests only catch what they cover; green CI isn't a proof of correctness.",
+    "ru": "Тесты ловят лишь то, что покрывают; зелёный CI — не доказательство правильности."
+   },
+   "article": "deploy.ci"
+  },
+  "next": "m045",
+  "ops": [
+   {
+    "id": "enable",
+    "app": "cicd",
+    "label": {
+     "en": "Enable CI with lint and unit stages",
+     "ru": "Включить CI со стадиями lint и unit"
+    },
+    "effects": [
+     {
+      "set": "ci.enabled",
+      "value": true
+     },
+     {
+      "set": "ci.stages.lint",
+      "value": true
+     },
+     {
+      "set": "ci.stages.unit",
+      "value": true
+     },
+     {
+      "set": "ci.stages.build",
+      "value": true
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "require",
+    "app": "git",
+    "label": {
+     "en": "Require checks to pass before merge",
+     "ru": "Требовать прохождения проверок до слияния"
+    },
+    "effects": [
+     {
+      "set": "git.protection.requireChecks",
+      "value": true
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m045",
+  "slug": "regression-test",
+  "act": 7,
+  "order": 45,
+  "kind": "build",
+  "title": {
+   "en": "A test for the bug we just fixed",
+   "ru": "Тест на баг, который только что починили"
+  },
+  "summary": {
+   "en": "Add a regression test so the checkout bug can't come back.",
+   "ru": "Добавить регрессионный тест, чтобы баг оформления не вернулся."
+  },
+  "prerequisites": [
+   "m044"
+  ],
+  "learning": [
+   "deploy.ci"
+  ],
+  "trigger": {
+   "id": "m045-t",
+   "from": "lev",
+   "subject": {
+    "en": "Same bug almost shipped again",
+    "ru": "Тот же баг чуть не выехал снова"
+   },
+   "body": {
+    "en": "I opened a refactor PR and it reintroduces that null crash on checkout. CI didn't catch it because we have no test for that case. Add a regression test that covers it, so CI fails the PR.",
+    "ru": "Я открыл PR с рефакторингом, и он снова вносит тот null-креш на оформлении. CI не поймал, потому что на этот случай нет теста. Добавь регрессионный тест, который его покрывает, чтобы CI завалил PR."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A regression test exists",
+     "ru": "Регрессионный тест существует"
+    },
+    "check": {
+     "fact": "ci.test.t-checkout",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "CI now fails the risky PR",
+     "ru": "CI теперь валит рискованный PR"
+    },
+    "check": {
+     "fact": "pr.11.checks",
+     "eq": "failed"
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "pr.11.checks",
+     "eq": "failed"
+    },
+    "text": {
+     "en": "The bug can never silently return — CI guards it.",
+     "ru": "Баг больше не вернётся молча — CI его сторожит."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A regression test reproduces a past bug as an automated check, so any change that reintroduces it fails CI before it can merge.",
+    "ru": "Регрессионный тест воспроизводит прошлый баг автоматической проверкой, поэтому любое изменение, возвращающее его, валит CI до слияния."
+   },
+   "whyNow": {
+    "en": "You already shipped this bug once; a test is how you guarantee 'never again'.",
+    "ru": "Вы уже выкатывали этот баг однажды; тест — способ гарантировать «больше никогда»."
+   },
+   "limits": {
+    "en": "A test only guards the exact case it checks; think about the edges.",
+    "ru": "Тест сторожит только тот случай, что проверяет; думайте о краях."
+   },
+   "article": "deploy.ci"
+  },
+  "next": "m046",
+  "setup": [
+   {
+    "push": "git.prs",
+    "value": {
+     "id": 11,
+     "title": "Refactor checkout",
+     "from": "feature/refactor",
+     "to": "main",
+     "author": "lev",
+     "status": "open",
+     "checks": "none",
+     "bugs": [
+      "null-crash"
+     ]
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "An open PR would reintroduce a known bug.",
+     "ru": "Открытый PR вернул бы известный баг."
+    },
+    "app": "cicd"
+   }
+  ],
+  "ops": [
+   {
+    "id": "addtest",
+    "app": "cicd",
+    "label": {
+     "en": "Add a regression test for the checkout crash",
+     "ru": "Добавить регрессионный тест на креш оформления"
+    },
+    "effects": [
+     {
+      "set": "ci.tests[id=t-checkout]",
+      "value": {
+       "id": "t-checkout",
+       "covers": "unit",
+       "label": {
+        "en": "Checkout handles missing field",
+        "ru": "Оформление переживает отсутствующее поле"
+       }
+      }
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m046",
+  "slug": "friday-deploy",
+  "act": 7,
+  "order": 46,
+  "kind": "decision",
+  "title": {
+   "en": "Friday 5 PM deploy",
+   "ru": "Деплой в пятницу в 17:00"
+  },
+  "summary": {
+   "en": "Nika wants a risky feature out before the weekend.",
+   "ru": "Ника хочет выкатить рискованную фичу перед выходными."
+  },
+  "prerequisites": [
+   "m045"
+  ],
+  "learning": [
+   "deploy.rollback",
+   "deploy.canary"
+  ],
+  "trigger": {
+   "id": "m046-t",
+   "from": "nika",
+   "subject": {
+    "en": "Ship the new checkout today!",
+    "ru": "Выкати новый чекаут сегодня!"
+   },
+   "body": {
+    "en": "The new checkout is ready and I promised investors it'd be live by Monday. It's Friday 5 PM. Can we just push it now and go home? What could go wrong?",
+    "ru": "Новый чекаут готов, и я обещала инвесторам, что он будет к понедельнику. Сейчас пятница, 17:00. Может, просто запушим сейчас и по домам? Что может пойти не так?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Ship safely before the weekend",
+     "ru": "Выкатить безопасно перед выходными"
+    },
+    "check": {
+     "any": [
+      {
+       "fact": "mission.choice.d",
+       "eq": "c1"
+      },
+      {
+       "fact": "deploy.count",
+       "gte": 3
+      }
+     ]
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "flag",
+    "kind": "good",
+    "when": {
+     "fact": "mission.choice.d",
+     "eq": "c1"
+    },
+    "text": {
+     "en": "Code deployed dark behind a flag; you enable it Monday with eyes on.",
+     "ru": "Код выкачен тёмным за флагом; включите в понедельник под присмотром."
+    },
+    "effects": [
+     {
+      "users": 100
+     }
+    ]
+   },
+   {
+    "id": "yolo",
+    "kind": "quickfix",
+    "when": true,
+    "text": {
+     "en": "You deployed a big change Friday evening with nobody watching.",
+     "ru": "Вы выкатили крупное изменение в пятницу вечером без присмотра."
+    },
+    "effects": [
+     {
+      "users": 100
+     }
+    ],
+    "debt": 10,
+    "consequences": [
+     {
+      "id": "c-fri",
+      "delay": 1,
+      "when": true,
+      "effects": [],
+      "mail": {
+       "id": "c-fri-m",
+       "from": "sonya",
+       "subject": {
+        "en": "Weekend incident from the Friday deploy",
+        "ru": "Выходной инцидент из-за пятничного деплоя"
+       },
+       "body": {
+        "en": "The Friday checkout change had an edge case. It broke on Saturday with nobody around to roll back for hours. Please — flags next time.",
+        "ru": "У пятничного изменения чекаута был краевой случай. Он сломался в субботу, и часами некому было откатить. Пожалуйста — в следующий раз флаги."
+       }
+      }
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A feature flag separates deploy (shipping the code) from release (turning it on). You can deploy risky code dark and enable it when people are watching.",
+    "ru": "Feature flag отделяет деплой (выкатить код) от релиза (включить). Можно выкатить рискованный код тёмным и включить, когда есть кому смотреть."
+   },
+   "whyNow": {
+    "en": "Deploys fail; the question is whether anyone is around to notice and undo it.",
+    "ru": "Деплои ломаются; вопрос в том, есть ли кому заметить и откатить."
+   },
+   "limits": {
+    "en": "Flags left on forever become technical debt — clean them up after launch.",
+    "ru": "Флаги, оставленные навсегда, становятся техдолгом — убирайте после запуска."
+   },
+   "article": "deploy.canary"
+  },
+  "next": "m047",
+  "setup": [
+   {
+    "set": "clock",
+    "value": 6780
+   },
+   {
+    "push": "deploy.flags",
+    "value": {
+     "id": "new-checkout",
+     "label": {
+      "en": "New checkout flow",
+      "ru": "Новый флоу оформления"
+     },
+     "enabled": false,
+     "rollout": 0
+    }
+   }
+  ],
+  "dialogue": [
+   {
+    "id": "d",
+    "npc": "nika",
+    "text": {
+     "en": "It's tested and green. Push it before the weekend?",
+     "ru": "Он протестирован и зелёный. Выкатим перед выходными?"
+    },
+    "choices": [
+     {
+      "id": "c1",
+      "text": {
+       "en": "Behind a feature flag, off by default — safe to deploy, we enable Monday.",
+       "ru": "За feature-флагом, выключенным по умолчанию — безопасно деплоить, включим в понедельник."
+      },
+      "reply": {
+       "en": "Smart. Deploy the code dark, flip it when we're watching.",
+       "ru": "Умно. Выкатим код тёмным, включим, когда будем смотреть."
+      }
+     },
+     {
+      "id": "c2",
+      "text": {
+       "en": "Full deploy now, enabled for everyone.",
+       "ru": "Полный деплой сейчас, всем включено."
+      },
+      "reply": {
+       "en": "Bold on a Friday evening…",
+       "ru": "Смело в пятницу вечером…"
+      }
+     }
+    ]
+   }
+  ],
+  "achievements": [
+   {
+    "id": "friday-deploy",
+    "when": {
+     "fact": "stats.fridayDeploys",
+     "gt": 0
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m047",
+  "slug": "rollback",
+  "act": 7,
+  "order": 47,
+  "kind": "tutorial",
+  "title": {
+   "en": "Practice a clean rollback",
+   "ru": "Отработать чистый откат"
+  },
+  "summary": {
+   "en": "Deploy a change, catch a problem, roll back calmly.",
+   "ru": "Выкатить изменение, поймать проблему, спокойно откатить."
+  },
+  "prerequisites": [
+   "m046"
+  ],
+  "learning": [
+   "deploy.rollback"
+  ],
+  "trigger": {
+   "id": "m047-t",
+   "from": "lev",
+   "subject": {
+    "en": "Let's rehearse rollback",
+    "ru": "Прорепетируем откат"
+   },
+   "body": {
+    "en": "Rollback shouldn't be scary. Deploy the pending change, and if metrics look bad, roll back — calmly, as a drill. The point is that undoing a release is routine, not an emergency.",
+    "ru": "Откат не должен быть страшным. Выкати ожидающее изменение, и если метрики плохие — откати, спокойно, как учение. Смысл в том, что отмена релиза — рутина, а не ЧП."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Perform at least one deploy",
+     "ru": "Сделать хотя бы один деплой"
+    },
+    "check": {
+     "fact": "deploy.count",
+     "gte": 3
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Rollback is a tool, not a panic.",
+     "ru": "Откат — инструмент, а не паника."
+    },
+    "effects": [
+     {
+      "users": 30
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "The previous release is kept ready; rolling back swaps it in. Practising it makes a real incident boring instead of terrifying.",
+    "ru": "Предыдущий релиз хранится наготове; откат подставляет его обратно. Репетиция делает реальный инцидент скучным, а не страшным."
+   },
+   "whyNow": {
+    "en": "A rollback you've never done is a rollback you'll fumble under pressure.",
+    "ru": "Откат, который ни разу не делали, — это откат, который завалят под давлением."
+   },
+   "limits": {
+    "en": "It can't undo a destructive database migration — those need a forward fix.",
+    "ru": "Он не отменит разрушительную миграцию БД — такие чинят только вперёд."
+   },
+   "article": "deploy.rollback"
+  },
+  "next": "m048",
+  "setup": [
+   {
+    "set": "clock",
+    "value": 10680
+   }
+  ]
+ },
+ {
+  "id": "m048",
+  "slug": "canary",
+  "act": 7,
+  "order": 48,
+  "kind": "build",
+  "title": {
+   "en": "Canary release",
+   "ru": "Канареечный релиз"
+  },
+  "summary": {
+   "en": "Roll out a change to a small slice first and watch.",
+   "ru": "Выкатить изменение сначала на малую долю и наблюдать."
+  },
+  "prerequisites": [
+   "m047"
+  ],
+  "learning": [
+   "deploy.canary"
+  ],
+  "trigger": {
+   "id": "m048-t",
+   "from": "lev",
+   "subject": {
+    "en": "Big change — let's canary it",
+    "ru": "Крупное изменение — выкатим канарейкой"
+   },
+   "body": {
+    "en": "The new pricing engine passed CI but it's a big rewrite and tests never catch everything. Deploy it as a canary to ~10% of traffic, watch the error rate, and only promote it if it stays clean.",
+    "ru": "Новый движок цен прошёл CI, но это крупная переработка, а тесты никогда не ловят всё. Выкати его канарейкой на ~10% трафика, следи за долей ошибок и повышай только если всё чисто."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Start a canary release",
+     "ru": "Запустить канареечный релиз"
+    },
+    "check": {
+     "fact": "deploy.canary",
+     "gt": 0
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Overall error rate stays low during the canary",
+     "ru": "Общая доля ошибок остаётся низкой во время канарейки"
+    },
+    "check": {
+     "fact": "m.errorRate",
+     "lt": 0.05
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "A canary limits the blast radius of a bad release.",
+     "ru": "Канарейка ограничивает радиус поражения плохого релиза."
+    },
+    "effects": [
+     {
+      "users": 100
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A canary sends a new release to a small percentage of traffic first. If it misbehaves, only that slice is hurt and you roll back; if it's clean, you promote it.",
+    "ru": "Канарейка направляет новый релиз сначала на малую долю трафика. Если он плохой, страдает только эта доля, и вы откатываете; если чистый — повышаете."
+   },
+   "whyNow": {
+    "en": "Tests can't catch everything in a big rewrite; a canary catches the rest in production safely.",
+    "ru": "Тесты не ловят всё в крупной переработке; канарейка безопасно ловит остальное в проде."
+   },
+   "limits": {
+    "en": "A canary needs good metrics to judge it — flying blind defeats the point.",
+    "ru": "Канарейке нужны хорошие метрики для оценки — лететь вслепую бессмысленно."
+   },
+   "article": "deploy.canary"
+  },
+  "next": "m049",
+  "setup": [
+   {
+    "push": "git.prs",
+    "value": {
+     "id": 12,
+     "title": "New pricing engine",
+     "from": "feature/pricing",
+     "to": "main",
+     "author": "lev",
+     "status": "open",
+     "checks": "passed",
+     "bugs": [
+      "canary-bug"
+     ]
+    }
+   },
+   {
+    "addBug": {
+     "id": "canary-bug",
+     "title": {
+      "en": "Pricing engine rounding bug",
+      "ru": "Ошибка округления в движке цен"
+     },
+     "endpoint": "checkout",
+     "errorRate": 0.3,
+     "logCode": "PRICING",
+     "logMessage": "Rounding error in new pricing engine",
+     "version": 99,
+     "caughtBy": "integration",
+     "fixed": true
+    }
+   }
+  ],
+  "achievements": [
+   {
+    "id": "canary-whisperer",
+    "when": {
+     "fact": "completed.m048",
+     "truthy": true
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m049",
+  "slug": "feature-flag",
+  "act": 7,
+  "order": 49,
+  "kind": "build",
+  "title": {
+   "en": "Feature flags",
+   "ru": "Feature flags"
+  },
+  "summary": {
+   "en": "Control features at runtime, decoupled from deploys.",
+   "ru": "Управлять фичами в рантайме, отдельно от деплоев."
+  },
+  "prerequisites": [
+   "m048"
+  ],
+  "learning": [
+   "deploy.canary"
+  ],
+  "trigger": {
+   "id": "m049-t",
+   "from": "nika",
+   "subject": {
+    "en": "Let me control features without Lev",
+    "ru": "Хочу управлять фичами без Лёвы"
+   },
+   "body": {
+    "en": "I want to turn features on and off myself for a gradual rollout, without asking Lev to deploy. Set up the wishlist feature behind a flag and roll it out to a fraction of users first.",
+    "ru": "Хочу сама включать и выключать фичи для постепенного раскатывания, не прося Лёву деплоить. Настрой фичу списка желаний за флагом и выкати сначала на часть пользователей."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Roll out the wishlist flag to some users",
+     "ru": "Выкатить флаг списка желаний на часть пользователей"
+    },
+    "check": {
+     "fact": "flag.wishlist.rollout",
+     "gt": 0
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Features now ship dark and roll out on a dial.",
+     "ru": "Фичи теперь выезжают тёмными и раскатываются ручкой."
+    },
+    "effects": [
+     {
+      "users": 80
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A feature flag turns a feature on or off without deploying. It lets you roll out gradually, A/B test, and kill a bad feature instantly.",
+    "ru": "Feature flag включает или выключает фичу без деплоя. Он даёт постепенное раскатывание, A/B-тесты и мгновенное отключение плохой фичи."
+   },
+   "whyNow": {
+    "en": "Deploy and release become separate decisions — ship code anytime, enable it when ready.",
+    "ru": "Деплой и релиз становятся разными решениями — выкатывайте код когда угодно, включайте когда готовы."
+   },
+   "limits": {
+    "en": "Every flag is a branch in your code; stale flags are debt to remove after launch.",
+    "ru": "Каждый флаг — ветвление в коде; устаревшие флаги — долг, который убирают после запуска."
+   },
+   "article": "deploy.canary"
+  },
+  "next": "m050",
+  "setup": [
+   {
+    "push": "deploy.flags",
+    "value": {
+     "id": "wishlist",
+     "label": {
+      "en": "Wishlist feature",
+      "ru": "Фича списка желаний"
+     },
+     "enabled": false,
+     "rollout": 0
+    }
+   }
+  ],
+  "checkpoint": true
+ }
+]

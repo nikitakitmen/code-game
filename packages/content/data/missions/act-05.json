@@ -1,0 +1,1476 @@
+[
+ {
+  "id": "m027",
+  "slug": "traffic-growth",
+  "act": 5,
+  "order": 27,
+  "kind": "incident",
+  "title": {
+   "en": "We got featured",
+   "ru": "Нас разместили в подборке"
+  },
+  "summary": {
+   "en": "A traffic spike makes everything slow. Get eyes on the system.",
+   "ru": "Всплеск трафика всё замедляет. Начать наблюдать за системой."
+  },
+  "prerequisites": [
+   "m026"
+  ],
+  "learning": [
+   "obs.metrics",
+   "perf.scaling"
+  ],
+  "trigger": {
+   "id": "m027-t",
+   "from": "nika",
+   "subject": {
+    "en": "A blogger linked us!",
+    "ru": "Нас упомянул блогер!"
+   },
+   "body": {
+    "en": "A popular blogger linked our shop and traffic exploded. Sonya says it 'feels slow'. I have no idea what's actually happening inside. Open Monitoring and tell me where it hurts.",
+    "ru": "Популярный блогер дал на нас ссылку, и трафик взлетел. Соня говорит «тормозит». Я вообще не понимаю, что внутри происходит. Открой Monitoring и скажи, где болит."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Identify the bottleneck via Monitoring",
+     "ru": "Найти узкое место через Monitoring"
+    },
+    "check": {
+     "fact": "mission.evidence.e-cpu",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Keep the site mostly available during the spike",
+     "ru": "Удержать сайт в основном доступным в пик"
+    },
+    "check": {
+     "fact": "m.availability",
+     "gte": 0.9
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "vert",
+    "kind": "acceptable",
+    "when": {
+     "fact": "size.backend",
+     "gte": 2
+    },
+    "text": {
+     "en": "You scaled the backend up to survive the spike.",
+     "ru": "Вы увеличили бэкенд, чтобы пережить всплеск."
+    },
+    "effects": [
+     {
+      "cash": -20
+     }
+    ]
+   },
+   {
+    "id": "ok",
+    "kind": "acceptable",
+    "when": true,
+    "text": {
+     "en": "You rode out the spike and now watch the metrics.",
+     "ru": "Вы пережили всплеск и теперь следите за метриками."
+    },
+    "effects": [
+     {
+      "users": 200
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Monitoring turns 'feels slow' into numbers: requests/sec, CPU, latency percentiles. You can't fix a bottleneck you can't see.",
+    "ru": "Monitoring превращает «тормозит» в числа: запросов/с, CPU, перцентили задержки. Нельзя чинить узкое место, которого не видишь."
+   },
+   "whyNow": {
+    "en": "Real traffic has arrived; from here you diagnose with data, not guesses.",
+    "ru": "Пришёл реальный трафик; дальше вы диагностируете данными, а не догадками."
+   },
+   "limits": {
+    "en": "Averages hide the pain — watch p95/p99, the slow tail real users feel.",
+    "ru": "Средние прячут боль — смотрите p95/p99, медленный хвост, который чувствуют пользователи."
+   },
+   "article": "obs.metrics"
+  },
+  "next": "m028",
+  "unlocks": {
+   "apps": [
+    "monitoring",
+    "finance"
+   ],
+   "features": [
+    "monitoring",
+    "perf"
+   ],
+   "commands": [
+    "top",
+    "free"
+   ]
+  },
+  "setup": [
+   {
+    "set": "traffic.users",
+    "value": 8000
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 28
+   },
+   {
+    "set": "traffic.pattern",
+    "value": "spike"
+   },
+   {
+    "set": "traffic.spikeMultiplier",
+    "value": 4
+   },
+   {
+    "set": "traffic.spikeStart",
+    "value": 18
+   },
+   {
+    "set": "traffic.spikeEnd",
+    "value": 42
+   },
+   {
+    "set": "tables[name=products].rows",
+    "value": 2000
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Users report the site is sluggish during peaks.",
+     "ru": "Пользователи жалуются на тормоза в пики."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-cpu",
+    "app": "monitoring",
+    "hint": {
+     "en": "Find the saturated component on the dashboard",
+     "ru": "Найти перегруженный компонент на дашборде"
+    },
+    "text": {
+     "en": "The backend CPU pegs at 100% during the spike.",
+     "ru": "CPU бэкенда упирается в 100% во время всплеска."
+    },
+    "match": {
+     "kind": "metric",
+     "key": "cpu.backend"
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m028",
+  "slug": "slow-query",
+  "act": 5,
+  "order": 28,
+  "kind": "incident",
+  "title": {
+   "en": "The catalog crawls",
+   "ru": "Каталог еле ползёт"
+  },
+  "summary": {
+   "en": "The product list is slow. The database is scanning every row.",
+   "ru": "Список товаров медленный. База сканирует все строки."
+  },
+  "prerequisites": [
+   "m027"
+  ],
+  "learning": [
+   "perf.slowQuery",
+   "db.explain"
+  ],
+  "trigger": {
+   "id": "m028-t",
+   "from": "sonya",
+   "subject": {
+    "en": "The catalog takes forever",
+    "ru": "Каталог грузится вечность"
+   },
+   "body": {
+    "en": "Even when traffic is normal now, opening a category takes several seconds. Browsing is painful. Lev added 400k products from a supplier feed last week — related?",
+    "ru": "Даже когда трафик сейчас нормальный, открытие категории занимает несколько секунд. Листать больно. Лёва на прошлой неделе залил 400 тысяч товаров из фида поставщика — связано?"
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Pin the slow query and its EXPLAIN",
+     "ru": "Закрепить медленный запрос и его EXPLAIN"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "mission.evidence.e-slow",
+       "truthy": true
+      },
+      {
+       "fact": "mission.evidence.e-explain",
+       "truthy": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Choose the correct hypothesis",
+     "ru": "Выбрать верную гипотезу"
+    },
+    "check": {
+     "fact": "mission.hypothesis",
+     "eq": "h1"
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You've located the full table scan. Next: fix it.",
+     "ru": "Вы нашли полное сканирование. Дальше: починить."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A query with no usable index scans every row (EXPLAIN type=ALL). Rows examined — not rows returned — is what costs time, and it grows with the table.",
+    "ru": "Запрос без подходящего индекса сканирует все строки (EXPLAIN type=ALL). Время тратится на просмотренные строки, а не возвращённые, и это растёт с таблицей."
+   },
+   "whyNow": {
+    "en": "At 500 rows nobody noticed; at 400k the same query is unusable.",
+    "ru": "На 500 строках никто не замечал; на 400 тысячах тот же запрос неюзабелен."
+   },
+   "limits": {
+    "en": "The fix isn't a bigger server — it's a smarter access path.",
+    "ru": "Починка — не больший сервер, а более умный путь доступа."
+   },
+   "article": "perf.slowQuery"
+  },
+  "next": "m029",
+  "unlocks": {
+   "commands": [
+    "mysql"
+   ]
+  },
+  "setup": [
+   {
+    "set": "tables[name=products].rows",
+    "value": 400000
+   },
+   {
+    "set": "traffic.pattern",
+    "value": "wave"
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 40
+   },
+   {
+    "set": "endpoints[id=catalog].queries",
+    "value": [
+     {
+      "id": "cat_list",
+      "table": "products",
+      "op": "select",
+      "where": [
+       "category_id"
+      ],
+      "orderBy": "created_at",
+      "limit": 24,
+      "match": "many",
+      "selectivity": 0.04
+     }
+    ]
+   },
+   {
+    "push": "tables[name=products].columns",
+    "value": {
+     "name": "created_at",
+     "type": "datetime"
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "/catalog is slow even at low traffic.",
+     "ru": "/catalog медленный даже при низком трафике."
+    },
+    "app": "monitoring"
+   },
+   {
+    "text": {
+     "en": "The database works hard on every catalog view.",
+     "ru": "База напрягается на каждый просмотр каталога."
+    },
+    "app": "database"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-slow",
+    "app": "logs",
+    "hint": {
+     "en": "Find the slow query in the log",
+     "ru": "Найти медленный запрос в логе"
+    },
+    "text": {
+     "en": "A SELECT on products examines hundreds of thousands of rows.",
+     "ru": "SELECT по products просматривает сотни тысяч строк."
+    },
+    "match": {
+     "kind": "log",
+     "key": "SLOW_QUERY"
+    }
+   },
+   {
+    "id": "e-explain",
+    "app": "database",
+    "hint": {
+     "en": "Run EXPLAIN on the catalog query",
+     "ru": "Сделать EXPLAIN запроса каталога"
+    },
+    "text": {
+     "en": "type: ALL — a full table scan, no index used.",
+     "ru": "type: ALL — полное сканирование, индекс не используется."
+    },
+    "match": {
+     "kind": "explain",
+     "keyPrefix": "products"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "The query scans the whole products table",
+     "ru": "Запрос сканирует всю таблицу products"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right — no index on category_id means a full scan of 400k rows every time.",
+     "ru": "Верно — без индекса по category_id каждый раз полный скан 400 тысяч строк."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The backend needs more CPU",
+     "ru": "Бэкенду нужно больше CPU"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "A bigger backend just scans faster; the query is the problem.",
+     "ru": "Больший бэкенд лишь быстрее сканирует; проблема в запросе."
+    }
+   },
+   {
+    "id": "h3",
+    "text": {
+     "en": "We need more RAM",
+     "ru": "Нужно больше памяти"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "RAM won't turn a full scan into a lookup. An index will.",
+     "ru": "Память не превратит скан в поиск. Индекс — да."
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m029",
+  "slug": "index",
+  "act": 5,
+  "order": 29,
+  "kind": "build",
+  "title": {
+   "en": "Add the index",
+   "ru": "Добавить индекс"
+  },
+  "summary": {
+   "en": "Turn the full table scan into an index lookup.",
+   "ru": "Превратить полное сканирование в поиск по индексу."
+  },
+  "prerequisites": [
+   "m028"
+  ],
+  "learning": [
+   "db.index",
+   "db.explain"
+  ],
+  "trigger": {
+   "id": "m029-t",
+   "from": "lev",
+   "subject": {
+    "en": "How do I make the query fast?",
+    "ru": "Как ускорить запрос?"
+   },
+   "body": {
+    "en": "You found the full scan. I think we need an index on the products table — on category_id, and ideally the sort column too so the ORDER BY is free. Create it in the Database app.",
+    "ru": "Ты нашёл полный скан. Думаю, нужен индекс на таблице products — на category_id, и желательно на столбец сортировки, чтобы ORDER BY был бесплатным. Создай его в приложении Database."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A composite index on category_id exists",
+     "ru": "Есть составной индекс на category_id"
+    },
+    "check": {
+     "fact": "idxlead.products.category_id",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The catalog query stops scanning the table",
+     "ru": "Запрос каталога перестаёт сканировать таблицу"
+    },
+    "check": {
+     "fact": "ep.catalog.rows",
+     "lt": 5000
+    },
+    "sim": true
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "Catalog p95 is fast",
+     "ru": "p95 каталога быстрый"
+    },
+    "check": {
+     "fact": "ep.catalog.p95",
+     "lt": 300
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "ep.catalog.rows",
+     "lt": 5000
+    },
+    "text": {
+     "en": "Index lookup instead of a full scan — orders of magnitude faster.",
+     "ru": "Поиск по индексу вместо полного скана — на порядки быстрее."
+    },
+    "effects": [
+     {
+      "users": 300
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A B-tree index on (category_id, created_at) lets the database jump to a category and read rows already in sort order, touching only the rows it returns.",
+    "ru": "B-дерево-индекс на (category_id, created_at) позволяет базе прыгнуть к категории и читать строки уже в порядке сортировки, трогая только возвращаемые строки."
+   },
+   "whyNow": {
+    "en": "This is the single highest-leverage database fix — a scan of 400k becomes a read of a few dozen.",
+    "ru": "Это самая мощная починка БД — скан 400 тысяч превращается в чтение пары десятков."
+   },
+   "limits": {
+    "en": "Indexes cost disk and slow writes slightly; index what you filter and sort on, not everything.",
+    "ru": "Индексы стоят места и чуть замедляют запись; индексируйте то, по чему фильтруете и сортируете, не всё подряд."
+   },
+   "article": "db.index"
+  },
+  "next": "m030",
+  "ops": [
+   {
+    "id": "idx",
+    "app": "database",
+    "label": {
+     "en": "Create index on (category_id, created_at)",
+     "ru": "Создать индекс на (category_id, created_at)"
+    },
+    "effects": [
+     {
+      "push": "tables[name=products].indexes",
+      "value": {
+       "name": "idx_products_cat_created",
+       "columns": [
+        "category_id",
+        "created_at"
+       ]
+      }
+     }
+    ],
+    "once": true
+   }
+  ],
+  "achievements": [
+   {
+    "id": "index-wizard",
+    "when": {
+     "fact": "ep.catalog.rows",
+     "lt": 5000
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m030",
+  "slug": "heavy-assets",
+  "act": 5,
+  "order": 30,
+  "kind": "incident",
+  "title": {
+   "en": "The home page weighs 8 MB",
+   "ru": "Главная весит 8 МБ"
+  },
+  "summary": {
+   "en": "Huge images make the page slow, especially on mobile.",
+   "ru": "Огромные картинки замедляют страницу, особенно на мобильных."
+  },
+  "prerequisites": [
+   "m029"
+  ],
+  "learning": [
+   "perf.assets",
+   "cache.cdn"
+  ],
+  "trigger": {
+   "id": "m030-t",
+   "from": "sonya",
+   "subject": {
+    "en": "Mobile users are leaving",
+    "ru": "Мобильные уходят"
+   },
+   "body": {
+    "en": "The page is fast once it loads, but it takes ages to appear on a phone. Our hero image alone is over 5 MB. More than half our visitors are on mobile now.",
+    "ru": "Страница быстрая, когда загрузилась, но на телефоне появляется целую вечность. Один только hero-баннер больше 5 МБ. Больше половины посетителей сейчас с телефонов."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Enable gzip on the proxy",
+     "ru": "Включить gzip на прокси"
+    },
+    "check": {
+     "fact": "node.nginx.gzip",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "The page loads quickly",
+     "ru": "Страница грузится быстро"
+    },
+    "check": {
+     "fact": "m.pageLoad",
+     "lt": 2500
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "m.pageLoad",
+     "lt": 2500
+    },
+    "text": {
+     "en": "A light page that loads fast even on mobile.",
+     "ru": "Лёгкая страница, быстрая даже на мобильных."
+    },
+    "effects": [
+     {
+      "users": 400
+     }
+    ]
+   },
+   {
+    "id": "cdn",
+    "kind": "good",
+    "when": {
+     "fact": "role.cdn",
+     "gte": 1
+    },
+    "text": {
+     "en": "A CDN serves the assets from the edge — fast everywhere.",
+     "ru": "CDN отдаёт ассеты с edge — быстро везде."
+    },
+    "effects": [
+     {
+      "users": 500
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A page's weight — all its bytes — must cross the network before it's usable. Compress text, optimize and lazy-load images, and prefer modern formats.",
+    "ru": "Вес страницы — все её байты — должен пройти сеть до того, как она станет пригодной. Сжимайте текст, оптимизируйте и лениво грузите картинки, предпочитайте современные форматы."
+   },
+   "whyNow": {
+    "en": "On mobile, megabytes of images dominate load time far more than server speed.",
+    "ru": "На мобильных мегабайты картинок определяют время загрузки куда сильнее скорости сервера."
+   },
+   "limits": {
+    "en": "You trade image quality for size — overdo it and photos look bad.",
+    "ru": "Вы меняете качество картинок на размер — переборщите, и фото выглядят плохо."
+   },
+   "article": "perf.assets"
+  },
+  "next": "m031",
+  "setup": [
+   {
+    "set": "files[path=/var/www/html/logo.png].sizeKb",
+    "value": 40
+   },
+   {
+    "push": "files",
+    "value": {
+     "path": "/var/www/html/hero.png",
+     "sizeKb": 5200,
+     "kind": "image"
+    }
+   },
+   {
+    "push": "files",
+    "value": {
+     "path": "/var/www/html/banner.png",
+     "sizeKb": 2600,
+     "kind": "image"
+    }
+   },
+   {
+    "set": "endpoints[id=home].assets",
+    "value": [
+     "style.css",
+     "logo.png",
+     "hero.png",
+     "banner.png"
+    ]
+   },
+   {
+    "set": "endpoints[id=home].responseKb",
+    "value": 8
+   },
+   {
+    "set": "traffic.mobileShare",
+    "value": 0.55
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Time-to-visible is seconds on mobile networks.",
+     "ru": "Время до появления — секунды на мобильных сетях."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-weight",
+    "app": "inspector",
+    "hint": {
+     "en": "Check the page weight and largest assets",
+     "ru": "Проверить вес страницы и самые тяжёлые ассеты"
+    },
+    "text": {
+     "en": "Several multi-megabyte images load before the page is usable.",
+     "ru": "Несколько картинок по мегабайты грузятся до того, как страница пригодна."
+    },
+    "match": {
+     "kind": "request",
+     "key": "home"
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "opt-hero",
+    "app": "files",
+    "label": {
+     "en": "Optimize hero.png (compress + modern format)",
+     "ru": "Оптимизировать hero.png (сжать + современный формат)"
+    },
+    "effects": [
+     {
+      "set": "files[path=/var/www/html/hero.png].optimized",
+      "value": true
+     },
+     {
+      "set": "files[path=/var/www/html/hero.png].sizeKb",
+      "value": 420
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "opt-banner",
+    "app": "files",
+    "label": {
+     "en": "Optimize banner.png",
+     "ru": "Оптимизировать banner.png"
+    },
+    "effects": [
+     {
+      "set": "files[path=/var/www/html/banner.png].optimized",
+      "value": true
+     },
+     {
+      "set": "files[path=/var/www/html/banner.png].sizeKb",
+      "value": 240
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "lazy",
+    "app": "files",
+    "label": {
+     "en": "Lazy-load the banner (below the fold)",
+     "ru": "Лениво грузить баннер (ниже сгиба)"
+    },
+    "effects": [
+     {
+      "set": "files[path=/var/www/html/banner.png].lazy",
+      "value": true
+     }
+    ],
+    "once": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m031",
+  "slug": "cache",
+  "act": 5,
+  "order": 31,
+  "kind": "build",
+  "title": {
+   "en": "Stop recomputing the catalog",
+   "ru": "Перестать пересчитывать каталог"
+  },
+  "summary": {
+   "en": "Add Redis and cache the hot catalog responses.",
+   "ru": "Добавить Redis и кэшировать горячие ответы каталога."
+  },
+  "prerequisites": [
+   "m030"
+  ],
+  "learning": [
+   "cache.redis",
+   "cache.ttl"
+  ],
+  "trigger": {
+   "id": "m031-t",
+   "from": "lev",
+   "subject": {
+    "en": "Same catalog, computed a million times",
+    "ru": "Один каталог, посчитан миллион раз"
+   },
+   "body": {
+    "en": "The index helped, but we still hit the DB for the exact same category page thousands of times a minute. Let's cache it in Redis: add a Redis node, connect the backend to it, and turn caching on for the catalog.",
+    "ru": "Индекс помог, но мы всё равно бьём в БД за одну и ту же страницу категории тысячи раз в минуту. Давай кэшировать в Redis: добавь узел Redis, подключи бэкенд к нему и включи кэш для каталога."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Redis exists and is connected to the backend",
+     "ru": "Redis существует и подключён к бэкенду"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "role.cache",
+       "gte": 1
+      },
+      {
+       "fact": "edgeRole.backend>cache",
+       "truthy": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Catalog cache hit rate is high",
+     "ru": "Высокий hit rate кэша каталога"
+    },
+    "check": {
+     "fact": "ep.catalog.cacheHit",
+     "gte": 0.8
+    },
+    "sim": true
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "Database load drops",
+     "ru": "Нагрузка на базу падает"
+    },
+    "check": {
+     "fact": "m.dbUtil",
+     "lt": 0.7
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "ep.catalog.cacheHit",
+     "gte": 0.8
+    },
+    "text": {
+     "en": "Most catalog views now come from memory.",
+     "ru": "Большинство просмотров каталога теперь из памяти."
+    },
+    "effects": [
+     {
+      "users": 600
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A cache stores a computed response under a key; the next request reads it from RAM instead of recomputing. Hit rate rises with traffic and TTL.",
+    "ru": "Кэш хранит посчитанный ответ по ключу; следующий запрос читает из памяти, а не считает заново. Hit rate растёт с трафиком и TTL."
+   },
+   "whyNow": {
+    "en": "The same popular pages are requested constantly — caching is the cheapest big win.",
+    "ru": "Одни и те же популярные страницы запрашивают постоянно — кэш это самый дешёвый крупный выигрыш."
+   },
+   "limits": {
+    "en": "A cache can serve stale data and adds a new thing that can fail — handle both.",
+    "ru": "Кэш может отдавать устаревшее и добавляет новый отказоустойчивый узел — учтите оба."
+   },
+   "article": "cache.redis"
+  },
+  "next": "m032",
+  "unlocks": {
+   "apps": [
+    "cache"
+   ],
+   "components": [
+    "redis"
+   ],
+   "settings": [
+    "cacheInvalidation",
+    "cacheFailOpen"
+   ]
+  },
+  "setup": [
+   {
+    "set": "endpoints[id=catalog].cache",
+    "value": {
+     "cardinality": 40,
+     "valueKb": 12,
+     "writesPerHourPerKey": 1
+    }
+   },
+   {
+    "set": "endpoints[id=api_catalog].cache",
+    "value": {
+     "cardinality": 40,
+     "valueKb": 10,
+     "writesPerHourPerKey": 1
+    }
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 120
+   },
+   {
+    "set": "traffic.users",
+    "value": 40000
+   }
+  ],
+  "ops": [
+   {
+    "id": "cache-cat",
+    "app": "cache",
+    "label": {
+     "en": "Cache /catalog with a 60s TTL",
+     "ru": "Кэшировать /catalog с TTL 60с"
+    },
+    "effects": [
+     {
+      "set": "cacheRules[endpoint=catalog]",
+      "value": {
+       "endpoint": "catalog",
+       "enabled": true,
+       "ttl": 60
+      }
+     }
+    ],
+    "once": true
+   },
+   {
+    "id": "cache-api",
+    "app": "cache",
+    "label": {
+     "en": "Cache /api/v1/products with a 60s TTL",
+     "ru": "Кэшировать /api/v1/products с TTL 60с"
+    },
+    "effects": [
+     {
+      "set": "cacheRules[endpoint=api_catalog]",
+      "value": {
+       "endpoint": "api_catalog",
+       "enabled": true,
+       "ttl": 60
+      }
+     }
+    ],
+    "once": true
+   }
+  ],
+  "achievements": [
+   {
+    "id": "cache-me",
+    "when": {
+     "fact": "ep.catalog.cacheHit",
+     "gt": 0.9
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m032",
+  "slug": "redis-ttl",
+  "act": 5,
+  "order": 32,
+  "kind": "tutorial",
+  "title": {
+   "en": "Tune the TTL",
+   "ru": "Настроить TTL"
+  },
+  "summary": {
+   "en": "Balance freshness against hit rate with the cache TTL.",
+   "ru": "Сбалансировать свежесть и hit rate через TTL кэша."
+  },
+  "prerequisites": [
+   "m031"
+  ],
+  "learning": [
+   "cache.ttl"
+  ],
+  "trigger": {
+   "id": "m032-t",
+   "from": "lev",
+   "subject": {
+    "en": "How long should we cache?",
+    "ru": "Сколько кэшировать?"
+   },
+   "body": {
+    "en": "We set a 60-second TTL. Longer means fewer DB hits but more stale data. Play with it in Cache Manager and watch the hit rate and database load trade off.",
+    "ru": "Поставили TTL 60 секунд. Дольше — меньше обращений к БД, но данные устаревают. Поиграй в Cache Manager и посмотри, как hit rate и нагрузка на БД меняются местами."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Keep a high hit rate",
+     "ru": "Держать высокий hit rate"
+    },
+    "check": {
+     "fact": "ep.catalog.cacheHit",
+     "gte": 0.85
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Keep database utilisation comfortable",
+     "ru": "Держать загрузку БД комфортной"
+    },
+    "check": {
+     "fact": "m.dbUtil",
+     "lt": 0.6
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You've balanced freshness and load.",
+     "ru": "Вы сбалансировали свежесть и нагрузку."
+    },
+    "effects": [
+     {
+      "users": 100
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "TTL is how long a cached value stays valid. Longer TTL → higher hit rate but staler data; shorter → fresher but more database load.",
+    "ru": "TTL — сколько кэшированное значение остаётся валидным. Дольше TTL → выше hit rate, но данные устаревают; короче → свежее, но больше нагрузка на БД."
+   },
+   "whyNow": {
+    "en": "There's no single right TTL; it's a dial you set per kind of data.",
+    "ru": "Единственно правильного TTL нет; это ручка, которую крутят под каждый тип данных."
+   },
+   "limits": {
+    "en": "A hot key with a 60 s TTL is ~99% hits; a rarely-read key barely benefits.",
+    "ru": "Горячий ключ с TTL 60 с даёт ~99% попаданий; редкий ключ почти не выигрывает."
+   },
+   "article": "cache.ttl"
+  },
+  "next": "m033"
+ },
+ {
+  "id": "m033",
+  "slug": "cache-invalidation",
+  "act": 5,
+  "order": 33,
+  "kind": "incident",
+  "title": {
+   "en": "Prices update but customers see the old ones",
+   "ru": "Цены меняются, а клиенты видят старые"
+  },
+  "summary": {
+   "en": "A cached catalog serves stale prices after an edit.",
+   "ru": "Кэшированный каталог отдаёт старые цены после правки."
+  },
+  "prerequisites": [
+   "m032"
+  ],
+  "learning": [
+   "cache.invalidation"
+  ],
+  "trigger": {
+   "id": "m033-t",
+   "from": "nika",
+   "subject": {
+    "en": "A sale that nobody can see",
+    "ru": "Распродажа, которую никто не видит"
+   },
+   "body": {
+    "en": "I dropped prices for a flash sale an hour ago and customers still see the old prices. Refreshing sometimes helps, sometimes not. It's maddening.",
+    "ru": "Час назад я скинула цены для флеш-распродажи, а клиенты всё ещё видят старые. Обновление иногда помогает, иногда нет. С ума сойти."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Cache invalidates on write",
+     "ru": "Кэш инвалидируется при записи"
+    },
+    "check": {
+     "fact": "app.cacheInvalidation",
+     "eq": "on-write"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Stale reads stop",
+     "ru": "Устаревшие чтения прекращаются"
+    },
+    "check": {
+     "fact": "anomaly.staleReads",
+     "lt": 1
+    },
+    "sim": true
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "Hit rate stays healthy",
+     "ru": "Hit rate остаётся здоровым"
+    },
+    "check": {
+     "fact": "ep.catalog.cacheHit",
+     "gte": 0.6
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.cacheInvalidation",
+     "eq": "on-write"
+    },
+    "text": {
+     "en": "Edits are visible immediately; the cache stays warm.",
+     "ru": "Правки видны сразу; кэш остаётся тёплым."
+    },
+    "effects": [
+     {
+      "users": 200
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "When data changes, the cached copy is wrong until it expires — unless you delete (invalidate) the key on write. Invalidate-on-write keeps data fresh without dropping the whole cache.",
+    "ru": "Когда данные меняются, копия в кэше неверна до истечения — если не удалять (инвалидировать) ключ при записи. Инвалидация при записи держит данные свежими, не сбрасывая весь кэш."
+   },
+   "whyNow": {
+    "en": "Your prices now change often; TTL-only staleness became a visible business problem.",
+    "ru": "Ваши цены теперь меняются часто; устаревание по одному TTL стало видимой бизнес-проблемой."
+   },
+   "limits": {
+    "en": "Invalidation is genuinely hard with many keys and dependencies — keep the key scheme simple.",
+    "ru": "Инвалидация реально сложна при множестве ключей и зависимостей — держите схему ключей простой."
+   },
+   "article": "cache.invalidation"
+  },
+  "next": "m034",
+  "setup": [
+   {
+    "set": "endpoints[id=catalog].cache",
+    "value": {
+     "cardinality": 40,
+     "valueKb": 12,
+     "writesPerHourPerKey": 30
+    }
+   },
+   {
+    "set": "endpoints[id=api_catalog].cache",
+    "value": {
+     "cardinality": 40,
+     "valueKb": 10,
+     "writesPerHourPerKey": 30
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Edited prices appear only after a delay.",
+     "ru": "Изменённые цены появляются только с задержкой."
+    },
+    "app": "browser"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-stale",
+    "app": "logs",
+    "hint": {
+     "en": "Find the stale-read warnings",
+     "ru": "Найти предупреждения об устаревших чтениях"
+    },
+    "text": {
+     "en": "The cache serves old values until the TTL expires.",
+     "ru": "Кэш отдаёт старые значения, пока не истечёт TTL."
+    },
+    "match": {
+     "kind": "log",
+     "key": "ANOMALY_STALEREADS"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "The cache isn't invalidated when a price changes",
+     "ru": "Кэш не инвалидируется при смене цены"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right — with TTL-only caching, edits aren't visible until expiry.",
+     "ru": "Верно — при кэше только по TTL правки не видны до истечения."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The database write failed",
+     "ru": "Запись в БД не прошла"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "The DB has the new price; the cache is serving the old one.",
+     "ru": "В БД новая цена; кэш отдаёт старую."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "inval",
+    "app": "cache",
+    "label": {
+     "en": "Invalidate the cache key on every product change",
+     "ru": "Инвалидировать ключ кэша при изменении товара"
+    },
+    "effects": [
+     {
+      "set": "app.cacheInvalidation",
+      "value": "on-write"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m034",
+  "slug": "eviction",
+  "act": 5,
+  "order": 34,
+  "kind": "incident",
+  "title": {
+   "en": "Redis is full and refusing writes",
+   "ru": "Redis переполнен и отказывает в записи"
+  },
+  "summary": {
+   "en": "Too much data in one Redis causes OOM errors — and risks sessions.",
+   "ru": "Слишком много данных в одном Redis вызывает OOM — и грозит сессиям."
+  },
+  "prerequisites": [
+   "m033"
+  ],
+  "learning": [
+   "cache.eviction"
+  ],
+  "trigger": {
+   "id": "m034-t",
+   "from": "mark",
+   "subject": {
+    "en": "Redis OOM, and sessions at risk",
+    "ru": "Redis OOM, и сессии под угрозой"
+   },
+   "body": {
+    "en": "Your logs are full of 'OOM command not allowed'. You put both the cache and user sessions in one small Redis with noeviction. Either it rejects writes, or if you switch to LRU it may evict people's sessions and log them out.",
+    "ru": "Ваши логи забиты 'OOM command not allowed'. Вы положили кэш и сессии в один маленький Redis с noeviction. Либо он отвергает записи, либо, если переключить на LRU, он вытеснит сессии людей и разлогинит их."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "No OOM / eviction errors",
+     "ru": "Нет ошибок OOM / вытеснения"
+    },
+    "check": {
+     "fact": "ep.catalog.err.CACHE_OOM",
+     "lt": 0.01
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Sessions aren't silently evicted",
+     "ru": "Сессии не вытесняются молча"
+    },
+    "check": {
+     "fact": "m.errorRate",
+     "lt": 0.05
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "split",
+    "kind": "good",
+    "when": {
+     "fact": "count.redis",
+     "gte": 2
+    },
+    "text": {
+     "en": "Separate Redis instances: disposable cache vs durable sessions.",
+     "ru": "Отдельные инстансы Redis: выбрасываемый кэш и надёжные сессии."
+    },
+    "effects": [
+     {
+      "users": 200
+     },
+     {
+      "cash": -8
+     }
+    ]
+   },
+   {
+    "id": "bigger",
+    "kind": "acceptable",
+    "when": {
+     "fact": "node.redis.memoryMb",
+     "gte": 1024
+    },
+    "text": {
+     "en": "More memory for now — but cache and sessions still share fate.",
+     "ru": "Пока больше памяти — но кэш и сессии всё ещё делят судьбу."
+    },
+    "effects": [
+     {
+      "users": 100
+     },
+     {
+      "cash": -8
+     }
+    ],
+    "debt": 4
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "When Redis hits maxmemory it either refuses writes (noeviction → OOM) or evicts keys (LRU). Mixing disposable cache with must-keep sessions means eviction can log users out.",
+    "ru": "Когда Redis упирается в maxmemory, он либо отказывает в записи (noeviction → OOM), либо вытесняет ключи (LRU). Смешение выбрасываемого кэша с важными сессиями значит, что вытеснение разлогинит пользователей."
+   },
+   "whyNow": {
+    "en": "You added sessions-in-Redis; now its memory policy has real consequences.",
+    "ru": "Вы добавили сессии в Redis; теперь его политика памяти имеет реальные последствия."
+   },
+   "limits": {
+    "en": "Keep cache and sessions on separate instances so their failure modes don't mix.",
+    "ru": "Держите кэш и сессии на разных инстансах, чтобы их отказы не смешивались."
+   },
+   "article": "cache.eviction"
+  },
+  "next": "m035",
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "sessionStore": "redis"
+    }
+   },
+   {
+    "set": "flags.cacheExtraMb",
+    "value": 400
+   },
+   {
+    "flag": "noop",
+    "value": 1
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Writes to Redis fail with OOM.",
+     "ru": "Записи в Redis падают с OOM."
+    },
+    "app": "cache"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-oom",
+    "app": "terminal",
+    "hint": {
+     "en": "Check Redis memory usage (redis-cli)",
+     "ru": "Проверить память Redis (redis-cli)"
+    },
+    "text": {
+     "en": "used_memory exceeds maxmemory; policy is noeviction.",
+     "ru": "used_memory превышает maxmemory; политика noeviction."
+    },
+    "match": {
+     "kind": "redis",
+     "key": "full"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Cache and sessions share one undersized Redis",
+     "ru": "Кэш и сессии делят один маленький Redis"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. They have different needs — cache is disposable, sessions are not.",
+     "ru": "Верно. У них разные нужды — кэш можно выбросить, сессии нет."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Redis itself is broken",
+     "ru": "Сам Redis сломан"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Redis is fine; it's out of memory because of what you stored.",
+     "ru": "Redis в порядке; он без памяти из-за того, что вы в него положили."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "bigger",
+    "app": "cache",
+    "label": {
+     "en": "Increase Redis memory to 1024 MB",
+     "ru": "Увеличить память Redis до 1024 МБ"
+    },
+    "effects": [
+     {
+      "set": "nodes[id=redis-1].config.memoryMb",
+      "value": 1024
+     }
+    ],
+    "once": true,
+    "when": {
+     "fact": "count.redis",
+     "gte": 1
+    }
+   }
+  ],
+  "checkpoint": true
+ }
+]

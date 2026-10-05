@@ -1,0 +1,1576 @@
+[
+ {
+  "id": "m071",
+  "slug": "vertical-scaling",
+  "act": 10,
+  "order": 71,
+  "kind": "build",
+  "title": {
+   "en": "Throw hardware at it",
+   "ru": "Закидать железом"
+  },
+  "summary": {
+   "en": "Traffic doubled. Scale the backend up as a first response.",
+   "ru": "Трафик удвоился. Увеличить бэкенд как первый ответ."
+  },
+  "prerequisites": [
+   "m070"
+  ],
+  "learning": [
+   "perf.scaling"
+  ],
+  "trigger": {
+   "id": "m071-t",
+   "from": "nika",
+   "subject": {
+    "en": "We're trending — don't fall over",
+    "ru": "Мы в трендах — не упадите"
+   },
+   "body": {
+    "en": "We're all over social media and traffic doubled overnight. The backend is maxed out. Quickest fix: give it a bigger machine. Do it now, we can be smarter later.",
+    "ru": "Мы повсюду в соцсетях, и трафик за ночь удвоился. Бэкенд на максимуме. Быстрее всего — дать ему машину побольше. Сделай сейчас, умнее будем потом."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Scale the backend up",
+     "ru": "Увеличить бэкенд"
+    },
+    "check": {
+     "fact": "size.backend",
+     "gte": 3
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Survive the peak",
+     "ru": "Пережить пик"
+    },
+    "check": {
+     "fact": "m.availability",
+     "gte": 0.95
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "acceptable",
+    "when": {
+     "fact": "size.backend",
+     "gte": 3
+    },
+    "text": {
+     "en": "A bigger backend absorbs the spike — for now.",
+     "ru": "Больший бэкенд поглощает всплеск — пока что."
+    },
+    "effects": [
+     {
+      "users": 100
+     },
+     {
+      "cash": -40
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Vertical scaling gives one server more CPU and RAM. It's the fastest response and needs no code changes.",
+    "ru": "Вертикальное масштабирование даёт одному серверу больше CPU и RAM. Это самый быстрый ответ и не требует изменений кода."
+   },
+   "whyNow": {
+    "en": "Under a sudden spike, buying headroom buys you time to think.",
+    "ru": "Под внезапным всплеском покупка запаса покупает время подумать."
+   },
+   "limits": {
+    "en": "It has a ceiling and is still a single point of failure — one machine, one fate.",
+    "ru": "У него есть потолок, и это по-прежнему единая точка отказа — одна машина, одна судьба."
+   },
+   "article": "perf.scaling"
+  },
+  "next": "m072",
+  "unlocks": {
+   "features": [
+    "spof",
+    "autoscaling"
+   ]
+  },
+  "setup": [
+   {
+    "set": "traffic.users",
+    "value": 300000
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 450
+   },
+   {
+    "set": "traffic.pattern",
+    "value": "wave"
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Backend CPU is pinned; latency climbs at peak.",
+     "ru": "CPU бэкенда упёрт; задержка растёт в пик."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m072",
+  "slug": "overload-returns",
+  "act": 10,
+  "order": 72,
+  "kind": "incident",
+  "title": {
+   "en": "The ceiling",
+   "ru": "Потолок"
+  },
+  "summary": {
+   "en": "Even the biggest single server isn't enough. You need more of them.",
+   "ru": "Даже самый большой одиночный сервер не тянет. Нужно их больше."
+  },
+  "prerequisites": [
+   "m071"
+  ],
+  "learning": [
+   "perf.scaling",
+   "scale.loadBalancer"
+  ],
+  "trigger": {
+   "id": "m072-t",
+   "from": "lev",
+   "subject": {
+    "en": "We've hit the biggest box",
+    "ru": "Мы упёрлись в самую большую машину"
+   },
+   "body": {
+    "en": "Even on the largest instance the backend is saturated at peak. There's no bigger box to buy. We can't scale up any further — we have to scale out: multiple backends behind a load balancer.",
+    "ru": "Даже на самом большом инстансе бэкенд в пик насыщен. Больше машины купить негде. Вверх уже некуда — надо вширь: несколько бэкендов за балансировщиком."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Recognise the need to scale out",
+     "ru": "Осознать необходимость масштабировать вширь"
+    },
+    "check": {
+     "fact": "mission.hypothesis",
+     "eq": "h1"
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You've accepted that one box can't do it. Next: a load balancer.",
+     "ru": "Вы приняли, что одна машина не справится. Дальше: балансировщик."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Vertical scaling has a hard ceiling and leaves a single point of failure. Horizontal scaling — many servers sharing the load — goes further and survives one dying.",
+    "ru": "У вертикального масштабирования жёсткий потолок, и остаётся единая точка отказа. Горизонтальное — много серверов делят нагрузку — идёт дальше и переживает смерть одного."
+   },
+   "whyNow": {
+    "en": "You've grown past what any one machine can serve; the architecture must change shape.",
+    "ru": "Вы переросли то, что тянет любая одна машина; архитектура должна сменить форму."
+   },
+   "limits": {
+    "en": "Scaling out only works if the app is stateless — which yours isn't yet.",
+    "ru": "Масштабирование вширь работает, только если приложение без состояния — а ваше пока нет."
+   },
+   "article": "perf.scaling"
+  },
+  "next": "m073",
+  "setup": [
+   {
+    "set": "traffic.users",
+    "value": 600000
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 900
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "The single backend saturates even at max size.",
+     "ru": "Единственный бэкенд насыщается даже на макс. размере."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-ceil",
+    "app": "monitoring",
+    "hint": {
+     "en": "See the backend pinned at 100% even when large",
+     "ru": "Увидеть бэкенд на 100% даже большим"
+    },
+    "text": {
+     "en": "Vertical scaling has run out of room.",
+     "ru": "Вертикальное масштабирование исчерпано."
+    },
+    "match": {
+     "kind": "metric",
+     "key": "cpu.backend"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "One server has a hard ceiling; scale horizontally",
+     "ru": "У одного сервера жёсткий потолок; масштабировать вширь"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Add more backends behind a load balancer.",
+     "ru": "Верно. Добавьте бэкенды за балансировщиком."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "Keep buying bigger machines",
+     "ru": "Покупать машины ещё больше"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "There isn't a bigger one, and it's still a single point of failure.",
+     "ru": "Больше нет, и это всё ещё единая точка отказа."
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m073",
+  "slug": "load-balancer",
+  "act": 10,
+  "order": 73,
+  "kind": "build",
+  "title": {
+   "en": "Add a load balancer",
+   "ru": "Добавить балансировщик"
+  },
+  "summary": {
+   "en": "Put a load balancer in front so several backends can share traffic.",
+   "ru": "Поставить балансировщик, чтобы несколько бэкендов делили трафик."
+  },
+  "prerequisites": [
+   "m072"
+  ],
+  "learning": [
+   "scale.loadBalancer"
+  ],
+  "trigger": {
+   "id": "m073-t",
+   "from": "lev",
+   "subject": {
+    "en": "Load balancer first, then backends",
+    "ru": "Сначала балансировщик, потом бэкенды"
+   },
+   "body": {
+    "en": "Add a Load Balancer node between Nginx and the backend. It spreads requests across backends and stops sending traffic to any that fail health checks. Wire it up; we'll add a second backend next.",
+    "ru": "Добавь узел Load Balancer между Nginx и бэкендом. Он распределяет запросы по бэкендам и перестаёт слать трафик на упавшие по health check. Собери схему; второй бэкенд добавим следующим шагом."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A load balancer exists in the path",
+     "ru": "Балансировщик есть в пути"
+    },
+    "check": {
+     "fact": "role.lb",
+     "gte": 1
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "It routes to a backend",
+     "ru": "Он маршрутизирует на бэкенд"
+    },
+    "check": {
+     "fact": "edgeRole.lb>backend",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "The site still works",
+     "ru": "Сайт по-прежнему работает"
+    },
+    "check": {
+     "fact": "m.errorRate",
+     "lt": 0.05
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "A single front door ready to fan out to many backends.",
+     "ru": "Единая дверь, готовая раздавать на много бэкендов."
+    },
+    "effects": [
+     {
+      "cash": -18
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A load balancer spreads requests across identical backends and removes dead ones via health checks, so several servers can share one address.",
+    "ru": "Балансировщик распределяет запросы по одинаковым бэкендам и убирает мёртвые через health check, чтобы несколько серверов делили один адрес."
+   },
+   "whyNow": {
+    "en": "Before adding servers, you need the thing that decides which server each request hits.",
+    "ru": "Прежде чем добавлять серверы, нужен тот, кто решает, на какой сервер попадёт каждый запрос."
+   },
+   "limits": {
+    "en": "It only helps if the backends are interchangeable — the next missions make them so.",
+    "ru": "Он помогает, только если бэкенды взаимозаменяемы — следующие миссии это обеспечат."
+   },
+   "article": "scale.loadBalancer"
+  },
+  "next": "m074",
+  "unlocks": {
+   "components": [
+    "lb"
+   ]
+  },
+  "checkpoint": true
+ },
+ {
+  "id": "m074",
+  "slug": "backend-2",
+  "act": 10,
+  "order": 74,
+  "kind": "build",
+  "title": {
+   "en": "A second backend",
+   "ru": "Второй бэкенд"
+  },
+  "summary": {
+   "en": "Add a second backend behind the load balancer.",
+   "ru": "Добавить второй бэкенд за балансировщиком."
+  },
+  "prerequisites": [
+   "m073"
+  ],
+  "learning": [
+   "scale.loadBalancer",
+   "perf.scaling"
+  ],
+  "trigger": {
+   "id": "m074-t",
+   "from": "lev",
+   "subject": {
+    "en": "Double the backends",
+    "ru": "Удвоить бэкенды"
+   },
+   "body": {
+    "en": "Add a second backend and connect it to the load balancer, the database, cache and queue just like the first. Now two servers share the peak.",
+    "ru": "Добавь второй бэкенд и подключи к балансировщику, базе, кэшу и очереди так же, как первый. Теперь два сервера делят пик."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "At least two backends serve traffic",
+     "ru": "Как минимум два бэкенда обслуживают трафик"
+    },
+    "check": {
+     "fact": "role.backend",
+     "gte": 2
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Both are behind the load balancer",
+     "ru": "Оба за балансировщиком"
+    },
+    "check": {
+     "fact": "edgeRole.lb>backend",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "The peak is handled",
+     "ru": "Пик обрабатывается"
+    },
+    "check": {
+     "fact": "m.availability",
+     "gte": 0.95
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "role.backend",
+     "gte": 2
+    },
+    "text": {
+     "en": "Two backends share the load.",
+     "ru": "Два бэкенда делят нагрузку."
+    },
+    "effects": [
+     {
+      "users": 200
+     },
+     {
+      "cash": -10
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "With a load balancer in front, adding identical backends scales capacity horizontally — twice the servers, roughly twice the throughput.",
+    "ru": "С балансировщиком впереди добавление одинаковых бэкендов масштабирует мощность горизонтально — вдвое больше серверов, примерно вдвое больше пропускной способности."
+   },
+   "whyNow": {
+    "en": "This is how you grow past a single machine's ceiling.",
+    "ru": "Так вы растёте выше потолка одной машины."
+   },
+   "limits": {
+    "en": "It assumes backends keep no local state — which is about to bite you.",
+    "ru": "Это предполагает, что бэкенды не хранят локальное состояние — что вот-вот аукнется."
+   },
+   "article": "perf.scaling"
+  },
+  "next": "m075",
+  "setup": [
+   {
+    "set": "traffic.baseRps",
+    "value": 1100
+   },
+   {
+    "set": "traffic.users",
+    "value": 700000
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m075",
+  "slug": "sessions-break",
+  "act": 10,
+  "order": 75,
+  "kind": "incident",
+  "title": {
+   "en": "Random logouts",
+   "ru": "Случайные разлогины"
+  },
+  "summary": {
+   "en": "In-memory sessions don't exist on the other backend. Users get logged out.",
+   "ru": "Сессии в памяти не существуют на другом бэкенде. Пользователей разлогинивает."
+  },
+  "prerequisites": [
+   "m074"
+  ],
+  "learning": [
+   "scale.statelessness",
+   "auth.session"
+  ],
+  "trigger": {
+   "id": "m075-t",
+   "from": "sonya",
+   "subject": {
+    "en": "People get logged out at random",
+    "ru": "Людей разлогинивает случайно"
+   },
+   "body": {
+    "en": "Since the second backend went in, users randomly get logged out mid-session. It's intermittent — about half the requests. Was fine with one server.",
+    "ru": "С тех пор как появился второй бэкенд, пользователей случайно разлогинивает посреди сессии. Периодически — примерно половина запросов. С одним сервером было нормально."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Identify the stateless problem",
+     "ru": "Определить проблему состояния"
+    },
+    "check": {
+     "fact": "mission.hypothesis",
+     "eq": "h1"
+    }
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "You've found why scaling out broke login. Next: share the state.",
+     "ru": "Вы нашли, почему масштабирование сломало вход. Дальше: общее состояние."
+    }
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A load balancer sends each request to any backend. In-memory sessions live on one server only, so a request routed elsewhere finds no session and logs you out.",
+    "ru": "Балансировщик шлёт каждый запрос на любой бэкенд. Сессии в памяти живут только на одном сервере, поэтому запрос, попавший на другой, не находит сессию и разлогинивает."
+   },
+   "whyNow": {
+    "en": "Horizontal scaling exposed hidden local state; the fix is to stop keeping it locally.",
+    "ru": "Горизонтальное масштабирование вскрыло скрытое локальное состояние; починка — перестать хранить его локально."
+   },
+   "limits": {
+    "en": "Sticky sessions would hide this, but they just pin the problem in place.",
+    "ru": "Sticky sessions спрятали бы это, но они лишь закрепляют проблему."
+   },
+   "article": "scale.statelessness"
+  },
+  "next": "m076",
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "sessionStore": "memory"
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Roughly half of authenticated requests lose the session.",
+     "ru": "Примерно половина авторизованных запросов теряет сессию."
+    },
+    "app": "inspector"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-sess",
+    "app": "logs",
+    "hint": {
+     "en": "Find session-not-found warnings",
+     "ru": "Найти предупреждения «сессия не найдена»"
+    },
+    "text": {
+     "en": "A session created on backend #1 is missing on backend #2.",
+     "ru": "Сессия, созданная на бэкенде №1, отсутствует на бэкенде №2."
+    },
+    "match": {
+     "kind": "log",
+     "key": "SESSION_LOST"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Sessions live in each backend's memory, not shared",
+     "ru": "Сессии в памяти каждого бэкенда, не общие"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. The load balancer sends you to a server that never saw your session.",
+     "ru": "Верно. Балансировщик отправляет вас на сервер, который не видел вашу сессию."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The session cookie is misconfigured",
+     "ru": "Cookie сессии настроена неверно"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "The cookie is fine; the session data just isn't on every server.",
+     "ru": "Cookie в порядке; данные сессии просто не на каждом сервере."
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m076",
+  "slug": "shared-sessions",
+  "act": 10,
+  "order": 76,
+  "kind": "build",
+  "title": {
+   "en": "Make the backends stateless",
+   "ru": "Сделать бэкенды без состояния"
+  },
+  "summary": {
+   "en": "Move sessions to shared Redis so any backend can serve any user.",
+   "ru": "Перенести сессии в общий Redis, чтобы любой бэкенд обслуживал любого."
+  },
+  "prerequisites": [
+   "m075"
+  ],
+  "learning": [
+   "scale.statelessness"
+  ],
+  "trigger": {
+   "id": "m076-t",
+   "from": "lev",
+   "subject": {
+    "en": "Share the session store",
+    "ru": "Общее хранилище сессий"
+   },
+   "body": {
+    "en": "Fix: store sessions in shared Redis instead of each server's memory. Then any backend can handle any request. Make sure both backends connect to the Redis used for sessions, and switch the session store.",
+    "ru": "Починка: хранить сессии в общем Redis вместо памяти каждого сервера. Тогда любой бэкенд обработает любой запрос. Убедись, что оба бэкенда подключены к Redis для сессий, и переключи хранилище сессий."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Sessions are stored in shared Redis",
+     "ru": "Сессии в общем Redis"
+    },
+    "check": {
+     "fact": "app.sessionStore",
+     "eq": "redis"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Random logouts stop",
+     "ru": "Случайные разлогины прекращаются"
+    },
+    "check": {
+     "fact": "m.errorRate",
+     "lt": 0.03
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.sessionStore",
+     "eq": "redis"
+    },
+    "text": {
+     "en": "Stateless backends — any server serves any user.",
+     "ru": "Бэкенды без состояния — любой сервер обслуживает любого."
+    },
+    "effects": [
+     {
+      "users": 300
+     }
+    ]
+   },
+   {
+    "id": "sticky",
+    "kind": "quickfix",
+    "when": {
+     "fact": "node.lb.sticky",
+     "truthy": true
+    },
+    "text": {
+     "en": "Sticky sessions paper over it — one server dying still logs its users out.",
+     "ru": "Sticky sessions замазывают проблему — смерть сервера всё равно разлогинит его пользователей."
+    },
+    "effects": [
+     {
+      "users": 150
+     }
+    ],
+    "debt": 8
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A stateless server keeps no per-user data locally; sessions live in a shared store (Redis). Then the load balancer can route any request to any backend.",
+    "ru": "Сервер без состояния не хранит данные пользователя локально; сессии в общем хранилище (Redis). Тогда балансировщик может направить любой запрос на любой бэкенд."
+   },
+   "whyNow": {
+    "en": "Statelessness is the precondition that makes horizontal scaling actually work.",
+    "ru": "Отсутствие состояния — условие, при котором горизонтальное масштабирование реально работает."
+   },
+   "limits": {
+    "en": "Shared state is extra infrastructure and network hops, but it's what lets servers be interchangeable.",
+    "ru": "Общее состояние — это лишняя инфраструктура и сетевые переходы, но именно оно делает серверы взаимозаменяемыми."
+   },
+   "article": "scale.statelessness"
+  },
+  "next": "m077",
+  "checkpoint": true
+ },
+ {
+  "id": "m077",
+  "slug": "read-replica",
+  "act": 10,
+  "order": 77,
+  "kind": "build",
+  "title": {
+   "en": "The database is the new bottleneck",
+   "ru": "База — новое узкое место"
+  },
+  "summary": {
+   "en": "Reads overwhelm the primary. Add a read replica.",
+   "ru": "Чтения перегружают primary. Добавить read-реплику."
+  },
+  "prerequisites": [
+   "m076"
+  ],
+  "learning": [
+   "db.replica"
+  ],
+  "trigger": {
+   "id": "m077-t",
+   "from": "lev",
+   "subject": {
+    "en": "All our reads hit one database",
+    "ru": "Все чтения бьют в одну базу"
+   },
+   "body": {
+    "en": "The backends scale fine now, but they all read from one MySQL primary and it's saturated. Most of our traffic is reads. Add a read replica and route read queries to it.",
+    "ru": "Бэкенды теперь масштабируются, но все читают из одного primary MySQL, и он насыщен. Большая часть трафика — чтение. Добавь read-реплику и направь чтения на неё."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "A read replica exists and follows the primary",
+     "ru": "Реплика существует и следует за primary"
+    },
+    "check": {
+     "all": [
+      {
+       "fact": "role.replica",
+       "gte": 1
+      },
+      {
+       "fact": "edgeRole.database>replica",
+       "truthy": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Backends can read from the replica",
+     "ru": "Бэкенды могут читать из реплики"
+    },
+    "check": {
+     "fact": "edgeRole.backend>replica",
+     "truthy": true
+    }
+   },
+   {
+    "id": "o3",
+    "text": {
+     "en": "Reads are routed to replicas",
+     "ru": "Чтения направлены в реплики"
+    },
+    "check": {
+     "fact": "app.readRouting",
+     "ne": "primary"
+    }
+   },
+   {
+    "id": "o4",
+    "text": {
+     "en": "Primary load drops",
+     "ru": "Нагрузка primary падает"
+    },
+    "check": {
+     "fact": "m.dbUtil",
+     "lt": 0.75
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.readRouting",
+     "ne": "primary"
+    },
+    "text": {
+     "en": "Reads scale on replicas; the primary handles writes.",
+     "ru": "Чтения масштабируются на репликах; primary держит записи."
+    },
+    "effects": [
+     {
+      "users": 300
+     },
+     {
+      "cash": -15
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A read replica follows the primary's changes and serves read queries. Since most traffic reads, replicas scale reads horizontally — at the cost of a little replication lag.",
+    "ru": "Read-реплика повторяет изменения primary и обслуживает чтения. Поскольку большая часть трафика — чтение, реплики масштабируют его горизонтально — ценой небольшой задержки репликации."
+   },
+   "whyNow": {
+    "en": "Stateless backends solved compute; now the shared database is the ceiling.",
+    "ru": "Бэкенды без состояния решили вычисления; теперь потолок — общая база."
+   },
+   "limits": {
+    "en": "Replicas lag slightly, so a user may not see their own just-made write.",
+    "ru": "Реплики немного отстают, поэтому пользователь может не увидеть свою только что сделанную запись."
+   },
+   "article": "db.replica"
+  },
+  "next": "m078",
+  "unlocks": {
+   "components": [
+    "replica"
+   ],
+   "settings": [
+    "readRouting"
+   ]
+  },
+  "setup": [
+   {
+    "set": "traffic.baseRps",
+    "value": 1600
+   },
+   {
+    "set": "traffic.users",
+    "value": 900000
+   },
+   {
+    "set": "tables[name=orders].rows",
+    "value": 500000
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "The primary database CPU is pinned by reads.",
+     "ru": "CPU primary-базы упёрт чтениями."
+    },
+    "app": "monitoring"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-dbcpu",
+    "app": "monitoring",
+    "hint": {
+     "en": "See the primary saturated by read queries",
+     "ru": "Увидеть primary, насыщенный чтениями"
+    },
+    "text": {
+     "en": "Read-heavy traffic maxes out the single primary.",
+     "ru": "Трафик с преобладанием чтения упирает единственный primary."
+    },
+    "match": {
+     "kind": "metric",
+     "key": "cpu.database"
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m078",
+  "slug": "connection-pool",
+  "act": 10,
+  "order": 78,
+  "kind": "incident",
+  "title": {
+   "en": "Too many connections",
+   "ru": "Слишком много соединений"
+  },
+  "summary": {
+   "en": "Many backends × big pools exhaust the database's connection limit.",
+   "ru": "Много бэкендов × большие пулы исчерпывают лимит соединений базы."
+  },
+  "prerequisites": [
+   "m077"
+  ],
+  "learning": [
+   "db.pool"
+  ],
+  "trigger": {
+   "id": "m078-t",
+   "from": "lev",
+   "subject": {
+    "en": "'Too many connections' errors",
+    "ru": "Ошибки «Too many connections»"
+   },
+   "body": {
+    "en": "We're seeing 'Too many connections' from MySQL at peak. Each backend keeps a pool of connections, and with several backends we blow past max_connections. Right-size the pools (or add a pooler), don't just crank the DB limit.",
+    "ru": "Видим «Too many connections» от MySQL в пик. Каждый бэкенд держит пул соединений, и с несколькими бэкендами мы пробиваем max_connections. Подберите размер пулов (или добавьте пулер), а не просто задирайте лимит БД."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "No connection-limit errors",
+     "ru": "Нет ошибок лимита соединений"
+    },
+    "check": {
+     "fact": "m.errorRate",
+     "lt": 0.03
+    },
+    "sim": true
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "Connections stay under the limit",
+     "ru": "Соединения ниже лимита"
+    },
+    "check": {
+     "fact": "ep.catalog.err.DB_TOO_MANY_CONNECTIONS",
+     "lt": 0.01
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "pool",
+    "kind": "good",
+    "when": {
+     "fact": "node.mysql.pooler",
+     "truthy": true
+    },
+    "text": {
+     "en": "A pooler multiplexes many app connections over few DB connections.",
+     "ru": "Пулер мультиплексирует много соединений приложения в несколько соединений с БД."
+    },
+    "effects": [
+     {
+      "users": 150
+     }
+    ]
+   },
+   {
+    "id": "shrink",
+    "kind": "good",
+    "when": true,
+    "text": {
+     "en": "Right-sized pools keep total connections under the limit.",
+     "ru": "Правильные размеры пулов держат соединения ниже лимита."
+    },
+    "effects": [
+     {
+      "users": 150
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "Opening DB connections is costly, so each backend keeps a pool. With many backends, instances × pool_size can exceed the database's max_connections. A pooler multiplexes them.",
+    "ru": "Открытие соединений дорого, поэтому каждый бэкенд держит пул. С многими бэкендами instances × pool_size может превысить max_connections. Пулер их мультиплексирует."
+   },
+   "whyNow": {
+    "en": "Scaling out multiplied the pools; the database's connection limit became the bottleneck.",
+    "ru": "Масштабирование вширь умножило пулы; лимит соединений базы стал узким местом."
+   },
+   "limits": {
+    "en": "Just raising max_connections trades the error for RAM pressure on the DB.",
+    "ru": "Просто поднять max_connections — обменять ошибку на давление по памяти на БД."
+   },
+   "article": "db.pool"
+  },
+  "next": "m079",
+  "unlocks": {
+   "features": [
+    "pooling"
+   ]
+  },
+  "setup": [
+   {
+    "set": "nodes[id=mysql-1].config.maxConnections",
+    "value": 151
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 2000
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "MySQL rejects connections at peak.",
+     "ru": "MySQL отклоняет соединения в пик."
+    },
+    "app": "database"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-conn",
+    "app": "terminal",
+    "hint": {
+     "en": "Check DB connections vs max (mysql processlist)",
+     "ru": "Проверить соединения БД против лимита (mysql processlist)"
+    },
+    "text": {
+     "en": "Open connections exceed max_connections.",
+     "ru": "Открытых соединений больше, чем max_connections."
+    },
+    "match": {
+     "kind": "db",
+     "key": "connections-full"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Backends × pool size exceed max_connections",
+     "ru": "Бэкенды × размер пула превышают max_connections"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Either shrink pools, add a pooler, or (carefully) raise the limit.",
+     "ru": "Верно. Уменьшите пулы, добавьте пулер или (осторожно) поднимите лимит."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The database is too small",
+     "ru": "База слишком маленькая"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "It's not CPU; it's the connection count. Each connection costs RAM.",
+     "ru": "Дело не в CPU; дело в числе соединений. Каждое стоит памяти."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "pooler",
+    "app": "database",
+    "label": {
+     "en": "Enable a connection pooler on the database",
+     "ru": "Включить пулер соединений на базе"
+    },
+    "effects": [
+     {
+      "set": "nodes[id=mysql-1].config.pooler",
+      "value": true
+     }
+    ],
+    "once": true,
+    "when": {
+     "fact": "count.mysql",
+     "gte": 1
+    }
+   }
+  ],
+  "achievements": [
+   {
+    "id": "it-depends",
+    "when": {
+     "fact": "m.errorRate",
+     "lt": 0.02
+    }
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m079",
+  "slug": "race-condition",
+  "act": 10,
+  "order": 79,
+  "kind": "incident",
+  "title": {
+   "en": "The last item sold twice",
+   "ru": "Последний товар продан дважды"
+  },
+  "summary": {
+   "en": "Concurrent checkouts oversell limited stock. Make the update atomic.",
+   "ru": "Параллельные оформления перепродают остаток. Сделать обновление атомарным."
+  },
+  "prerequisites": [
+   "m078"
+  ],
+  "learning": [
+   "db.race"
+  ],
+  "trigger": {
+   "id": "m079-t",
+   "from": "sonya",
+   "subject": {
+    "en": "We oversold the sneaker drop",
+    "ru": "Мы перепродали дроп кроссовок"
+   },
+   "body": {
+    "en": "Limited sneaker drop: 100 pairs, we sold 118. Customers are furious and we're refunding. The stock check is read-then-write, and under a flood of simultaneous checkouts two requests both see 'in stock' and both sell.",
+    "ru": "Лимитированный дроп кроссовок: 100 пар, продали 118. Клиенты в ярости, мы возвращаем деньги. Проверка остатка — прочитать-потом-записать, и под шквалом одновременных оформлений два запроса оба видят «в наличии» и оба продают."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Inventory update is atomic or locked",
+     "ru": "Обновление остатка атомарно или с блокировкой"
+    },
+    "check": {
+     "any": [
+      {
+       "fact": "app.inventoryUpdate",
+       "eq": "atomic"
+      },
+      {
+       "fact": "app.inventoryUpdate",
+       "eq": "locking"
+      }
+     ]
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "No overselling",
+     "ru": "Нет перепродажи"
+    },
+    "check": {
+     "fact": "anomaly.oversold",
+     "lt": 1
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "atomic",
+    "kind": "good",
+    "when": {
+     "fact": "app.inventoryUpdate",
+     "eq": "atomic"
+    },
+    "text": {
+     "en": "An atomic UPDATE … WHERE stock>0 can't oversell.",
+     "ru": "Атомарный UPDATE … WHERE stock>0 не перепродаст."
+    },
+    "effects": [
+     {
+      "users": 200
+     },
+     {
+      "cash": 80
+     }
+    ]
+   },
+   {
+    "id": "lock",
+    "kind": "acceptable",
+    "when": {
+     "fact": "app.inventoryUpdate",
+     "eq": "locking"
+    },
+    "text": {
+     "en": "Row locks prevent overselling but serialize hot items.",
+     "ru": "Блокировки строк не дают перепродать, но сериализуют горячие товары."
+    },
+    "effects": [
+     {
+      "users": 150
+     }
+    ],
+    "debt": 3
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A race condition: two requests read stock=1, both decide it's available, both write. An atomic UPDATE … WHERE stock>0 does the check and write in one indivisible step.",
+    "ru": "Состояние гонки: два запроса читают stock=1, оба решают, что есть, оба пишут. Атомарный UPDATE … WHERE stock>0 делает проверку и запись одним неделимым шагом."
+   },
+   "whyNow": {
+    "en": "At scale, concurrency is constant; code that assumes it runs alone oversells.",
+    "ru": "На масштабе параллельность постоянна; код, думающий, что он один, перепродаёт."
+   },
+   "limits": {
+    "en": "Locking also works but serializes access to hot rows, hurting throughput.",
+    "ru": "Блокировки тоже работают, но сериализуют доступ к горячим строкам, снижая пропускную способность."
+   },
+   "article": "db.race"
+  },
+  "next": "m080",
+  "unlocks": {
+   "settings": [
+    "inventoryUpdate"
+   ]
+  },
+  "setup": [
+   {
+    "flag": "limitedDrop",
+    "value": 0.15
+   },
+   {
+    "merge": "app",
+    "value": {
+     "inventoryUpdate": "read-then-write"
+    }
+   },
+   {
+    "set": "traffic.baseRps",
+    "value": 2200
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Stock goes negative during high-demand drops.",
+     "ru": "Остаток уходит в минус на горячих дропах."
+    },
+    "app": "logs"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-over",
+    "app": "logs",
+    "hint": {
+     "en": "Find the oversold / negative-stock lines",
+     "ru": "Найти строки о перепродаже / отрицательном остатке"
+    },
+    "text": {
+     "en": "Two concurrent checkouts both decremented the last unit.",
+     "ru": "Два параллельных оформления оба списали последнюю единицу."
+    },
+    "match": {
+     "kind": "log",
+     "key": "ANOMALY_OVERSOLD"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Read-then-write races under concurrency",
+     "ru": "Прочитать-потом-записать гонятся при параллельности"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Make the decrement atomic or lock the row.",
+     "ru": "Верно. Сделайте уменьшение атомарным или заблокируйте строку."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The stock number was wrong to begin with",
+     "ru": "Остаток был неверен изначально"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "Stock was right; two requests just both read it before either wrote.",
+     "ru": "Остаток был верен; просто два запроса прочитали его до записи."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "atomic",
+    "app": "database",
+    "label": {
+     "en": "Use an atomic conditional UPDATE",
+     "ru": "Использовать атомарный условный UPDATE"
+    },
+    "effects": [
+     {
+      "set": "app.inventoryUpdate",
+      "value": "atomic"
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ },
+ {
+  "id": "m080",
+  "slug": "deadlock",
+  "act": 10,
+  "order": 80,
+  "kind": "incident",
+  "title": {
+   "en": "Deadlocks under load",
+   "ru": "Дедлоки под нагрузкой"
+  },
+  "summary": {
+   "en": "Checkout and refund grab locks in opposite orders and deadlock.",
+   "ru": "Оформление и возврат берут блокировки в обратном порядке и дедлочатся."
+  },
+  "prerequisites": [
+   "m079"
+  ],
+  "learning": [
+   "db.deadlock"
+  ],
+  "trigger": {
+   "id": "m080-t",
+   "from": "lev",
+   "subject": {
+    "en": "'Deadlock found' in the logs",
+    "ru": "В логах «Deadlock found»"
+   },
+   "body": {
+    "en": "During busy drops we get 'Deadlock found; try restarting transaction'. Checkout locks products then orders; refund locks orders then products. When they overlap, each waits for the other. Fix the lock order and retry on deadlock.",
+    "ru": "В горячие дропы ловим «Deadlock found; try restarting transaction». Оформление блокирует products, потом orders; возврат — orders, потом products. Когда пересекаются, каждый ждёт другого. Исправьте порядок блокировок и повторяйте при дедлоке."
+   }
+  },
+  "objectives": [
+   {
+    "id": "o1",
+    "text": {
+     "en": "Consistent lock ordering",
+     "ru": "Единый порядок блокировок"
+    },
+    "check": {
+     "fact": "app.lockOrdering",
+     "eq": "consistent"
+    }
+   },
+   {
+    "id": "o2",
+    "text": {
+     "en": "No deadlock errors reach users",
+     "ru": "Ошибки дедлока не доходят до пользователей"
+    },
+    "check": {
+     "fact": "anomaly.deadlocks",
+     "lt": 1
+    },
+    "sim": true
+   }
+  ],
+  "solutions": [
+   {
+    "id": "good",
+    "kind": "good",
+    "when": {
+     "fact": "app.lockOrdering",
+     "eq": "consistent"
+    },
+    "text": {
+     "en": "A consistent lock order makes the cycle impossible.",
+     "ru": "Единый порядок блокировок делает цикл невозможным."
+    },
+    "effects": [
+     {
+      "users": 150
+     }
+    ]
+   }
+  ],
+  "explanation": {
+   "what": {
+    "en": "A deadlock is a lock cycle: A holds row 1 wants row 2, B holds row 2 wants row 1. The DB kills one so the other survives. Consistent lock ordering prevents the cycle; retry handles the rest.",
+    "ru": "Дедлок — цикл блокировок: A держит строку 1 хочет 2, B держит 2 хочет 1. БД убивает одну, чтобы выжила другая. Единый порядок блокировок предотвращает цикл; повтор делает остальное."
+   },
+   "whyNow": {
+    "en": "Row locking fixed overselling but introduced lock-order bugs across features.",
+    "ru": "Блокировки строк починили перепродажу, но внесли баги порядка блокировок между фичами."
+   },
+   "limits": {
+    "en": "You can't always avoid deadlocks, but ordering makes them rare and retry makes them invisible.",
+    "ru": "Избежать дедлоков всегда нельзя, но порядок делает их редкими, а повтор — невидимыми."
+   },
+   "article": "db.deadlock"
+  },
+  "next": "m081",
+  "unlocks": {
+   "settings": [
+    "lockOrdering",
+    "deadlockRetry"
+   ]
+  },
+  "setup": [
+   {
+    "merge": "app",
+    "value": {
+     "inventoryUpdate": "locking",
+     "lockOrdering": "inconsistent",
+     "deadlockRetry": false
+    }
+   },
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "refund",
+     "method": "POST",
+     "path": "/admin/refund/:id",
+     "target": "backend",
+     "weight": 1,
+     "cpuMs": 12,
+     "responseKb": 1,
+     "auth": "admin",
+     "product": {
+      "en": "Support refunds an order",
+      "ru": "Поддержка возвращает деньги за заказ"
+     },
+     "queries": [
+      {
+       "id": "ref_ord",
+       "table": "orders",
+       "op": "update",
+       "where": [
+        "id"
+       ],
+       "match": "one",
+       "lockRows": true
+      },
+      {
+       "id": "ref_prod",
+       "table": "products",
+       "op": "update",
+       "where": [
+        "id"
+       ],
+       "match": "one",
+       "lockRows": true
+      }
+     ],
+     "handler": "Admin\\RefundController@store",
+     "writes": true
+    }
+   }
+  ],
+  "symptoms": [
+   {
+    "text": {
+     "en": "Transactions abort with deadlock errors at peak.",
+     "ru": "Транзакции падают с ошибками дедлока в пик."
+    },
+    "app": "logs"
+   }
+  ],
+  "evidence": [
+   {
+    "id": "e-dead",
+    "app": "logs",
+    "hint": {
+     "en": "Find the deadlock errors",
+     "ru": "Найти ошибки дедлока"
+    },
+    "text": {
+     "en": "Two transactions lock the same rows in opposite order.",
+     "ru": "Две транзакции блокируют одни строки в обратном порядке."
+    },
+    "match": {
+     "kind": "log",
+     "key": "DB_DEADLOCK"
+    }
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "h1",
+    "text": {
+     "en": "Inconsistent lock ordering causes a cycle",
+     "ru": "Непоследовательный порядок блокировок создаёт цикл"
+    },
+    "correct": true,
+    "feedback": {
+     "en": "Right. Take locks in the same order everywhere, and retry the victim.",
+     "ru": "Верно. Берите блокировки везде в одном порядке и повторяйте проигравшую."
+    }
+   },
+   {
+    "id": "h2",
+    "text": {
+     "en": "The database is corrupt",
+     "ru": "База повреждена"
+    },
+    "correct": false,
+    "feedback": {
+     "en": "The DB is fine; it's detecting and breaking a lock cycle.",
+     "ru": "База в порядке; она обнаруживает и разрывает цикл блокировок."
+    }
+   }
+  ],
+  "ops": [
+   {
+    "id": "order",
+    "app": "database",
+    "label": {
+     "en": "Make all transactions lock in one consistent order",
+     "ru": "Чтобы все транзакции блокировали в едином порядке"
+    },
+    "effects": [
+     {
+      "set": "app.lockOrdering",
+      "value": "consistent"
+     }
+    ],
+    "once": true,
+    "code": true
+   },
+   {
+    "id": "retry",
+    "app": "database",
+    "label": {
+     "en": "Retry transactions on deadlock",
+     "ru": "Повторять транзакции при дедлоке"
+    },
+    "effects": [
+     {
+      "set": "app.deadlockRetry",
+      "value": true
+     }
+    ],
+    "once": true,
+    "code": true
+   }
+  ],
+  "checkpoint": true
+ }
+]
