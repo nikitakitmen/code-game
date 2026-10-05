@@ -5,7 +5,9 @@
   "description": "PROD \u2014 Build it. Break it. Scale it. A browser engineering simulator.",
   "workspaces": [
     "packages/engine",
-    "packages/content"
+    "packages/content",
+    "apps/web",
+    "e2e"
   ],
   "scripts": {
     "dev": "npm run dev -w @prod/web",

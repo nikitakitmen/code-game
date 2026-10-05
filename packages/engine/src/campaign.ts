@@ -40,13 +40,14 @@ const fail = (state: GameState, key: string, params?: Record<string, string | nu
 
 export function newGame(content: ContentBundle, seed: number): GameState {
   const init = deepClone(content.initial);
+  const first = [...content.missionIndex].sort((a, b) => a.order - b.order)[0]?.id ?? null;
   const state: GameState = {
     schemaVersion: SAVE_SCHEMA_VERSION,
     seed: seed >>> 0,
     clock: 9 * 60, // Monday 09:00
     seq: 0,
     company: { name: '', domain: null },
-    campaign: { currentMissionId: null, completed: {}, completedOrder: [], active: null, finished: false, livingDay: 0 },
+    campaign: { currentMissionId: first, completed: {}, completedOrder: [], active: null, finished: false, livingDay: 0 },
     world: init.world,
     debt: 0,
     budget: { cash: init.cash, ledger: [{ at: 0, amount: init.cash, key: 'seed' }] },

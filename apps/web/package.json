@@ -1,0 +1,33 @@
+{
+  "name": "@prod/web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prod/content": "1.0.0",
+    "@prod/engine": "1.0.0",
+    "immer": "^11.1.0",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "jsdom": "^25.0.0",
+    "playwright": "^1.63.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}
