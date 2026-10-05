@@ -63,7 +63,8 @@ and [`docs/CONTENT.md`](docs/CONTENT.md).
 ```bash
 cp .env.example .env            # set DB passwords
 docker compose build
-docker compose run --rm api php artisan key:generate --force
+docker compose run --rm --no-deps --entrypoint php api artisan key:generate --show
+# paste the printed base64:… value into APP_KEY= in .env
 docker compose up
 # open http://localhost
 ```

@@ -28,7 +28,8 @@ cd code-game
 cp .env.example .env
 # set DB_PASSWORD / DB_ROOT_PASSWORD to something non-default
 docker compose build
-docker compose run --rm api php artisan key:generate --force
+docker compose run --rm --no-deps --entrypoint php api artisan key:generate --show
+# paste the printed base64:… value into APP_KEY= in .env
 docker compose up
 ```
 

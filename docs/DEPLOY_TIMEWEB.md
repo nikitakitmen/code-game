@@ -28,7 +28,7 @@ docker compose version
 ## 3. Get the code and configure
 
 ```bash
-git clone https://github.com/nikitakitmen/code-game.git /opt/prod
+git clone -b claude/laughing-pascal-6es6fp https://github.com/nikitakitmen/code-game.git /opt/prod
 cd /opt/prod
 cp .env.example .env
 ```
@@ -62,7 +62,8 @@ Caddy will obtain and renew a Let's Encrypt certificate on its own (ports 80 and
 
 ```bash
 docker compose build
-docker compose run --rm api php artisan key:generate --force   # writes APP_KEY to .env
+docker compose run --rm --no-deps --entrypoint php api artisan key:generate --show
+# paste the printed base64:… value into APP_KEY= in .env
 docker compose up -d
 ```
 
