@@ -1,0 +1,30 @@
+# One front door for PROD. /api/* → Laravel (php-fpm), everything else → Next.js.
+{
+	admin off
+	# For a real domain, replace :80 below with your-domain.tld and Caddy gets HTTPS automatically.
+}
+
+:80 {
+	encode gzip zstd
+
+	# Laravel API (FastCGI to the php-fpm container; document root is the mounted public dir)
+	handle /api/* {
+		root * /srv/api/public
+		php_fastcgi api:9000
+	}
+	handle /up {
+		root * /srv/api/public
+		php_fastcgi api:9000
+	}
+
+	# Next.js PROD OS
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}

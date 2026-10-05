@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
+  outputFileTracingRoot: new URL('../../', import.meta.url).pathname,
   transpilePackages: ['@prod/engine', '@prod/content'],
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: false },

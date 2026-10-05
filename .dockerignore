@@ -1,0 +1,13 @@
+**/node_modules
+**/.next
+**/vendor
+**/dist
+**/coverage
+apps/api/storage/*.key
+apps/api/database/database.sqlite
+**/.env
+!**/.env.example
+.git
+e2e/test-results
+e2e/playwright-report
+docs/screenshot.png

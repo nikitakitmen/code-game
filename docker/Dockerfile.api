@@ -1,0 +1,26 @@
+# Laravel API (php-fpm). Caddy terminates HTTP and talks FastCGI to this.
+FROM php:8.3-fpm-alpine
+
+RUN apk add --no-cache git unzip icu-dev oniguruma-dev libzip-dev $PHPIZE_DEPS \
+  && docker-php-ext-install -j$(nproc) pdo_mysql mysqli intl zip opcache pcntl bcmath \
+  && apk del $PHPIZE_DEPS
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# install PHP deps first (better layer caching)
+COPY apps/api/composer.json apps/api/composer.lock ./
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --no-interaction --no-scripts --prefer-dist --no-autoloader
+
+COPY apps/api/ ./
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer dump-autoload --optimize \
+  && mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
+  && chown -R www-data:www-data storage bootstrap/cache
+
+COPY docker/api-entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 9000
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php-fpm"]
