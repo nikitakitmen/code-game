@@ -11,11 +11,11 @@
   "world": {
     "nodes": [
       {
-        "id": "users", "type": "client", "name": "Users", "region": "eu", "pos": { "x": 1, "y": 4 }, "size": "s",
+        "id": "users", "type": "client", "name": "Users", "region": "eu", "pos": { "x": 20, "y": 60 }, "size": "s",
         "config": {}, "ip": "client", "ports": [], "publicPorts": [], "locked": true, "createdAt": 0
       },
       {
-        "id": "web1", "type": "nginx", "name": "VPS (Nginx)", "region": "eu", "pos": { "x": 5, "y": 4 }, "size": "s",
+        "id": "web1", "type": "nginx", "name": "VPS (Nginx)", "region": "eu", "pos": { "x": 140, "y": 60 }, "size": "s",
         "config": { "listenPort": 80, "gzip": false, "http2": false, "cacheHeaders": false, "rateLimit": 0, "tz": 0 },
         "ip": "203.0.113.10", "ports": [80, 22], "publicPorts": [80, 22], "createdAt": 0
       }

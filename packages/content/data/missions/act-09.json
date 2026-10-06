@@ -135,7 +135,8 @@
     "bruteforce"
    ],
    "settings": [
-    "lockout"
+    "lockout",
+    "loginRateLimit"
    ]
   },
   "setup": [
@@ -259,7 +260,7 @@
     },
     "match": {
      "kind": "schema",
-     "key": "users.password"
+     "key": "users.password_hash"
     }
    }
   ],
@@ -1684,12 +1685,7 @@
      "en": "Close the public database port",
      "ru": "Закрыть публичный порт БД"
     },
-    "effects": [
-     {
-      "set": "flags.dbClosed",
-      "value": true
-     }
-    ],
+    "effects": [],
     "once": true,
     "when": {
      "fact": "vuln.exposedDatabase",

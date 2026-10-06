@@ -732,12 +732,7 @@
      "en": "Close the backend's public port",
      "ru": "Закрыть публичный порт бэкенда"
     },
-    "effects": [
-     {
-      "set": "flags.beClosed",
-      "value": true
-     }
-    ],
+    "effects": [],
     "once": true,
     "when": {
      "fact": "vuln.exposedBackend",

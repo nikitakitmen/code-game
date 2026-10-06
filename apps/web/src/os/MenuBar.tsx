@@ -34,7 +34,13 @@ export function MenuBar() {
   }, []);
 
   const saveLabel =
-    st.saveStatus === 'saving' ? t('menu.saving') : st.saveStatus === 'saved' ? t('menu.saved') : st.saveStatus === 'conflict' ? '⚠' : t('menu.offline');
+    st.saveStatus === 'saving' ? t('menu.saving')
+    : st.saveStatus === 'saved' ? t('menu.saved')
+    : st.saveStatus === 'conflict' ? `⚠ ${t('menu.conflict')}`
+    : st.saveStatus === 'unauthorized' ? `⚠ ${t('menu.unauthorized')}`
+    : st.saveStatus === 'error' ? `⚠ ${t('menu.syncError')}`
+    : st.saveStatus === 'idle' ? t('menu.pending')
+    : t('menu.offline');
 
   return (
     <div className="menubar" ref={ref}>
@@ -48,7 +54,7 @@ export function MenuBar() {
             <button onClick={() => { void st.save(); setMenu(null); }}>{t('menu.save')}</button>
             <div className="sep" />
             {st.authed ? (
-              <button onClick={() => { void useGame.getState(); setMenu(null); import('@/game/api').then((m) => m.api.logout().then(() => useGame.setState({ authed: false }))); }}>{t('menu.logout')}</button>
+              <button onClick={() => { void useGame.getState(); setMenu(null); import('@/game/api').then((m) => m.api.logout().then(() => useGame.getState().syncFromServer())); }}>{t('menu.logout')}</button>
             ) : (
               <button onClick={() => { st.openModal({ kind: 'auth' }); setMenu(null); }}>{t('menu.login')}</button>
             )}

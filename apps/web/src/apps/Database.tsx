@@ -2,7 +2,9 @@
 import { useState } from 'react';
 import { useGame } from '@/game/store';
 import { Btn, Empty, Panel, useT, num, ms } from '@/ui/kit';
-import { explainQuery, tableIndexes, querySql, type TableDef } from '@prod/engine';
+import { explainQuery, tableIndexes, hasDatabase, pin, type TableDef } from '@prod/engine';
+import { PinBtn } from '@/ui/Pin';
+import { SettingsPanel } from '@/ui/Settings';
 
 export function DatabaseApp() {
   const st = useGame();
@@ -10,10 +12,9 @@ export function DatabaseApp() {
   const tables = st.state.world.tables;
   const [sel, setSel] = useState<string | null>(tables[0]?.name ?? null);
   const current = tables.find((tb) => tb.name === sel);
-  const hasDb = st.state.world.nodes.some((n) => n.type === 'mysql');
-  const active = st.state.campaign.active;
+  const hasDb = hasDatabase(st.state, st.content);
 
-  if (!hasDb) return <Empty>No database yet. Add MySQL in Architecture.</Empty>;
+  if (!hasDb) return <div className="col"><Empty>No database yet. Add MySQL in Architecture.</Empty><SettingsPanel app="database" /></div>;
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
@@ -27,6 +28,7 @@ export function DatabaseApp() {
         ))}
       </div>
       <div style={{ flex: 1, overflow: 'auto', padding: 8 }}>
+        <SettingsPanel app="database" />
         {current ? <TableView table={current} /> : <Empty>—</Empty>}
       </div>
     </div>
@@ -53,7 +55,7 @@ function TableView({ table }: { table: TableDef }) {
       <div className="spread"><h3 style={{ margin: 0 }}>{table.name}</h3><span className="tag">{num(table.rows)} {t('db.rows')}</span></div>
       <Panel title="columns">
         <table>
-          <thead><tr><th></th><th>column</th><th>type</th><th>key</th></tr></thead>
+          <thead><tr><th></th><th>column</th><th>type</th><th>key</th><th></th></tr></thead>
           <tbody>
             {table.columns.map((c) => (
               <tr key={c.name}>
@@ -61,6 +63,7 @@ function TableView({ table }: { table: TableDef }) {
                 <td className="mono">{c.name}</td>
                 <td className="tiny">{c.type}</td>
                 <td className="tiny">{c.pk ? 'PK' : c.unique ? 'UNIQUE' : c.fk ? `FK→${c.fk}` : ''}</td>
+                <td><PinBtn token={pin.column('database', table.name, c.name)} /></td>
               </tr>
             ))}
           </tbody>
@@ -82,9 +85,8 @@ function TableView({ table }: { table: TableDef }) {
           {queries.map(({ ep, q }) => {
             const ex = explainQuery(q, st.state.world.tables);
             return (
-              <div key={ep + q.id} className="panel inset tiny" style={{ cursor: st.state.campaign.active ? 'pointer' : 'default' }}
-                onClick={() => st.state.campaign.active && st.dispatch({ type: 'mission.pin', token: { app: 'database', kind: 'explain', key: `${ex.table}:${ex.type}` } })}>
-                <div className="mono" style={{ whiteSpace: 'pre-wrap' }}>{ex.sql}</div>
+              <div key={ep + q.id} className="panel inset tiny">
+                <div className="spread"><span className="mono" style={{ whiteSpace: 'pre-wrap' }}>{ex.sql}</span><PinBtn token={pin.explain(ex.table, ex.type)} /></div>
                 <div className="spread">
                   <span className={`tag ${ex.type === 'ALL' ? 'error' : ex.type === 'ref' || ex.type === 'range' ? 'warn' : 'ok'}`}>type={ex.type}</span>
                   <span className="mono">{t('db.rowsScanned')}: {num(ex.rows)}</span>

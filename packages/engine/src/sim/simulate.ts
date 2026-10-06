@@ -96,6 +96,8 @@ type Ctx = {
   byId: Map<string, ArchNode>;
   scale: number;
   events: SimEvent[];
+  /** memo: entry node health per endpoint and offline set */
+  entryHealth: Map<string, boolean>;
 };
 
 const roleOfNode = (ctx: Ctx, n: ArchNode | undefined): NodeRole | undefined => (n ? ctx.defs.get(n.type)?.role : undefined);
@@ -231,7 +233,7 @@ export function simulateCore(state: GameState, content: ContentBundle, opts: Sim
   const seed = simSeed(state, opts);
   const defs = new Map(content.components.map((c) => [c.type, c] as const));
   const byId = new Map(w.nodes.map((n) => [n.id, n] as const));
-  const ctx: Ctx = { state, content, w, defs, byId, scale, events: [] };
+  const ctx: Ctx = { state, content, w, defs, byId, scale, events: [], entryHealth: new Map() };
 
   const endpoints = w.endpoints.filter((e) => !e.disabled && flagShare(w, e.flag) > 0);
   const totalWeight = sum(endpoints.map((e) => e.weight * flagShare(w, e.flag))) || 1;
@@ -390,9 +392,11 @@ export function simulateCore(state: GameState, content: ContentBundle, opts: Sim
       const termRps = r;
       cpuDemand.set(term, (cpuDemand.get(term) ?? 0) + termRps * info.cpuMs);
       for (const q of info.dbCalls) {
-        dbDemand.set(q.db, (dbDemand.get(q.db) ?? 0) + termRps * q.rate * q.costMs);
-        load.set(q.db, (load.get(q.db) ?? 0) + termRps * q.rate);
-        bumpEdge(edgeLoad, term, q.db, termRps * q.rate);
+        // cache hits answer reads without touching the database
+        const qRps = termRps * q.rate * dbShare(info, q);
+        dbDemand.set(q.db, (dbDemand.get(q.db) ?? 0) + qRps * q.costMs);
+        load.set(q.db, (load.get(q.db) ?? 0) + qRps);
+        bumpEdge(edgeLoad, term, q.db, qRps);
       }
       if (info.cache) {
         cacheOps.set(info.cache, (cacheOps.get(info.cache) ?? 0) + termRps * info.cacheOpsPerReq);
@@ -589,7 +593,7 @@ export function simulateCore(state: GameState, content: ContentBundle, opts: Sim
     const poolNeed = new Map<string, number>();
     for (const [f, info] of flowInfo) {
       if (!info.terminal) continue;
-      const dbMs = sum(info.dbCalls.map((q) => q.rate * q.costMs * queueFactor(Math.min(0.97, util.get(q.db) ?? 0)) + q.rate * q.netMs));
+      const dbMs = sum(info.dbCalls.map((q) => q.rate * dbShare(info, q) * (q.costMs * queueFactor(Math.min(0.97, util.get(q.db) ?? 0)) + q.netMs)));
       poolNeed.set(info.terminal, (poolNeed.get(info.terminal) ?? 0) + (f.rps * dbMs) / 1000);
     }
 
@@ -1062,6 +1066,11 @@ interface FlowInfo {
   anomaliesPerHour: { id: string; perHour: number }[];
 }
 
+/** Share of a query's executions that reach the database: reads skip it on a cache hit. */
+function dbShare(info: FlowInfo, q: FlowInfo['dbCalls'][number]): number {
+  return q.read ? 1 - info.hitRate : 1;
+}
+
 function totalRpsOf(flows: Flow[], epId: string): number {
   return sum(flows.filter((f) => f.ep.id === epId).map((f) => f.rps));
 }
@@ -1125,23 +1134,26 @@ function resolveEntry(
 
   // GeoDNS / failover choose an entry per user region
   if (w.dns.geoRouting || w.dns.failover) {
-    const alive = entries.filter((n) => !offline.has(n.id));
-    let candidates = w.dns.geoRouting ? alive.filter((n) => n.region === region) : alive.filter((n) => n.ip === apex.value);
-    const primaryDown = entries.filter((n) => n.ip === apex.value).every((n) => offline.has(n.id));
-    if (!candidates.length || primaryDown) {
-      if (w.dns.failover) {
-        // health checks need ~2 ticks to notice; resolvers keep the old answer for the TTL
-        const downSince = Math.min(...[...regionDownSince.values(), t]);
-        const detect = 2 + Math.ceil((apex.ttl / 60) / ctx.scale);
-        if (t - downSince < detect) {
-          parts.push({ share: okShare, filter: null, error: 'REGION_DOWN' });
-          return parts;
-        }
-        candidates = alive.filter((n) => n.region === ctx.w.primaryRegion).length ? alive.filter((n) => n.region === ctx.w.primaryRegion) : alive;
-      } else if (!candidates.length) {
-        candidates = entries.filter((n) => n.ip === apex.value);
+    // an entry is healthy when it is up and still has a live route to a server (a CDN whose
+    // origin is down is not)
+    const healthy = entries.filter((n) => !offline.has(n.id) && entryServes(ctx, ep, n, offline, region));
+    const apexEntries = entries.filter((n) => n.ip === apex.value);
+    // GeoDNS answers with an entry in the user's region; elsewhere (or without GeoDNS) the A record
+    let candidates = w.dns.geoRouting ? healthy.filter((n) => n.region === region) : [];
+    if (!candidates.length) candidates = healthy.filter((n) => apexEntries.includes(n));
+    if (!candidates.length && w.dns.failover) {
+      // health checks need ~2 ticks to notice an outage; resolvers keep the old answer for the TTL
+      const outages = [...regionDownSince.values()].filter((s) => s <= t);
+      const downSince = outages.length ? Math.min(...outages) : -Infinity;
+      const detect = 2 + Math.ceil((apex.ttl / 60) / ctx.scale);
+      if (t - downSince < detect) {
+        parts.push({ share: okShare, filter: null, error: 'REGION_DOWN' });
+        return parts;
       }
+      const home = healthy.filter((n) => n.region === ctx.w.primaryRegion);
+      candidates = home.length ? home : healthy;
     }
+    if (!candidates.length && !w.dns.failover) candidates = apexEntries;
     if (!candidates.length) {
       parts.push({ share: okShare, filter: null, error: 'REGION_DOWN' });
       return parts;
@@ -1179,6 +1191,18 @@ function resolveEntry(
   }
   void ep;
   return parts;
+}
+
+/** Does traffic entering at this node still reach a server for the endpoint? (DNS health checks) */
+function entryServes(ctx: Ctx, ep: EndpointDef, entry: ArchNode, offline: Set<string>, region: RegionId): boolean {
+  const key = `${ep.id}|${entry.id}|${[...offline].sort().join(',')}`;
+  let ok = ctx.entryHealth.get(key);
+  if (ok === undefined) {
+    const route = routeEndpoint({ content: ctx.content, world: ctx.w, offline, entryFilter: new Set([entry.id]), userRegion: region }, ep);
+    ok = !route.error && route.paths.some((p) => !p.failed);
+    ctx.entryHealth.set(key, ok);
+  }
+  return ok;
 }
 
 /** Ports, firewall, TLS, mixed content and CORS at the entry node. */
@@ -1406,21 +1430,21 @@ function analyseFlow(ctx: Ctx, f: Flow, t: number, active: WorldIncident[], expl
         const q = ep.queries[i];
         const ex = explain[i];
         const isRead = q.op === 'select' && !q.lockRows && !ep.writes;
-        let target = primary;
-        if (isRead && routing !== 'primary' && replicas.length) {
-          target = replicas[Math.floor((t + i) % replicas.length)];
-          info.readsFromReplica = true;
-        }
-        if (!target) {
+        // reads routed to replicas are spread across all of them; everything else goes to the primary
+        const targets = isRead && routing !== 'primary' && replicas.length ? replicas : primary ? [primary] : [];
+        if (targets === replicas) info.readsFromReplica = true;
+        if (!targets.length) {
           info.extraErrors.push({ code: 'DB_DOWN', p: 1 });
           continue;
         }
-        const netMs = dcRtt(termNode.region, target.region);
-        const rate = q.perRequest ?? 1;
+        const rate = (q.perRequest ?? 1) / targets.length;
         const cost = ex?.costMs ?? 0.5;
-        info.dbCalls.push({ db: target.id, rate, costMs: cost, netMs, read: isRead });
-        totalMs += rate * (cost + netMs);
-        if (isRead) readMs += rate * (cost + netMs);
+        for (const target of targets) {
+          const netMs = dcRtt(termNode.region, target.region);
+          info.dbCalls.push({ db: target.id, rate, costMs: cost, netMs, read: isRead });
+          totalMs += rate * (cost + netMs);
+          if (isRead) readMs += rate * (cost + netMs);
+        }
       }
       info.readShareOfDb = totalMs > 0 ? readMs / totalMs : 0;
     }

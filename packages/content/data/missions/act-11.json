@@ -677,12 +677,7 @@
      "en": "Give payments its own database",
      "ru": "Дать платежам свою базу"
     },
-    "effects": [
-     {
-      "set": "flags.paymentsOwnsData",
-      "value": true
-     }
-    ],
+    "effects": [],
     "once": true
    }
   ],

@@ -31,6 +31,18 @@ interface WM {
   setArg(id: string, arg: unknown): void;
 }
 
+type AppOpenedListener = (id: string) => void;
+const openListeners = new Set<AppOpenedListener>();
+
+/**
+ * Subscribe to app launches. Fires when a window is created (closed → open) — not when an
+ * already open window is focused or restored from minimize. Returns an unsubscribe function.
+ */
+export function onAppOpened(fn: AppOpenedListener): () => void {
+  openListeners.add(fn);
+  return () => openListeners.delete(fn);
+}
+
 const DEFAULTS: Record<string, { w: number; h: number }> = {
   mail: { w: 560, h: 420 },
   project: { w: 520, h: 420 },
@@ -95,6 +107,7 @@ export const useWM = create<WM>((set, get) => ({
       focusedId: id,
       topZ: z,
     });
+    for (const fn of openListeners) fn(id);
   },
   close(id) {
     set({ windows: get().windows.filter((w) => w.id !== id), focusedId: get().focusedId === id ? null : get().focusedId });

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useGame } from '@/game/store';
 import { useWM } from './windows';
 import { Btn, useT, Dot, Meter, ms, pct, num, money } from '@/ui/kit';
-import type { MissionDef } from '@prod/engine';
+import { evaluate, type MissionDef } from '@prod/engine';
 
 export function MissionDock() {
   const st = useGame();
@@ -106,7 +106,7 @@ function ActiveMission({ mission }: { mission: MissionDef }) {
         <div className="panel inset" style={{ margin: 0 }}>
           <div className="tiny muted">{t('mission.symptoms')}</div>
           {mission.symptoms.map((s, i) => (
-            <div key={i} className="tiny">• {tr(s.text)} <a style={{ cursor: 'pointer' }} onClick={() => wm.open(s.app)}>[{t(`app.${s.app}`)}]</a></div>
+            <div key={i} className="tiny">• {tr(s.text)} <AppLink app={s.app} /></div>
           ))}
         </div>
       )}
@@ -119,7 +119,7 @@ function ActiveMission({ mission }: { mission: MissionDef }) {
             return (
               <div key={e.id} className="obj">
                 <span className={`box ${got ? 'done' : ''}`}>{got ? '✓' : ''}</span>
-                <span className="tiny">{got ? tr(e.text) : <>{tr(e.hint)} <a style={{ cursor: 'pointer' }} onClick={() => wm.open(e.app)}>[{t(`app.${e.app}`)}]</a></>}</span>
+                <span className="tiny">{got ? tr(e.text) : <>{tr(e.hint)} <AppLink app={e.app} /></>}</span>
               </div>
             );
           })}
@@ -176,15 +176,32 @@ function Hypotheses({ mission, disabled }: { mission: MissionDef; disabled: bool
   );
 }
 
+/** A link to the app where something happens; plain text while that app is still locked. */
+function AppLink({ app }: { app: string }) {
+  const st = useGame();
+  const wm = useWM();
+  const { t } = useT();
+  if (!st.state.unlocks.apps.includes(app)) return <span className="muted">[{t(`app.${app}`)}]</span>;
+  return <a style={{ cursor: 'pointer' }} onClick={() => wm.open(app)}>[{t(`app.${app}`)}]</a>;
+}
+
 function Ops({ mission }: { mission: MissionDef }) {
   const st = useGame();
+  const wm = useWM();
   const { tr, t } = useT();
   const active = st.state.campaign.active!;
-  const { evaluate } = require('@prod/engine') as typeof import('@prod/engine');
   return (
     <div className="col">
       {mission.ops!.map((o) => {
         if (o.when && !evaluate(o.when, st.facts as never)) return null;
+        // an op without effects only points at the app where the player does it
+        if (!o.effects.length) {
+          return (
+            <Btn key={o.id} sm disabled={!st.state.unlocks.apps.includes(o.app)} onClick={() => wm.open(o.app)} title={o.description ? tr(o.description) : undefined}>
+              {tr(o.label)} → {t(`app.${o.app}`)}
+            </Btn>
+          );
+        }
         const done = o.once !== false && active.ops.includes(o.id);
         return (
           <Btn key={o.id} sm danger={o.danger} disabled={done} onClick={() => st.op(o.id)} title={o.description ? tr(o.description) : undefined}>

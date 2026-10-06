@@ -232,10 +232,6 @@
   "next": "m043",
   "setup": [
    {
-    "push": "git.branches",
-    "value": {}
-   },
-   {
     "set": "git.branches",
     "value": {
      "main": "c0000001",
@@ -498,12 +494,7 @@
      "en": "Roll back to the previous release",
      "ru": "Откатить к предыдущему релизу"
     },
-    "effects": [
-     {
-      "set": "flags.doRollback",
-      "value": true
-     }
-    ],
+    "effects": [],
     "once": true
    },
    {

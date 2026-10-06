@@ -394,6 +394,9 @@
   "unlocks": {
    "settings": [
     "deleteMethod"
+   ],
+   "apps": [
+    "logs"
    ]
   },
   "setup": [

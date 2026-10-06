@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { useGame } from '@/game/store';
 import { Btn, Empty, useT } from '@/ui/kit';
-import { clockParts } from '@prod/engine';
+import { SettingsPanel } from '@/ui/Settings';
+import { clockParts, pin } from '@prod/engine';
 
 export function LogsApp() {
   const st = useGame();
@@ -29,14 +30,15 @@ export function LogsApp() {
           const cp = clockParts(localMin);
           const color = l.level === 'ERROR' || l.level === 'FATAL' ? '#ef6b63' : l.level === 'WARN' ? '#e0a53a' : '#9fb2c9';
           return (
-            <div key={l.id} className="mono" style={{ color, whiteSpace: 'pre-wrap', padding: '0 4px', cursor: active ? 'pointer' : 'default' }}
-              onClick={() => active && st.dispatch({ type: 'mission.pin', token: { app: 'logs', kind: 'log', key: l.code } })}
+            <div key={l.id} data-pin={active ? `logs:log:${l.code}` : undefined} className="mono" style={{ color, whiteSpace: 'pre-wrap', padding: '0 4px', cursor: active ? 'pointer' : 'default' }}
+              onClick={() => active && st.dispatch({ type: 'mission.pin', token: pin.log(l.code) })}
               title={active ? t('common.pin') : undefined}>
               <span style={{ color: '#5f6b80' }}>{cp.hhmm}{utc ? 'Z' : `+${l.tz}`}</span> {l.level.padEnd(5)} <span style={{ color: '#7f8aa0' }}>[{l.source}]</span> {l.requestId ? <span style={{ color: '#6f8fff' }}>{l.requestId.slice(0, 10)} </span> : ''}{l.message}
             </div>
           );
         })}
       </div>
+      <SettingsPanel app="logs" />
       <div className="tiny muted">{utc ? 'Logs shown in UTC.' : 'Logs shown in each server’s local time (see Incident Manager to normalise).'}</div>
     </div>
   );

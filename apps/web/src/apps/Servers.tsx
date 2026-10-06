@@ -1,6 +1,7 @@
 'use client';
 import { useGame } from '@/game/store';
 import { Btn, Dot, Meter, Panel, useT, pct, money } from '@/ui/kit';
+import { SettingsPanel } from '@/ui/Settings';
 import { maybeComponent } from '@prod/engine';
 
 export function ServersApp() {
@@ -10,6 +11,7 @@ export function ServersApp() {
   const hosts = w.nodes.filter((n) => maybeComponent(st.content, n.type)?.role !== 'client');
   return (
     <div className="col">
+      <SettingsPanel app="servers" />
       <div className="tiny muted">Processes, ports and the firewall. Open a public port by connecting the Users node to a server in Architecture, or toggle below.</div>
       {hosts.map((n) => {
         const ns = st.sim.nodes[n.id];

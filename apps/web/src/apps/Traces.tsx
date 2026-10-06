@@ -2,6 +2,8 @@
 import { useWM } from '@/os/windows';
 import { useGame } from '@/game/store';
 import { Empty, useT, ms } from '@/ui/kit';
+import { PinBtn } from '@/ui/Pin';
+import { pin } from '@prod/engine';
 
 /** Trace Viewer — reuses the Inspector's trace rendering but lists the slowest requests. */
 export function TracesApp() {
@@ -22,7 +24,7 @@ export function TracesApp() {
         const parts: [string, number, string][] = [['net', netMs, 'var(--muted)'], ['app', appMs, 'var(--accent)'], ['db', dbMs, 'var(--warn)']];
         return (
           <div key={x.id} className="panel inset" style={{ margin: 0, cursor: 'pointer' }} onClick={() => wm.open('inspector', { endpointId: x.endpointId })}>
-            <div className="spread tiny"><span className="mono">{x.method} {x.path}</span><span className="mono">{ms(x.totalMs)}</span></div>
+            <div className="spread tiny"><span className="mono">{x.method} {x.path}</span><span className="row"><span className="mono">{ms(x.totalMs)}</span><PinBtn token={pin.request('traces', x.endpointId)} /></span></div>
             <div style={{ display: 'flex', height: 8, border: '1px solid var(--line)' }}>
               {parts.map(([k, v, c]) => <div key={k} title={`${k} ${ms(v)}`} style={{ width: `${(v / Math.max(1, x.totalMs)) * 100}%`, background: c }} />)}
             </div>

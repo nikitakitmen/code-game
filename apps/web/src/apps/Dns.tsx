@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useGame } from '@/game/store';
 import { Btn, Empty, Panel, useT, Why } from '@/ui/kit';
+import { PinBtn } from '@/ui/Pin';
+import { pin } from '@prod/engine';
 import type { DnsRecord } from '@prod/engine';
 
 export function DnsApp() {
@@ -39,7 +41,7 @@ export function DnsApp() {
                     <td>{r.type}</td>
                     <td className="mono">{r.value}</td>
                     <td className="mono">{r.ttl}s</td>
-                    <td><Btn sm danger onClick={() => st.dispatch({ type: 'dns.deleteRecord', id: r.id })}>✕</Btn></td>
+                    <td className="row"><PinBtn token={pin.dns(r.name, r.type)} /><Btn sm danger onClick={() => st.dispatch({ type: 'dns.deleteRecord', id: r.id })}>✕</Btn></td>
                   </tr>
                 ))}
               </tbody>

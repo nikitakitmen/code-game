@@ -438,7 +438,7 @@
     },
     "check": {
      "fact": "m.p95.us",
-     "lt": 400
+     "lt": 700
     },
     "sim": true
    }
@@ -751,7 +751,12 @@
     }
    }
   ],
-  "checkpoint": true
+  "checkpoint": true,
+  "unlocks": {
+   "features": [
+    "failover"
+   ]
+  }
  },
  {
   "id": "m095",
@@ -915,7 +920,12 @@
     }
    }
   ],
-  "checkpoint": true
+  "checkpoint": true,
+  "setup": [
+   {
+    "resolveIncident": "euout"
+   }
+  ]
  },
  {
   "id": "m096",

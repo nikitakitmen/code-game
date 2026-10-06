@@ -816,7 +816,7 @@
     },
     "match": {
      "kind": "schema",
-     "key": "users.password"
+     "key": "users.password_hash"
     }
    }
   ],
@@ -1228,7 +1228,38 @@
     }
    }
   ],
-  "checkpoint": true
+  "checkpoint": true,
+  "setup": [
+   {
+    "push": "endpoints",
+    "value": {
+     "id": "account",
+     "method": "GET",
+     "path": "/account",
+     "target": "backend",
+     "weight": 4,
+     "cpuMs": 8,
+     "responseKb": 3,
+     "auth": "user",
+     "product": {
+      "en": "A user views their account",
+      "ru": "Пользователь смотрит свой аккаунт"
+     },
+     "queries": [
+      {
+       "id": "acc_user",
+       "table": "users",
+       "op": "select",
+       "where": [
+        "id"
+       ],
+       "match": "one"
+      }
+     ],
+     "handler": "AccountController@show"
+    }
+   }
+  ]
  },
  {
   "id": "m014",
@@ -1325,6 +1356,9 @@
   "unlocks": {
    "settings": [
     "adminRoleCheck"
+   ],
+   "apps": [
+    "api"
    ]
   },
   "setup": [

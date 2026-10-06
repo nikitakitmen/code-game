@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useGame } from '@/game/store';
 import { Btn, Empty, Panel, useT } from '@/ui/kit';
-import { utcMinutes, clockParts, type IncidentRecord } from '@prod/engine';
+import { utcMinutes, clockParts, type IncidentRecord, type SloConfig } from '@prod/engine';
 
 export function IncidentsApp() {
   const st = useGame();
@@ -10,7 +10,7 @@ export function IncidentsApp() {
   const incidents = st.state.world.observability.incidents;
   const [sel, setSel] = useState<string | null>(incidents[incidents.length - 1]?.id ?? null);
   const current = incidents.find((i) => i.id === sel);
-  if (!incidents.length) return <Empty>No incidents declared.</Empty>;
+  if (!incidents.length) return <div className="col"><Empty>No incidents declared.</Empty><SloEditor /></div>;
   return (
     <div style={{ display: 'flex', height: '100%' }}>
       <div style={{ width: 160, borderRight: '2px solid var(--line)', overflow: 'auto', flex: 'none' }}>
@@ -21,7 +21,8 @@ export function IncidentsApp() {
         ))}
       </div>
       <div style={{ flex: 1, overflow: 'auto', padding: 8 }}>
-        {current ? <IncidentView incident={current} /> : <Empty>—</Empty>}
+        {current ? <IncidentView key={current.id} incident={current} /> : <Empty>—</Empty>}
+        <SloEditor />
       </div>
     </div>
   );
@@ -88,6 +89,41 @@ function Postmortem({ incidentId }: { incidentId: string }) {
           <Btn sm disabled={!cause || !action} onClick={() => { st.dispatch({ type: 'postmortem.answer', incidentId, key: 'rootCause', value: cause }); st.dispatch({ type: 'postmortem.answer', incidentId, key: 'action', value: action }); st.dispatch({ type: 'postmortem.submit', incidentId }); }}>Submit</Btn>
         </div>
       )}
+    </Panel>
+  );
+}
+
+/** Service level objective: the reliability target and the error budget it leaves. */
+function SloEditor() {
+  const st = useGame();
+  const { t } = useT();
+  const current = st.state.world.observability.slo;
+  const [draft, setDraft] = useState<SloConfig>(current ?? { availability: 0.99, latencyMs: 800, slaAvailability: 0.98, freezeOnBudgetExhausted: true });
+  const edit = (patch: Partial<SloConfig>) => setDraft({ ...draft, ...patch });
+  const used = st.sim.summary.errorBudgetUsed;
+  return (
+    <Panel title={t('slo.title')}>
+      <div className="col tiny">
+        <label className="row">
+          {t('slo.availability')}
+          <select aria-label={t('slo.availability')} value={String(draft.availability)} onChange={(e) => edit({ availability: Number(e.target.value) })}>
+            {[0.99, 0.995, 0.999, 0.9995, 0.9999].map((v) => <option key={v} value={String(v)}>{(v * 100).toFixed(2)}%</option>)}
+          </select>
+        </label>
+        <label className="row">{t('slo.latency')} <input aria-label={t('slo.latency')} type="number" min={50} style={{ width: 70 }} value={draft.latencyMs} onChange={(e) => edit({ latencyMs: Number(e.target.value) })} /></label>
+        <label className="row">
+          {t('slo.sla')}
+          <select aria-label={t('slo.sla')} value={String(draft.slaAvailability ?? '')} onChange={(e) => edit({ slaAvailability: e.target.value ? Number(e.target.value) : null })}>
+            <option value="">—</option>
+            {[0.98, 0.99, 0.995, 0.999].map((v) => <option key={v} value={String(v)}>{(v * 100).toFixed(1)}%</option>)}
+          </select>
+        </label>
+        <label className="row"><input type="checkbox" checked={draft.freezeOnBudgetExhausted} onChange={(e) => edit({ freezeOnBudgetExhausted: e.target.checked })} /> {t('slo.freeze')}</label>
+        <div className="row">
+          <Btn sm primary onClick={() => st.dispatch({ type: 'slo.set', slo: draft })}>{t('slo.save')}</Btn>
+          {current && used !== null && <span className={`tag ${used > 1 ? 'error' : 'ok'}`}>{t('slo.used')}: {Math.round(used * 100)}%</span>}
+        </div>
+      </div>
     </Panel>
   );
 }

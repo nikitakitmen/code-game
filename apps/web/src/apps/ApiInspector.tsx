@@ -2,12 +2,14 @@
 import { useState } from 'react';
 import { useGame } from '@/game/store';
 import { Btn, Empty, Panel, useT } from '@/ui/kit';
+import { SettingsPanel } from '@/ui/Settings';
 import { callApi, type ApiRequest, type HttpMethod } from '@prod/engine';
 
 export function ApiApp() {
   const st = useGame();
   const { t, tr } = useT();
-  const apiEps = st.state.world.endpoints.filter((e) => !e.disabled && e.api);
+  // every server endpoint can be called; JSON APIs first
+  const apiEps = st.state.world.endpoints.filter((e) => !e.disabled && e.target === 'backend').sort((a, b) => Number(!!b.api) - Number(!!a.api));
   const [method, setMethod] = useState<HttpMethod>('GET');
   const [path, setPath] = useState(apiEps[0]?.path ?? '/api/v1/products');
   const [auth, setAuth] = useState<ApiRequest['auth']>('none');
@@ -50,6 +52,7 @@ export function ApiApp() {
           {res.notes.map((n) => <div key={n} className="tag warn tiny" style={{ marginTop: 4 }}>{apiNote(n, tr)}</div>)}
         </Panel>
       )}
+      <SettingsPanel app="api" />
     </div>
   );
 }

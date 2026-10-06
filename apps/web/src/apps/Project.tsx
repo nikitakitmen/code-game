@@ -2,6 +2,7 @@
 import { useGame } from '@/game/store';
 import { useWM } from '@/os/windows';
 import { Btn, Panel, useT, num, money, pct } from '@/ui/kit';
+import { SettingsPanel } from '@/ui/Settings';
 
 export function ProjectApp() {
   const st = useGame();
@@ -42,6 +43,8 @@ export function ProjectApp() {
           })}
         </div>
       </Panel>
+
+      <SettingsPanel app="project" title={t('set.title.project')} />
 
       <div className="row">
         <Btn primary onClick={() => wm.open('mail')}>{t('app.mail')}</Btn>

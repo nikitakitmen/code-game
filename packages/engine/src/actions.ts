@@ -5,7 +5,7 @@
  */
 import { produce, type Draft } from 'immer';
 import { componentDef, maybeComponent } from './catalog';
-import { addMail, applyEffects, makeNode, type EngineEvent } from './effects';
+import { addMail, advanceTime, applyEffects, makeNode, type EngineEvent } from './effects';
 import { combineSeed, createRng } from './rng';
 import { canConnect } from './sim/graph';
 import type {
@@ -109,6 +109,13 @@ export interface ReduceResult {
 /** Actions that only touch presentation/meta state: they don't make the last simulation stale. */
 const NON_WORLD = new Set(['app.open', 'mail.read', 'node.move', 'node.rename', 'mission.pin', 'mission.unpin', 'incident.utc']);
 
+/** False for presentation/meta actions: they leave the simulated world (and the last simulation) unchanged. */
+export function isWorldAction(action: GameAction): boolean {
+  // moving a node to another region changes latency and failure domains
+  if (action.type === 'node.move' && action.region) return true;
+  return !NON_WORLD.has(action.type);
+}
+
 const reject = (state: GameState, key: string, params?: Record<string, string | number>): ReduceResult => ({
   state,
   events: [{ type: 'error', key, params }],
@@ -121,7 +128,7 @@ export function reduce(state: GameState, action: GameAction, content: ContentBun
   const events: EngineEvent[] = [];
   const next = produce(state, (d) => {
     apply(d, action, content, events);
-    if (!NON_WORLD.has(action.type)) {
+    if (isWorldAction(action)) {
       d.seq += 1;
       if (d.campaign.active) d.campaign.active.actions += 1;
       d.decisionLog.push({ seq: d.seq, at: d.clock, missionId: d.campaign.currentMissionId, action: action.type, summary: summarize(action) });
@@ -774,18 +781,6 @@ function apply(d: Draft<GameState>, a: GameAction, content: ContentBundle, event
   }
 }
 
-export function advanceTime(d: Draft<GameState>, minutes: number) {
-  d.clock += minutes;
-  const w = d.world;
-  // leaked memory accumulates again while time passes
-  if (minutes >= 720) {
-    for (const inc of w.incidents) if (inc.active && inc.kind === 'memoryLeak') inc.params = { ...(inc.params ?? {}), startPct: 92 };
-  }
-  if (w.tls.enabled && w.tls.autoRenew && w.tls.expiresAt !== null && w.tls.expiresAt - d.clock < 30 * 1440) {
-    w.tls.expiresAt = d.clock + 90 * 1440;
-  }
-}
-
 function shortHash(d: Draft<GameState>, salt: string): string {
   return createRng(combineSeed(d.seed, d.world.git.commits.length, salt)).hex(7);
 }
@@ -936,7 +931,7 @@ function rollback(d: Draft<GameState>, events: EngineEvent[]) {
       }
       // config of a canary was shared — restore the stable release config
       const stable = w.deploy.releases.filter((r) => r.version === w.deploy.version).pop();
-      if (stable) w.app = JSON.parse(JSON.stringify(stable.app));
+      if (stable) restoreReleaseApp(w, stable);
       for (const f of rel.fixes) {
         const bug = w.bugs.find((x) => x.id === f);
         if (bug) bug.fixed = false;
@@ -957,13 +952,22 @@ function rollback(d: Draft<GameState>, events: EngineEvent[]) {
       const bug = w.bugs.find((x) => x.id === f);
       if (bug) bug.fixed = false;
     }
-    w.app = JSON.parse(JSON.stringify(previous.app));
+    restoreReleaseApp(w, previous);
     previous.status = 'live';
     w.deploy.version = previous.version;
   }
   d.stats.rollbacks += 1;
   d.timeline.push({ at: d.clock, kind: 'deploy', key: 'timeline.rollback', params: { version: w.deploy.version } });
   events.push({ type: 'deploy', key: 'deploy.rolledBack', params: { version: w.deploy.version } });
+}
+
+/**
+ * Restore the app settings a release shipped with. A snapshot only covers the settings it
+ * recorded: releases created by deploy.run hold the full config, older/seeded releases may
+ * hold none — those must not wipe the live configuration.
+ */
+function restoreReleaseApp(w: Draft<GameState>['world'], release: { app: Record<string, ConfigValue> }) {
+  w.app = { ...w.app, ...JSON.parse(JSON.stringify(release.app)) };
 }
 
 /** Match pinned evidence tokens against the active mission's evidence definitions. */

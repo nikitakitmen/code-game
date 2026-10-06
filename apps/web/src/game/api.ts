@@ -63,6 +63,19 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
   return (await res.json()) as T;
 }
 
+/** Why a sync failed: the backend is unreachable (offline play is fine), or it answered with a problem. */
+export type SyncProblem = 'offline' | 'unauthorized' | 'conflict' | 'invalid' | 'error';
+
+export function syncProblem(e: unknown): SyncProblem {
+  const status = (e as { status?: number }).status;
+  if (status === undefined) return 'offline'; // fetch itself failed: no network / server down
+  if (status === 401 || status === 403) return 'unauthorized';
+  if (status === 409) return 'conflict';
+  if (status === 422) return 'invalid';
+  if (status === 502 || status === 503 || status === 504) return 'offline'; // the proxy can't reach the API
+  return 'error';
+}
+
 export const api = {
   online: true,
   async health(): Promise<boolean> {
@@ -109,15 +122,15 @@ export const api = {
     await req('POST', '/profile/merge-guest', { guest_token: guest, strategy });
     setGuestToken(null);
   },
-  async loadSave(): Promise<{ state: GameState; revision: number } | null> {
+  async loadSave(): Promise<{ save: { state: GameState; revision: number } | null; problem?: SyncProblem }> {
     try {
       const r = await req<{ save: { state: GameState; revision: number } | null }>('GET', '/save');
-      return r.save ? { state: r.save.state, revision: r.save.revision } : null;
-    } catch {
-      return null;
+      return { save: r.save ? { state: r.save.state, revision: r.save.revision } : null };
+    } catch (e) {
+      return { save: null, problem: syncProblem(e) };
     }
   },
-  async putSave(state: GameState, revision: number): Promise<{ revision: number } | 'conflict' | null> {
+  async putSave(state: GameState, revision: number): Promise<{ revision: number } | SyncProblem> {
     try {
       const r = await req<{ save: { revision: number } }>('PUT', '/save', {
         schema_version: state.schemaVersion,
@@ -129,8 +142,7 @@ export const api = {
       });
       return { revision: r.save.revision };
     } catch (e) {
-      if ((e as { status?: number }).status === 409) return 'conflict';
-      return null;
+      return syncProblem(e);
     }
   },
   async saveCheckpoint(state: GameState, type: string, label: string, missionId: string | null) {

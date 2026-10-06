@@ -1,6 +1,7 @@
 'use client';
 import { useGame } from '@/game/store';
 import { Btn, Empty, Panel, useT, pct, Why } from '@/ui/kit';
+import { SettingsPanel } from '@/ui/Settings';
 
 export function CacheApp() {
   const st = useGame();
@@ -40,6 +41,7 @@ export function CacheApp() {
           );
         })}
       </Panel>
+      <SettingsPanel app="cache" />
       <div className="row"><Why node="cache.redis" /><Why node="cache.invalidation" /><Why node="cache.eviction" /></div>
     </div>
   );

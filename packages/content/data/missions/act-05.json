@@ -899,6 +899,9 @@
    "settings": [
     "cacheInvalidation",
     "cacheFailOpen"
+   ],
+   "commands": [
+    "redis-cli"
    ]
   },
   "setup": [

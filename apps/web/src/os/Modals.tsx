@@ -53,6 +53,8 @@ function AuthModal() {
       if (mode === 'register') {
         await api.register(email, password, locale);
         useGame.setState({ authed: true });
+        // the guest save now lives in the account profile under its own revision: adopt it before saving
+        await st.syncFromServer();
         await st.save();
         st.closeModal();
       } else {

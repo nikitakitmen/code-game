@@ -16,15 +16,15 @@ export function Desktop() {
   const { t } = useT();
   const unlocked = st.state.unlocks.apps;
 
-  // first run: ask for the company name, open mail
+  // first run: open mail; once the saved game is loaded, ask for the company name if there is none
   useEffect(() => {
-    if (!st.state.company.name) st.openModal({ kind: 'company' });
-    if (!wm.windows.length) {
-      wm.open('mail');
-      if (st.state.company.name) wm.open('project');
-    }
+    if (!wm.windows.length) wm.open('mail');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    if (st.hydrated && !st.state.company.name && !st.modal) st.openModal({ kind: 'company' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [st.hydrated]);
 
   const icons = APPS.filter((a) => a.desktop && unlocked.includes(a.id));
 

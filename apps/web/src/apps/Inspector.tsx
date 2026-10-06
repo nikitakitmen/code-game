@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useGame } from '@/game/store';
 import { Btn, Empty, useT, ms } from '@/ui/kit';
+import { PinBtn } from '@/ui/Pin';
+import { pin } from '@prod/engine';
 import type { RequestTrace, StageTrace } from '@prod/engine';
 
 type Layer = 'all' | 'product' | 'application' | 'network' | 'infrastructure';
@@ -62,7 +64,7 @@ function TraceView({ trace, layer, setLayer }: { trace: RequestTrace; layer: Lay
           <Btn key={l} sm primary={layer === l} onClick={() => setLayer(l)}>{l === 'all' ? '★' : t('inspector.' + (l === 'network' ? 'networkL' : l))}</Btn>
         ))}
       </div>
-      {active && <Btn sm onClick={() => st.dispatch({ type: 'mission.pin', token: { app: 'inspector', kind: 'request', key: trace.endpointId } })}>📌 {t('common.pin')}</Btn>}
+      {active && <div className="row tiny"><PinBtn token={pin.request('inspector', trace.endpointId)} /> {t('common.pin')}</div>}
       <div className="panel inset">
         {stages.map((s) => <StageRow key={s.id} s={s} max={maxEnd} />)}
       </div>

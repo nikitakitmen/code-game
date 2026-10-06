@@ -4,9 +4,9 @@
  * rewards and the post-campaign "living production" mode.
  */
 import { produce, type Draft } from 'immer';
-import { advanceTime, matchEvidence } from './actions';
+import { matchEvidence } from './actions';
 import { evaluate } from './conditions';
-import { addMail, applyEffects, mergeUnlocks, type EngineEvent } from './effects';
+import { addMail, advanceTime, applyEffects, mergeUnlocks, type EngineEvent } from './effects';
 import { computeFacts } from './facts';
 import { revenuePerMonth } from './quality';
 import { combineSeed, createRng } from './rng';

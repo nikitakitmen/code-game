@@ -15,5 +15,6 @@ export * from './save';
 export * from './sim';
 export { runCommand, ALLOWED_COMMANDS, type TerminalOutput } from './tools/terminal';
 export { callApi, findEndpoint, type ApiRequest, type ApiResponse } from './tools/api';
+export { pinsFor, pin, sameToken, tlsStatus, tableOwners, hasDatabase, MONITORING_METRICS } from './tools/evidence';
 
 export const ENGINE_VERSION = '1.0.0';

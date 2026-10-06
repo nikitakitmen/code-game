@@ -22,6 +22,7 @@ import {
   restoreCheckpoint,
   pruneCheckpoints,
   loadState,
+  isWorldAction,
   SAVE_SCHEMA_VERSION,
   type GameState,
   type GameAction,
@@ -37,6 +38,7 @@ import { loadContent } from '@prod/content';
 import { api } from './api';
 import { t as i18nT } from '@/i18n';
 import { play as playSfx } from '@/os/sounds';
+import { onAppOpened, useWM } from '@/os/windows';
 
 const LOCAL_KEY = 'prod.save.v3';
 const CP_KEY = 'prod.checkpoints.v3';
@@ -63,11 +65,14 @@ interface GameStore {
   muted: boolean;
   reduceMotion: boolean;
   revision: number;
-  saveStatus: 'idle' | 'saving' | 'saved' | 'local' | 'conflict';
+  /** local = no backend reachable (fine, progress stays in this browser); unauthorized/error = the server refused */
+  saveStatus: 'idle' | 'saving' | 'saved' | 'local' | 'conflict' | 'unauthorized' | 'error';
   toasts: Toast[];
   modal: Modal | null;
   checkpoints: Checkpoint[];
   booted: boolean;
+  /** the saved game (local or server) has been loaded; until then nothing is persisted */
+  hydrated: boolean;
   authed: boolean;
 
   boot(): void;
@@ -167,6 +172,7 @@ export const useGame = create<GameStore>((set, get) => {
     modal: null,
     checkpoints: [],
     booted: false,
+    hydrated: false,
     authed: false,
 
     boot() {
@@ -179,7 +185,9 @@ export const useGame = create<GameStore>((set, get) => {
       const r = reduce(state, action, content);
       applyEvents(get, r.events);
       if (r.ok) {
-        const sim = simulate(r.state, content);
+        // presentation/meta actions (opening an app, reading mail, pinning…) don't change the world:
+        // keep the last simulation, only refresh the facts
+        const sim = isWorldAction(action) ? simulate(r.state, content) : get().sim;
         set({ state: r.state, sim, facts: computeFacts(r.state, content, sim) });
         maybeAutoSave(get, set);
       }
@@ -319,6 +327,7 @@ export const useGame = create<GameStore>((set, get) => {
       const sim = simulate(restored, content);
       set({ state: restored, sim, facts: computeFacts(restored, content, sim), checkpoints: cps });
       persistCheckpoints(cps);
+      registerOpenWindows(get);
       maybeAutoSave(get, set);
     },
 
@@ -327,15 +336,18 @@ export const useGame = create<GameStore>((set, get) => {
       persistLocal(state, revision);
       set({ saveStatus: 'saving' });
       const r = await api.putSave(state, revision);
-      if (r === 'conflict') set({ saveStatus: 'conflict' });
-      else if (r) set({ revision: r.revision, saveStatus: 'saved' });
-      else set({ saveStatus: 'local' });
+      if (typeof r === 'object') set({ revision: r.revision, saveStatus: 'saved' });
+      else if (r === 'offline') set({ saveStatus: 'local' });
+      else if (r === 'conflict') set({ saveStatus: 'conflict' });
+      else if (r === 'unauthorized') set({ saveStatus: 'unauthorized' });
+      else set({ saveStatus: 'error' });
     },
 
     async syncFromServer() {
       set({ authed: api.isAuthed() });
       await api.ensureGuest();
-      const remote = await api.loadSave();
+      const loaded = await api.loadSave();
+      const remote = loaded.save;
       const local = readLocal();
       const { content } = get();
       let chosen: { state: GameState; revision: number } | null = null;
@@ -351,20 +363,39 @@ export const useGame = create<GameStore>((set, get) => {
           /* corrupt save: keep the fresh game */
         }
       }
+      if (loaded.problem === 'unauthorized') set({ saveStatus: 'unauthorized' });
+      else if (loaded.problem === 'error') set({ saveStatus: 'error' });
       const cps = readCheckpoints();
       if (cps.length) set({ checkpoints: cps });
-      set({ authed: api.isAuthed() });
+      set({ authed: api.isAuthed(), hydrated: true });
+      // windows opened while the save was loading count as opened apps of the loaded game
+      registerOpenWindows(get);
     },
 
     resetGame() {
       const content = get().content;
       const state = newGame(content, freshSeed());
       const sim = simulate(state, content);
-      set({ state, sim, facts: computeFacts(state, content, sim), revision: 0, checkpoints: [], modal: null });
+      set({ state, sim, facts: computeFacts(state, content, sim), revision: 0, checkpoints: [], modal: null, hydrated: true });
       persistLocal(state, 0);
+      registerOpenWindows(get);
     },
   };
 });
+
+/* ----- PROD OS → game bridge ----- */
+
+// Launching an app window is a game event (missions can ask the player to open an app).
+onAppOpened((app) => {
+  const g = useGame.getState();
+  if (g.hydrated) g.dispatch({ type: 'app.open', app });
+});
+
+function registerOpenWindows(get: () => GameStore) {
+  for (const w of useWM.getState().windows) {
+    if (!get().state.openedApps.includes(w.id)) get().dispatch({ type: 'app.open', app: w.id });
+  }
+}
 
 /* ----- helpers outside the store ----- */
 
@@ -397,6 +428,8 @@ function titleOf(get: () => GameStore, missionId: string): string {
 
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 function maybeAutoSave(get: () => GameStore, set: (p: Partial<GameStore>) => void) {
+  // before the saved game is loaded, writing would replace the player's local save with a fresh game
+  if (!get().hydrated) return;
   persistLocal(get().state, get().revision);
   set({ saveStatus: 'idle' });
   if (autoSaveTimer) clearTimeout(autoSaveTimer);

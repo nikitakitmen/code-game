@@ -9,6 +9,7 @@ export function WindowFrame({ win }: { win: WinState }) {
   const { t } = useT();
   const def = APP_MAP[win.id];
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
+  const resizeRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   const focused = wm.focusedId === win.id;
   if (!def || win.minimized) return null;
 
@@ -30,7 +31,6 @@ export function WindowFrame({ win }: { win: WinState }) {
     (e.currentTarget as HTMLElement).classList.remove('grabbing');
   };
 
-  const resizeRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   const onResizeDown = (e: React.PointerEvent) => {
     e.stopPropagation();
     wm.focus(win.id);

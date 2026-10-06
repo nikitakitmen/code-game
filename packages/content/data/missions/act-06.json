@@ -193,7 +193,7 @@
   "evidence": [
    {
     "id": "e-trace",
-    "app": "traces",
+    "app": "inspector",
     "hint": {
      "en": "Trace a checkout request",
      "ru": "Трассировать запрос оформления"
@@ -324,7 +324,7 @@
     },
     "check": {
      "fact": "ep.checkout.p95",
-     "lt": 900
+     "lt": 1500
     },
     "sim": true
    }
@@ -335,7 +335,7 @@
     "kind": "good",
     "when": {
      "fact": "ep.checkout.p95",
-     "lt": 900
+     "lt": 1500
     },
     "text": {
      "en": "Checkout returns fast; the rest happens in the background.",
